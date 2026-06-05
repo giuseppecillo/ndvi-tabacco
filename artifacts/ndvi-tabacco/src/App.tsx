@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import taurusLogo from "@assets/Tauruss_1780665840150.png";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type TipoIntervento =
   | "copertura_prima"
@@ -179,6 +181,95 @@ export default function App() {
     setObsId(isNaN(num) ? "" : String(num + 1));
   }, [obsId, data, dataTrapianto, tipoIntervento, giorni, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
 
+  const esportaPDF = useCallback(() => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+    // Logo (convert img URL → base64 via canvas)
+    const img = new Image();
+    img.src = taurusLogo;
+    const drawDoc = () => {
+      const logoW = 28, logoH = 28;
+      try { doc.addImage(img, "PNG", 10, 8, logoW, logoH); } catch (_) { /* skip if fails */ }
+
+      // Header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(22, 101, 52); // green-800
+      doc.text("Taurus Agriculture Solution", 42, 18);
+      doc.setFontSize(11);
+      doc.setTextColor(40, 40, 40);
+      doc.text("Registro NDVI Tabacco", 42, 26);
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Esportato il: ${new Date().toLocaleDateString("it-IT")}  —  ${osservazioni.length} osservazion${osservazioni.length === 1 ? "e" : "i"}`, 42, 33);
+
+      // Separator line
+      doc.setDrawColor(22, 101, 52);
+      doc.setLineWidth(0.5);
+      doc.line(10, 39, 287, 39);
+
+      autoTable(doc, {
+        startY: 43,
+        head: [[
+          "ID", "Rilev.", "Trapianto", "Cliente", "Appezz.", "Tipo", "Gg",
+          "M1", "M2", "M3", "M4", "M5",
+          "Media", "Ottimale", "Diff.", "Dose\n(kg/ha)",
+        ]],
+        body: osservazioni.map((o) => [
+          o.id,
+          o.data,
+          o.dataTrapianto || "—",
+          o.cliente,
+          o.appezzamento,
+          o.tipoIntervento === "copertura_prima"   ? "Cop. 1ª"
+            : o.tipoIntervento === "copertura_seconda" ? "Cop. 2ª"
+            : "Fertirrrig.",
+          o.giorni,
+          o.n1.toFixed(2), o.n2.toFixed(2), o.n3.toFixed(2), o.n4.toFixed(2), o.n5.toFixed(2),
+          o.media.toFixed(3),
+          o.ottimale.toFixed(3),
+          o.discostamento.toFixed(3),
+          o.dose.toFixed(1),
+        ]),
+        styles: { fontSize: 7.5, cellPadding: 2, halign: "center" },
+        headStyles: { fillColor: [22, 101, 52], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [242, 247, 243] },
+        columnStyles: {
+          0:  { fontStyle: "bold", textColor: [22, 101, 52] },
+          3:  { halign: "left" },
+          4:  { halign: "left" },
+          15: { fontStyle: "bold" },
+        },
+        didParseCell: (data) => {
+          // Highlight dose > 0 in red
+          if (data.section === "body" && data.column.index === 15) {
+            const val = parseFloat(String(data.cell.raw));
+            if (val > 0) data.cell.styles.textColor = [185, 28, 28];
+            else data.cell.styles.textColor = [22, 101, 52];
+          }
+        },
+        margin: { left: 10, right: 10 },
+      });
+
+      // Footer
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(150);
+        doc.text(
+          `Pagina ${i} di ${pageCount}  —  Calcolatore NDVI Tabacco · Taurus Agriculture Solution`,
+          148.5, 205, { align: "center" }
+        );
+      }
+
+      doc.save(`NDVI_Tabacco_${new Date().toISOString().slice(0, 10)}.pdf`);
+    };
+
+    if (img.complete) { drawDoc(); }
+    else { img.onload = drawDoc; img.onerror = drawDoc; }
+  }, [osservazioni]);
+
   const doseColor =
     risultati.dose === 0 ? "text-green-700"
     : risultati.dose > 50 ? "text-red-700"
@@ -326,8 +417,16 @@ export default function App() {
         {osservazioni.length > 0 && (
           <div className="bg-white rounded-2xl shadow-md p-6 border border-stone-200">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-green-900">Registro Osservazioni</h2>
-              <span className="text-sm text-stone-400">{osservazioni.length} record</span>
+              <div>
+                <h2 className="text-lg font-bold text-green-900">Registro Osservazioni</h2>
+                <span className="text-sm text-stone-400">{osservazioni.length} record</span>
+              </div>
+              <button
+                onClick={esportaPDF}
+                className="flex items-center gap-2 bg-green-800 hover:bg-green-900 active:bg-green-950 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              >
+                📄 Esporta PDF
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse min-w-[800px]">
