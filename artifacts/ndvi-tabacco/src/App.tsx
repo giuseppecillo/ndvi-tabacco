@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import taurusLogo from "@assets/Tauruss_1780665840150.png";
 
 type Observation = {
   giorni: number;
@@ -108,9 +109,10 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-teal-100 py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-teal-800">🌿 Calcolatore NDVI Tabacco</h1>
-          <p className="text-teal-600 mt-1 text-sm">Strumento di supporto alla fertilizzazione azotata</p>
+        <div className="text-center flex flex-col items-center gap-2">
+          <img src={taurusLogo} alt="Taurus Agriculture Solution" className="h-28 w-auto drop-shadow-md" />
+          <h1 className="text-3xl font-bold text-teal-800">Calcolatore NDVI Tabacco</h1>
+          <p className="text-teal-600 mt-0.5 text-sm">Strumento di supporto alla fertilizzazione azotata</p>
         </div>
 
         {/* Input Card */}
