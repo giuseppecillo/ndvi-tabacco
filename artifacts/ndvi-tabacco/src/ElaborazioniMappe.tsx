@@ -15,6 +15,8 @@
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 // @ts-ignore – shpjs has no bundled types in all versions
 import shp from "shpjs";
 import { Observation, TipoIntervento } from "./App";
@@ -23,93 +25,139 @@ import {
   parseKml, computeIdwGrid, downloadShapefile, downloadGeoTiff,
 } from "./utils/geoUtils";
 
-// ── Canvas helpers ────────────────────────────────────────────────────────────
+// ── Color helpers ─────────────────────────────────────────────────────────────
 
-function doseRgb(dose: number, min: number, max: number): string {
-  const t   = max > min ? Math.max(0, Math.min(1, (dose - min) / (max - min))) : 0;
-  // green(22,163,74) → amber(202,138,4) → red(220,38,38)
-  const r   = t < 0.5 ? Math.round(22  + (202 - 22)  * t * 2) : 220;
-  const g   = t < 0.5 ? Math.round(163 + (138 - 163) * t * 2)
-                       : Math.round(138 - (138 - 38)  * (t - 0.5) * 2);
-  const b   = t < 0.5 ? Math.round(74  * (1 - t * 2)) : 0;
-  return `rgb(${r},${g},${b})`;
+function doseRgba(dose: number, min: number, max: number, alpha = 0.82): string {
+  const t = max > min ? Math.max(0, Math.min(1, (dose - min) / (max - min))) : 0;
+  const r = t < 0.5 ? Math.round(22  + (202 - 22)  * t * 2) : 220;
+  const g = t < 0.5 ? Math.round(163 + (138 - 163) * t * 2)
+                     : Math.round(138 - (138 - 38)  * (t - 0.5) * 2);
+  const b = t < 0.5 ? Math.round(74  * (1 - t * 2)) : 0;
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function drawCanvas(canvas: HTMLCanvasElement, result: PolyIdwResult) {
-  if (!result.grid.length) return;
+/** Render IDW grid cells to an offscreen canvas and return a PNG data URL. */
+function renderIdwOverlay(result: PolyIdwResult): string {
   const [west, south, east, north] = result.bbox;
-  const PAD = 28, LEG = 70, MAX_W = 560, MAX_H = 400;
-  const avW = MAX_W - 2 * PAD - LEG;
-  const avH = MAX_H - 2 * PAD;
-  const geoW = east - west   || 0.001;
+  const geoW = east - west  || 0.001;
   const geoH = north - south || 0.001;
-  const scale = Math.min(avW / geoW, avH / geoH);
-  const cw    = Math.round(geoW * scale + 2 * PAD + LEG);
-  const ch    = Math.round(geoH * scale + 2 * PAD);
-
-  canvas.width  = cw;
-  canvas.height = ch;
+  const W = 1024;
+  const H = Math.max(1, Math.round(W * geoH / geoW));
+  const canvas = document.createElement("canvas");
+  canvas.width  = W;
+  canvas.height = H;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#f0fdf4";
-  ctx.fillRect(0, 0, cw, ch);
-
-  const toX = (lng: number) => (lng - west)  * scale + PAD;
-  const toY = (lat: number) => (north - lat) * scale + PAD;
-
-  // Cell size in pixels (10 m ≈ latRes degrees)
-  const latRes = result.cellSizeDeg.lat;
-  const cellPx = Math.max(1.5, latRes * scale + 0.8);
-
-  // Draw cells
+  ctx.clearRect(0, 0, W, H);
   const { min, max } = result.stats;
+  const cW = Math.max(2, (result.cellSizeDeg.lon / geoW) * W + 1.5);
+  const cH = Math.max(2, (result.cellSizeDeg.lat / geoH) * H + 1.5);
   for (const g of result.grid) {
-    ctx.fillStyle = doseRgb(g.dose, min, max);
-    ctx.fillRect(toX(g.lng) - cellPx / 2, toY(g.lat) - cellPx / 2, cellPx + 0.5, cellPx + 0.5);
+    const x = ((g.lng - west)  / geoW) * W;
+    const y = ((north - g.lat) / geoH) * H;
+    ctx.fillStyle = doseRgba(g.dose, min, max);
+    ctx.fillRect(x - cW / 2, y - cH / 2, cW + 0.5, cH + 0.5);
   }
+  return canvas.toDataURL("image/png");
+}
 
-  // Polygon outline
-  ctx.beginPath();
-  ctx.strokeStyle = "#166534";
-  ctx.lineWidth   = 1.8;
-  result.polygon.ring.forEach(([lng, lat], i) =>
-    i === 0 ? ctx.moveTo(toX(lng), toY(lat)) : ctx.lineTo(toX(lng), toY(lat))
+// ── Leaflet map sub-component ─────────────────────────────────────────────────
+
+function MapView({ result }: { result: PolyIdwResult }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<{ lat: number; lng: number; dose: number } | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || !result.grid.length) return;
+    const [west, south, east, north] = result.bbox;
+    const bounds = L.latLngBounds([[south, west], [north, east]]);
+
+    const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true });
+
+    // Satellite basemap — Esri World Imagery (free, no key)
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      { attribution: "Tiles © Esri &mdash; Source: Esri, Maxar, Earthstar Geographics", maxZoom: 22 }
+    ).addTo(map);
+
+    // IDW raster overlay
+    const dataUrl = renderIdwOverlay(result);
+    L.imageOverlay(dataUrl, bounds, { opacity: 0.78, interactive: false }).addTo(map);
+
+    // Polygon outline
+    L.polygon(
+      result.polygon.ring.map(([lng, lat]) => [lat, lng] as [number, number]),
+      { color: "#166534", weight: 2.5, fill: false, dashArray: undefined }
+    ).addTo(map);
+
+    // Control points with tooltip
+    result.controls.forEach(cp => {
+      L.circleMarker([cp.lat, cp.lng], {
+        radius: 7, color: "#fff", weight: 2, fillColor: "#1d4ed8", fillOpacity: 1,
+      })
+        .bindTooltip(`<b>#${cp.obsId}</b><br/>${cp.appezzamento}<br/>${cp.dose.toFixed(1)} kg/ha`, {
+          direction: "top", offset: [0, -6],
+        })
+        .addTo(map);
+    });
+
+    map.fitBounds(bounds, { padding: [20, 20] });
+
+    // GIS info on mouse move
+    const { cellSizeDeg, grid } = result;
+    const halfLat = cellSizeDeg.lat * 0.65;
+    const halfLon = cellSizeDeg.lon * 0.65;
+
+    function onMove(e: L.LeafletMouseEvent) {
+      const { lat, lng } = e.latlng;
+      const cell = grid.find(
+        g => Math.abs(g.lat - lat) < halfLat && Math.abs(g.lng - lng) < halfLon
+      );
+      setHover(cell ? { lat, lng, dose: cell.dose } : null);
+    }
+    map.on("mousemove", onMove);
+    map.on("mouseout", () => setHover(null));
+
+    return () => { map.remove(); };
+  }, [result]);
+
+  const { min, max } = result.stats;
+
+  return (
+    <div className="relative rounded-xl overflow-hidden border border-stone-200 shadow">
+      <div ref={containerRef} className="w-full" style={{ height: 440 }} />
+
+      {/* GIS info tooltip (bottom-left) */}
+      {hover ? (
+        <div className="absolute bottom-3 left-3 bg-black/75 text-white text-xs rounded-lg px-3 py-2 pointer-events-none z-[1000] leading-5">
+          <div className="font-mono opacity-80">📍 {hover.lat.toFixed(6)}, {hover.lng.toFixed(6)}</div>
+          <div>🌿 Dose IDW: <strong className="text-green-300">{hover.dose.toFixed(1)} kg/ha</strong></div>
+        </div>
+      ) : (
+        <div className="absolute bottom-3 left-3 bg-black/50 text-white/70 text-[11px] rounded-md px-2 py-1 pointer-events-none z-[1000]">
+          Sposta il cursore sulla mappa per i valori
+        </div>
+      )}
+
+      {/* Color legend (top-right) */}
+      <div className="absolute top-3 right-3 bg-white/92 backdrop-blur rounded-lg px-3 py-2.5 z-[1000] shadow-md text-xs min-w-[76px]">
+        <div className="font-bold text-stone-600 text-center mb-2 text-[11px]">kg/ha</div>
+        {[
+          { color: "#dc2626", label: max.toFixed(0), pos: "max" },
+          { color: "#f59e0b", label: ((min + max) / 2).toFixed(0), pos: "mid" },
+          { color: "#22c55e", label: min.toFixed(0), pos: "min" },
+        ].map(({ color, label, pos }) => (
+          <div key={pos} className="flex items-center gap-1.5 mb-1">
+            <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0 border border-white/40" style={{ background: color }} />
+            <span className="text-stone-700 font-medium">{label}</span>
+          </div>
+        ))}
+        <div className="border-t border-stone-200 pt-1.5 mt-1 flex items-center gap-1.5">
+          <div className="w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white flex-shrink-0" />
+          <span className="text-stone-500 text-[10px]">ctrl pt</span>
+        </div>
+      </div>
+    </div>
   );
-  ctx.closePath();
-  ctx.stroke();
-
-  // Control points
-  for (const cp of result.controls) {
-    const x = toX(cp.lng), y = toY(cp.lat);
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
-    ctx.fillStyle   = "#1d4ed8";
-    ctx.fill();
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth   = 1.5;
-    ctx.stroke();
-    ctx.fillStyle = "#1e3a8a";
-    ctx.font      = "bold 9px sans-serif";
-    ctx.fillText(`#${cp.obsId}`, x + 7, y + 3);
-  }
-
-  // Color legend
-  const lx = cw - LEG + 10, ly = PAD, lh = Math.min(120, ch - 2 * PAD);
-  const grad = ctx.createLinearGradient(0, ly, 0, ly + lh);
-  grad.addColorStop(0,   "#dc2626");
-  grad.addColorStop(0.5, "#f59e0b");
-  grad.addColorStop(1,   "#22c55e");
-  ctx.fillStyle = grad;
-  ctx.fillRect(lx, ly, 12, lh);
-  ctx.strokeStyle = "#9ca3af";
-  ctx.lineWidth   = 0.5;
-  ctx.strokeRect(lx, ly, 12, lh);
-  ctx.fillStyle = "#374151";
-  ctx.font      = "8px sans-serif";
-  ctx.fillText(`${max.toFixed(1)}`, lx + 15, ly + 4);
-  ctx.fillText(`${((min + max) / 2).toFixed(1)}`, lx + 15, ly + lh / 2 + 3);
-  ctx.fillText(`${min.toFixed(1)}`, lx + 15, ly + lh);
-  ctx.fillStyle = "#6b7280";
-  ctx.fillText("kg/ha", lx - 2, ly + lh + 12);
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -146,7 +194,6 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
 
   // UI
   const [showNotes,     setShowNotes]     = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // GPS-enabled observations
   const gpsObs = useMemo(
@@ -262,13 +309,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
     }, 50);
   }, [selPolyIdx, polygons, activeControls, power]);
 
-  // Draw canvas when result for selected polygon is ready
   const currentResult = selPolyIdx !== null ? results.get(selPolyIdx) : undefined;
-  useEffect(() => {
-    if (canvasRef.current && currentResult?.grid.length) {
-      drawCanvas(canvasRef.current, currentResult);
-    }
-  }, [currentResult]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -581,13 +622,8 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
             {currentResult.controls.length} punti di controllo · p = {power}
           </div>
 
-          {/* Canvas map */}
-          <div className="overflow-x-auto rounded-xl border border-stone-100 bg-green-50 p-2">
-            <canvas ref={canvasRef} className="block mx-auto rounded" />
-          </div>
-          <p className="text-xs text-stone-400 text-center">
-            Verde = dose bassa · Ambra = media · Rosso = dose alta · Punti blu = punti di controllo
-          </p>
+          {/* Leaflet map with satellite basemap */}
+          <MapView result={currentResult} />
 
           {/* Export buttons */}
           <div className="flex flex-wrap gap-3 pt-1">
