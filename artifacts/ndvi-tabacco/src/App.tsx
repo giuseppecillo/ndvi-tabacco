@@ -2,19 +2,21 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import taurusLogo from "@assets/Tauruss_1780665840150.png";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { ElaborazioniMappe } from "./ElaborazioniMappe";
+import { exportObservationsCsv } from "./utils/geoUtils";
 
-type TipoIntervento =
+export type TipoIntervento =
   | "copertura_prima"
   | "copertura_seconda"
   | "fertirrigazione";
 
-const TIPO_LABELS: Record<TipoIntervento, string> = {
+export const TIPO_LABELS: Record<TipoIntervento, string> = {
   copertura_prima:   "Concimazione copertura — 1ª",
   copertura_seconda: "Concimazione copertura — 2ª",
   fertirrigazione:   "Fertirrigazione (copertura)",
 };
 
-type Observation = {
+export type Observation = {
   id: string;
   data: string;
   dataTrapianto: string;
@@ -144,6 +146,7 @@ function NumberInput({
 const today = new Date().toISOString().slice(0, 10);
 
 export default function App() {
+  const [activeTab, setActiveTab]       = useState<"calcolatore" | "elaborazioni">("calcolatore");
   const [obsId, setObsId]               = useState("1");
   const [data, setData]                 = useState(today);
   const [dataTrapianto, setDataTrapianto] = useState("");
@@ -349,6 +352,30 @@ export default function App() {
           <p className="text-green-700 mt-0.5 text-sm">Strumento di supporto alla fertilizzazione azotata</p>
         </div>
 
+        {/* Tab navigation */}
+        <div className="flex rounded-xl overflow-hidden border border-green-200 shadow-sm">
+          {(["calcolatore", "elaborazioni"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+                activeTab === tab
+                  ? "bg-green-800 text-white"
+                  : "bg-white text-green-800 hover:bg-green-50"
+              }`}
+            >
+              {tab === "calcolatore" ? "🌿 Calcolatore NDVI" : "🗺 Elaborazioni e Mappe"}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "elaborazioni" && (
+          <ElaborazioniMappe osservazioni={osservazioni} />
+        )}
+
+        {/* Input Card — shown only in calcolatore tab */}
+        {activeTab === "calcolatore" && <>
+
         {/* Input Card */}
         <div className="bg-white rounded-2xl shadow-md p-6 space-y-5 border border-stone-200">
 
@@ -500,6 +527,12 @@ export default function App() {
                   🗑 Reset Registro
                 </button>
                 <button
+                  onClick={() => exportObservationsCsv(osservazioni)}
+                  className="flex items-center gap-2 bg-white hover:bg-stone-50 active:bg-stone-100 text-stone-700 border border-stone-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  📊 Esporta CSV
+                </button>
+                <button
                   onClick={esportaPDF}
                   className="flex items-center gap-2 bg-green-800 hover:bg-green-900 active:bg-green-950 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
                 >
@@ -595,6 +628,9 @@ export default function App() {
         <p className="text-center text-xs text-green-700 pb-4">
           Formula: Dose = (NDVI_ottimale − NDVI_media) × 500 × (resa / 4.5) · Limite max = azoto totale / 2
         </p>
+
+        </>}
+
       </div>
     </div>
   );
