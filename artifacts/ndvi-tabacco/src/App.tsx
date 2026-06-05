@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import taurusLogo from "@assets/Tauruss_1780665840150.png";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -140,7 +140,18 @@ export default function App() {
   const [n3, setN3] = useState(0.41);
   const [n4, setN4] = useState(0.39);
   const [n5, setN5] = useState(0.4);
-  const [osservazioni, setOsservazioni] = useState<Observation[]>([]);
+  const [osservazioni, setOsservazioni] = useState<Observation[]>(() => {
+    try {
+      const saved = localStorage.getItem("ndvi_osservazioni");
+      return saved ? (JSON.parse(saved) as Observation[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("ndvi_osservazioni", JSON.stringify(osservazioni));
+  }, [osservazioni]);
   const [errors, setErrors]             = useState<Record<string, string>>({});
 
   // Giorni auto-calcolati se c'è la data trapianto, altrimenti manuali
