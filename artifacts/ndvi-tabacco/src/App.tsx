@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import taurusLogo from "@assets/Tauruss_1780665840150.png";
+const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
