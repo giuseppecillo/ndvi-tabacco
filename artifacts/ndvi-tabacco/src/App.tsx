@@ -1,10 +1,22 @@
 import { useState, useCallback, useMemo } from "react";
 import taurusLogo from "@assets/Tauruss_1780665840150.png";
 
+type TipoIntervento =
+  | "copertura_prima"
+  | "copertura_seconda"
+  | "fertirrigazione";
+
+const TIPO_LABELS: Record<TipoIntervento, string> = {
+  copertura_prima:   "Concimazione copertura — 1ª",
+  copertura_seconda: "Concimazione copertura — 2ª",
+  fertirrigazione:   "Fertirrigazione (ultima copertura)",
+};
+
 type Observation = {
   id: string;
   data: string;
   dataTrapianto: string;
+  tipoIntervento: TipoIntervento;
   giorni: number;
   cliente: string;
   appezzamento: string;
@@ -114,6 +126,7 @@ export default function App() {
   const [obsId, setObsId]               = useState("1");
   const [data, setData]                 = useState(today);
   const [dataTrapianto, setDataTrapianto] = useState("");
+  const [tipoIntervento, setTipoIntervento] = useState<TipoIntervento>("copertura_prima");
   const [cliente, setCliente]           = useState("");
   const [appezzamento, setAppezzamento] = useState("");
   const [varieta, setVarieta]           = useState("Burley");
@@ -152,6 +165,7 @@ export default function App() {
         id: trimmedId,
         data,
         dataTrapianto,
+        tipoIntervento,
         giorni,
         cliente: cliente.trim(),
         appezzamento: appezzamento.trim(),
@@ -163,7 +177,7 @@ export default function App() {
     ]);
     const num = parseInt(trimmedId);
     setObsId(isNaN(num) ? "" : String(num + 1));
-  }, [obsId, data, dataTrapianto, giorni, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
+  }, [obsId, data, dataTrapianto, tipoIntervento, giorni, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
 
   const doseColor =
     risultati.dose === 0 ? "text-green-700"
@@ -199,6 +213,32 @@ export default function App() {
             <TextInput label="Appezzamento" value={appezzamento}
               onChange={(v) => { setAppezzamento(v); setErrors((e) => ({ ...e, appezzamento: "" })); }}
               placeholder="es. Parcella A, Campo Nord" error={errors.appezzamento} />
+
+            {/* Tipo intervento — occupa tutta la larghezza */}
+            <div className="col-span-2 flex flex-col gap-2">
+              <label className="text-sm font-semibold text-stone-700">Tipo Monitoraggio</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {(Object.keys(TIPO_LABELS) as TipoIntervento[]).map((key) => (
+                  <label
+                    key={key}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-lg border cursor-pointer transition-colors text-sm font-medium
+                      ${tipoIntervento === key
+                        ? "bg-green-800 text-white border-green-800"
+                        : "bg-white text-stone-700 border-stone-300 hover:border-green-700"}`}
+                  >
+                    <input
+                      type="radio"
+                      name="tipoIntervento"
+                      value={key}
+                      checked={tipoIntervento === key}
+                      onChange={() => setTipoIntervento(key)}
+                      className="accent-white"
+                    />
+                    {TIPO_LABELS[key]}
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* — Parametri Colturali — */}
@@ -298,6 +338,7 @@ export default function App() {
                     <th className="px-2 py-2 text-center">Trapianto</th>
                     <th className="px-2 py-2 text-center">Cliente</th>
                     <th className="px-2 py-2 text-center">Appezz.</th>
+                    <th className="px-2 py-2 text-center">Tipo</th>
                     <th className="px-2 py-2 text-center">Gg</th>
                     <th className="px-2 py-2 text-center">Media</th>
                     <th className="px-2 py-2 text-center">Ottimale</th>
@@ -315,6 +356,19 @@ export default function App() {
                       </td>
                       <td className="px-2 py-2 text-center">{obs.cliente}</td>
                       <td className="px-2 py-2 text-center">{obs.appezzamento}</td>
+                      <td className="px-2 py-2 text-center whitespace-nowrap">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          obs.tipoIntervento === "fertirrigazione"
+                            ? "bg-blue-100 text-blue-700"
+                            : obs.tipoIntervento === "copertura_seconda"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-green-100 text-green-700"
+                        }`}>
+                          {obs.tipoIntervento === "copertura_prima"   ? "Cop. 1ª"
+                           : obs.tipoIntervento === "copertura_seconda" ? "Cop. 2ª"
+                           : "Fertirrrig."}
+                        </span>
+                      </td>
                       <td className="px-2 py-2 text-center">{obs.giorni}</td>
                       <td className="px-2 py-2 text-center font-semibold bg-green-50 text-green-800">
                         {obs.media.toFixed(3)}
