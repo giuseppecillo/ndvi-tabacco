@@ -9,7 +9,7 @@ type TipoIntervento =
 const TIPO_LABELS: Record<TipoIntervento, string> = {
   copertura_prima:   "Concimazione copertura — 1ª",
   copertura_seconda: "Concimazione copertura — 2ª",
-  fertirrigazione:   "Fertirrigazione (ultima copertura)",
+  fertirrigazione:   "Fertirrigazione (seconda copertura)",
 };
 
 type Observation = {
