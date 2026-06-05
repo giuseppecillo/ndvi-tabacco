@@ -13,11 +13,11 @@ router.get("/osservazioni", async (_req, res) => {
          cliente, appezzamento, resa, varieta,
          n1, n2, n3, n4, n5,
          media, ottimale, discostamento, dose,
+         lat, lng,
          created_at AS "createdAt"
        FROM osservazioni
        ORDER BY created_at DESC`
     );
-    // Cast numeric strings back to numbers
     const parsed = rows.map((r) => ({
       ...r,
       giorni:        Number(r.giorni),
@@ -31,6 +31,8 @@ router.get("/osservazioni", async (_req, res) => {
       ottimale:      Number(r.ottimale),
       discostamento: Number(r.discostamento),
       dose:          Number(r.dose),
+      lat:           r.lat != null ? Number(r.lat) : null,
+      lng:           r.lng != null ? Number(r.lng) : null,
     }));
     res.json(parsed);
   } catch (err) {
@@ -47,18 +49,21 @@ router.post("/osservazioni", async (req, res) => {
          (id, data, data_trapianto, tipo_intervento, giorni,
           cliente, appezzamento, resa, varieta,
           n1, n2, n3, n4, n5,
-          media, ottimale, discostamento, dose)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+          media, ottimale, discostamento, dose,
+          lat, lng)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
        ON CONFLICT (id) DO UPDATE SET
          data=$2, data_trapianto=$3, tipo_intervento=$4, giorni=$5,
          cliente=$6, appezzamento=$7, resa=$8, varieta=$9,
          n1=$10, n2=$11, n3=$12, n4=$13, n5=$14,
-         media=$15, ottimale=$16, discostamento=$17, dose=$18`,
+         media=$15, ottimale=$16, discostamento=$17, dose=$18,
+         lat=$19, lng=$20`,
       [
         o.id, o.data, o.dataTrapianto || null, o.tipoIntervento, o.giorni,
         o.cliente, o.appezzamento, o.resa, o.varieta,
         o.n1, o.n2, o.n3, o.n4, o.n5,
         o.media, o.ottimale, o.discostamento, o.dose,
+        o.lat ?? null, o.lng ?? null,
       ]
     );
     res.status(201).json({ ok: true });

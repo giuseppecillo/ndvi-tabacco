@@ -33,6 +33,8 @@ type Observation = {
   ottimale: number;
   discostamento: number;
   dose: number;
+  lat: number | null;
+  lng: number | null;
 };
 
 // NDVI di riferimento per tabacco (Nicotiana tabacum) per fascia di giorni dal trapianto.
@@ -187,27 +189,42 @@ export default function App() {
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setErrors({});
-    const nuova: Observation = {
-      id: trimmedId,
-      data,
-      dataTrapianto,
-      tipoIntervento,
-      giorni,
-      cliente: cliente.trim(),
-      appezzamento: appezzamento.trim(),
-      resa,
-      varieta,
-      n1, n2, n3, n4, n5,
-      ...risultati,
+    const trimmedIdFinal = trimmedId;
+    const num = parseInt(trimmedIdFinal);
+
+    const doSave = (lat: number | null, lng: number | null) => {
+      const nuova: Observation = {
+        id: trimmedIdFinal,
+        data,
+        dataTrapianto,
+        tipoIntervento,
+        giorni,
+        cliente: cliente.trim(),
+        appezzamento: appezzamento.trim(),
+        resa,
+        varieta,
+        n1, n2, n3, n4, n5,
+        ...risultati,
+        lat,
+        lng,
+      };
+      fetch("/api/osservazioni", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuova),
+      }).then(() => setOsservazioni((prev) => [nuova, ...prev]));
     };
-    fetch("/api/osservazioni", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nuova),
-    }).then(() => {
-      setOsservazioni((prev) => [nuova, ...prev]);
-    });
-    const num = parseInt(trimmedId);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => doSave(pos.coords.latitude, pos.coords.longitude),
+        ()    => doSave(null, null),
+        { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
+      );
+    } else {
+      doSave(null, null);
+    }
+
     setObsId(isNaN(num) ? "" : String(num + 1));
   }, [obsId, data, dataTrapianto, tipoIntervento, giorni, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
 
@@ -254,7 +271,7 @@ export default function App() {
         head: [[
           "ID", "Rilev.", "Trapianto", "Cliente", "Appezz.", "Tipo", "Gg",
           "M1", "M2", "M3", "M4", "M5",
-          "Media", "Ottimale", "Diff.", "Dose\n(kg/ha)",
+          "Media", "Ottimale", "Diff.", "Dose\n(kg/ha)", "Lat", "Lng",
         ]],
         body: osservazioni.map((o) => [
           o.id,
@@ -271,6 +288,8 @@ export default function App() {
           o.ottimale.toFixed(3),
           o.discostamento.toFixed(3),
           o.dose.toFixed(1),
+          o.lat != null ? o.lat.toFixed(6) : "—",
+          o.lng != null ? o.lng.toFixed(6) : "—",
         ]),
         styles: { fontSize: 7.5, cellPadding: 2, halign: "center" },
         headStyles: { fillColor: [22, 101, 52], textColor: 255, fontStyle: "bold" },
@@ -503,12 +522,13 @@ export default function App() {
                     <th className="px-2 py-2 text-center">Ottimale</th>
                     <th className="px-2 py-2 text-center">Diff.</th>
                     <th className="px-2 py-2 text-center">Dose (kg/ha)</th>
+                    <th className="px-2 py-2 text-center">GPS</th>
                     <th className="px-2 py-2 text-center rounded-tr-lg">Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loadingOss ? (
-                    <tr><td colSpan={12} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
+                    <tr><td colSpan={13} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
                   ) : osservazioni.map((obs, i) => (
                     <tr key={obs.id} className={i % 2 === 0 ? "bg-stone-50" : "bg-white"}>
                       <td className="px-2 py-2 text-center font-mono font-semibold text-green-800">{obs.id}</td>
@@ -541,6 +561,19 @@ export default function App() {
                         obs.dose === 0 ? "text-green-700 bg-green-50" : "text-red-700 bg-red-50"
                       }`}>
                         {obs.dose.toFixed(1)}
+                      </td>
+                      <td className="px-2 py-2 text-center text-xs text-stone-400 font-mono whitespace-nowrap">
+                        {obs.lat != null && obs.lng != null ? (
+                          <a
+                            href={`https://www.google.com/maps?q=${obs.lat.toFixed(6)},${obs.lng.toFixed(6)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700 hover:underline"
+                            title="Apri in Google Maps"
+                          >
+                            {obs.lat.toFixed(5)}<br />{obs.lng.toFixed(5)}
+                          </a>
+                        ) : <span className="text-stone-300">—</span>}
                       </td>
                       <td className="px-2 py-2 text-center">
                         <button
