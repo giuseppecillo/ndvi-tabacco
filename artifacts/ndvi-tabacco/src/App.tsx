@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import taurusLogo from "@assets/Tauruss_1780665840150.png";
 
 type Observation = {
+  id: number;
   giorni: number;
   resa: number;
   varieta: string;
@@ -85,6 +86,7 @@ export default function App() {
     setOsservazioni((prev) => [
       ...prev,
       {
+        id: prev.length + 1,
         giorni,
         resa,
         varieta,
@@ -198,7 +200,7 @@ export default function App() {
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="bg-teal-600 text-white">
-                    <th className="px-3 py-2 text-center rounded-tl-lg">#</th>
+                    <th className="px-3 py-2 text-center rounded-tl-lg">ID</th>
                     <th className="px-3 py-2 text-center">Gg</th>
                     <th className="px-3 py-2 text-center">Resa</th>
                     <th className="px-3 py-2 text-center">M1</th>
@@ -215,7 +217,7 @@ export default function App() {
                 <tbody>
                   {osservazioni.map((obs, i) => (
                     <tr key={i} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                      <td className="px-3 py-2 text-center text-gray-400">{i + 1}</td>
+                      <td className="px-3 py-2 text-center font-mono text-gray-500">{obs.id}</td>
                       <td className="px-3 py-2 text-center">{obs.giorni}</td>
                       <td className="px-3 py-2 text-center">{obs.resa}</td>
                       <td className="px-3 py-2 text-center">{obs.n1}</td>
