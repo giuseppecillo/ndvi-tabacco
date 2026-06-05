@@ -35,6 +35,23 @@ type Observation = {
   dose: number;
 };
 
+// NDVI di riferimento per tabacco (Nicotiana tabacum) per fascia di giorni dal trapianto.
+// Valori basati su curve di crescita del tabacco da letteratura agronomica:
+// rapida ascesa nella fase vegetativa, picco a piena copertura canopy (51–65 gg),
+// leggero calo nella fase di maturazione (> 65 gg).
+const NDVI_FASCE: Array<{ maxGiorni: number; ottimale: number; label: string }> = [
+  { maxGiorni: 20,  ottimale: 0.30, label: "≤ 20 gg"  },
+  { maxGiorni: 35,  ottimale: 0.40, label: "21–35 gg"  },
+  { maxGiorni: 50,  ottimale: 0.62, label: "36–50 gg"  },
+  { maxGiorni: 65,  ottimale: 0.74, label: "51–65 gg"  },
+  { maxGiorni: 999, ottimale: 0.70, label: "> 65 gg"   },
+];
+
+function ndviOttimale(giorni: number): { ottimale: number; label: string } {
+  const fascia = NDVI_FASCE.find((f) => giorni <= f.maxGiorni) ?? NDVI_FASCE[NDVI_FASCE.length - 1];
+  return { ottimale: fascia.ottimale, label: fascia.label };
+}
+
 function calcola(
   resa: number,
   azotoTot: number,
@@ -46,7 +63,7 @@ function calcola(
   n5: number
 ) {
   const media = (n1 + n2 + n3 + n4 + n5) / 5;
-  const ottimale = 0.5 + (giorni - 30) * 0.01;
+  const { ottimale } = ndviOttimale(giorni);
   const discostamento = Math.max(0, ottimale - media);
   let dose = discostamento * 500 * (resa / 4.5);
   const limiteMax = azotoTot / 2;
@@ -293,7 +310,8 @@ export default function App() {
     : risultati.dose > 50 ? "text-red-700"
     : "text-amber-600";
 
-  const ndviOttimaleNote = `Riferimento per ${giorni} gg: 0.50 + (${giorni} − 30) × 0.01 = ${risultati.ottimale.toFixed(3)}`;
+  const { label: ndviFasciaLabel } = ndviOttimale(giorni);
+  const ndviOttimaleNote = `Fascia ${ndviFasciaLabel} → NDVI ottimale: ${risultati.ottimale.toFixed(3)}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-100 to-green-50 py-8 px-4">
@@ -408,8 +426,18 @@ export default function App() {
           {/* — Risultati — */}
           <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-3">
             <h2 className="text-base font-bold text-green-900 mb-1">Risultati</h2>
-            <div className="text-xs text-green-700 bg-green-100 rounded-lg px-3 py-2 font-mono">
-              📐 {ndviOttimaleNote}
+            <div className="text-xs text-green-800 bg-green-100 rounded-lg px-3 py-2 space-y-1">
+              <div className="font-semibold">📐 {ndviOttimaleNote}</div>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-green-700 font-mono pt-0.5">
+                {NDVI_FASCE.map((f) => (
+                  <span
+                    key={f.label}
+                    className={`whitespace-nowrap ${f.label === ndviFasciaLabel ? "font-bold underline underline-offset-2" : "opacity-60"}`}
+                  >
+                    {f.label}: {f.ottimale.toFixed(2)}
+                  </span>
+                ))}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <ResultRow label="Media NDVI" value={risultati.media.toFixed(3)} />
