@@ -77,4 +77,14 @@ router.delete("/osservazioni/:id", async (req, res) => {
   }
 });
 
+// DELETE all — reset the entire registry
+router.delete("/osservazioni", async (_req, res) => {
+  try {
+    await pool.query("DELETE FROM osservazioni");
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "DB error", detail: String(err) });
+  }
+});
+
 export default router;

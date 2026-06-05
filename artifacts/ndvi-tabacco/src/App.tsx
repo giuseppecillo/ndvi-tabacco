@@ -216,6 +216,12 @@ export default function App() {
       .then(() => setOsservazioni((prev) => prev.filter((o) => o.id !== id)));
   }, []);
 
+  const resetRegistro = useCallback(() => {
+    if (!window.confirm("Sei sicuro di voler cancellare tutto il registro? L'operazione è irreversibile.")) return;
+    fetch("/api/osservazioni", { method: "DELETE" })
+      .then(() => setOsservazioni([]));
+  }, []);
+
   const esportaPDF = useCallback(() => {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
@@ -467,12 +473,20 @@ export default function App() {
                 <h2 className="text-lg font-bold text-green-900">Registro Osservazioni</h2>
                 <span className="text-sm text-stone-400">{osservazioni.length} record</span>
               </div>
-              <button
-                onClick={esportaPDF}
-                className="flex items-center gap-2 bg-green-800 hover:bg-green-900 active:bg-green-950 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-              >
-                📄 Esporta PDF
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={resetRegistro}
+                  className="flex items-center gap-2 bg-white hover:bg-red-50 active:bg-red-100 text-red-600 border border-red-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  🗑 Reset Registro
+                </button>
+                <button
+                  onClick={esportaPDF}
+                  className="flex items-center gap-2 bg-green-800 hover:bg-green-900 active:bg-green-950 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  📄 Esporta PDF
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse min-w-[800px]">
