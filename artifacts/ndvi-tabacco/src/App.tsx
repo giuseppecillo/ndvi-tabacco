@@ -140,18 +140,16 @@ export default function App() {
   const [n3, setN3] = useState(0.41);
   const [n4, setN4] = useState(0.39);
   const [n5, setN5] = useState(0.4);
-  const [osservazioni, setOsservazioni] = useState<Observation[]>(() => {
-    try {
-      const saved = localStorage.getItem("ndvi_osservazioni");
-      return saved ? (JSON.parse(saved) as Observation[]) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [osservazioni, setOsservazioni] = useState<Observation[]>([]);
+  const [loadingOss, setLoadingOss] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem("ndvi_osservazioni", JSON.stringify(osservazioni));
-  }, [osservazioni]);
+    fetch("/api/osservazioni")
+      .then((r) => r.json())
+      .then((data: Observation[]) => setOsservazioni(data))
+      .catch(() => {})
+      .finally(() => setLoadingOss(false));
+  }, []);
   const [errors, setErrors]             = useState<Record<string, string>>({});
 
   // Giorni auto-calcolati se c'è la data trapianto, altrimenti manuali
@@ -172,25 +170,34 @@ export default function App() {
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setErrors({});
-    setOsservazioni((prev) => [
-      ...prev,
-      {
-        id: trimmedId,
-        data,
-        dataTrapianto,
-        tipoIntervento,
-        giorni,
-        cliente: cliente.trim(),
-        appezzamento: appezzamento.trim(),
-        resa,
-        varieta,
-        n1, n2, n3, n4, n5,
-        ...risultati,
-      },
-    ]);
+    const nuova: Observation = {
+      id: trimmedId,
+      data,
+      dataTrapianto,
+      tipoIntervento,
+      giorni,
+      cliente: cliente.trim(),
+      appezzamento: appezzamento.trim(),
+      resa,
+      varieta,
+      n1, n2, n3, n4, n5,
+      ...risultati,
+    };
+    fetch("/api/osservazioni", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nuova),
+    }).then(() => {
+      setOsservazioni((prev) => [nuova, ...prev]);
+    });
     const num = parseInt(trimmedId);
     setObsId(isNaN(num) ? "" : String(num + 1));
   }, [obsId, data, dataTrapianto, tipoIntervento, giorni, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
+
+  const eliminaOsservazione = useCallback((id: string) => {
+    fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
+      .then(() => setOsservazioni((prev) => prev.filter((o) => o.id !== id)));
+  }, []);
 
   const esportaPDF = useCallback(() => {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -453,11 +460,14 @@ export default function App() {
                     <th className="px-2 py-2 text-center">Media</th>
                     <th className="px-2 py-2 text-center">Ottimale</th>
                     <th className="px-2 py-2 text-center">Diff.</th>
-                    <th className="px-2 py-2 text-center rounded-tr-lg">Dose (kg/ha)</th>
+                    <th className="px-2 py-2 text-center">Dose (kg/ha)</th>
+                    <th className="px-2 py-2 text-center rounded-tr-lg">Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {osservazioni.map((obs, i) => (
+                  {loadingOss ? (
+                    <tr><td colSpan={12} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
+                  ) : osservazioni.map((obs, i) => (
                     <tr key={obs.id} className={i % 2 === 0 ? "bg-stone-50" : "bg-white"}>
                       <td className="px-2 py-2 text-center font-mono font-semibold text-green-800">{obs.id}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap">{obs.data}</td>
@@ -489,6 +499,15 @@ export default function App() {
                         obs.dose === 0 ? "text-green-700 bg-green-50" : "text-red-700 bg-red-50"
                       }`}>
                         {obs.dose.toFixed(1)}
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <button
+                          onClick={() => eliminaOsservazione(obs.id)}
+                          className="text-red-400 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                          title="Elimina osservazione"
+                        >
+                          🗑
+                        </button>
                       </td>
                     </tr>
                   ))}
