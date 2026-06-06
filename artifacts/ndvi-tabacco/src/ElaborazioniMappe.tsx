@@ -195,6 +195,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
 
   // UI
   const [showNotes,     setShowNotes]     = useState(false);
+  const [useAllGps,     setUseAllGps]     = useState(false);
 
   // GPS-enabled observations
   const gpsObs = useMemo(
@@ -203,7 +204,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   );
 
   // Auto-derive controls for selected polygon (DB source)
-  const dbControls = useMemo<ControlPoint[]>(() => {
+  const dbControlsMatched = useMemo<ControlPoint[]>(() => {
     if (selPolyIdx === null || !polygons[selPolyIdx]) return [];
     const norm = polygons[selPolyIdx].name.toLowerCase().trim();
     return gpsObs
@@ -220,6 +221,19 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
         dose:         o.dose,
       }));
   }, [selPolyIdx, polygons, gpsObs]);
+
+  const dbControlsAll = useMemo<ControlPoint[]>(() =>
+    gpsObs.map(o => ({
+      obsId:        o.id,
+      cliente:      o.cliente,
+      appezzamento: o.appezzamento,
+      lng:          o.lng!,
+      lat:          o.lat!,
+      dose:         o.dose,
+    })),
+  [gpsObs]);
+
+  const dbControls = useAllGps ? dbControlsAll : dbControlsMatched;
 
   const activeControls: ControlPoint[] = pointSource === "db" ? dbControls : shpPoints;
 
@@ -480,13 +494,33 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
               </p>
             ) : selPolyIdx === null ? (
               <p className="text-sm text-stone-400 italic">Seleziona prima un poligono.</p>
-            ) : dbControls.length === 0 ? (
-              <div className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2 space-y-1">
+            ) : !useAllGps && dbControlsMatched.length === 0 ? (
+              <div className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2 space-y-2">
                 <p>⚠️ Nessuna osservazione GPS corrisponde al poligono <strong>{polygons[selPolyIdx]?.name}</strong>.</p>
-                <p className="text-xs text-amber-600">Il matching usa il campo <em>Appezzamento</em>. Verifica che il nome nel KML coincida (anche parzialmente) con quello nel registro.</p>
-                <p className="text-xs text-amber-600 mt-1">Oppure usa la sorgente <strong>Shapefile esterno</strong> per caricare i punti manualmente.</p>
+                <p className="text-xs text-amber-600">
+                  Il matching confronta il nome del poligono con il campo <em>Appezzamento</em> del registro.
+                  Se i nomi non coincidono, usa il pulsante qui sotto per includere tutte le osservazioni GPS.
+                </p>
+                <button
+                  onClick={() => setUseAllGps(true)}
+                  className="mt-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  📍 Usa tutte le {gpsObs.length} osservazioni GPS
+                </button>
               </div>
             ) : (
+              <>
+              {useAllGps && (
+                <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3 text-xs text-blue-800">
+                  <span>📍 Modalità <strong>tutte le osservazioni GPS</strong> attiva — {dbControlsAll.length} punti inclusi</span>
+                  <button
+                    onClick={() => setUseAllGps(false)}
+                    className="ml-3 text-blue-600 hover:text-blue-800 underline shrink-0"
+                  >
+                    Torna al matching automatico
+                  </button>
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full text-xs border-collapse">
                   <thead>
@@ -513,6 +547,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
         )}
