@@ -411,7 +411,7 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
     2048, 0, 1, 4326,    // GeographicTypeGeoKey = WGS 84
   ]);                                                             // 32 B
 
-  const NUM_IFD = 14;
+  const NUM_IFD = 15;
   const ifdOff  = 8;
   const ifdLen  = 2 + NUM_IFD * 12 + 4;
   let   extraOff = ifdOff + ifdLen;
@@ -450,6 +450,7 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
   e(259,   3, 1, 1);                       // Compression  = None
   e(262,   3, 1, 1);                       // PhotometricInterp = MinIsBlack
   e(273,   4, 1, imgOff);                  // StripOffsets
+  e(277,   3, 1, 1);                       // SamplesPerPixel = 1
   e(278,   4, 1, rows);                    // RowsPerStrip = all rows (single strip)
   e(279,   4, 1, data.byteLength);         // StripByteCounts
   e(284,   3, 1, 1);                       // PlanarConfig = Chunky
