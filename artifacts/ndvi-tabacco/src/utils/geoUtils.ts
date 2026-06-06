@@ -97,6 +97,76 @@ export function parseKml(text: string): KmlPolygon[] {
   return results;
 }
 
+/**
+ * Parses a KMZ file (ZIP archive containing a .kml) and returns all polygons.
+ * Requires jszip as a peer dependency.
+ */
+export async function parseKmz(buffer: ArrayBuffer): Promise<KmlPolygon[]> {
+  // Dynamic import keeps the bundle lean for users who never load KMZ
+  const JSZip = (await import("jszip")).default;
+  const zip   = await JSZip.loadAsync(buffer);
+  // KMZ spec: the root KML is usually doc.kml; fall back to any .kml entry
+  const entry =
+    zip.file("doc.kml") ??
+    Object.values(zip.files).find(f => !f.dir && f.name.toLowerCase().endsWith(".kml"));
+  if (!entry) throw new Error("Nessun file .kml trovato nell'archivio KMZ.");
+  const text = await entry.async("string");
+  return parseKml(text);
+}
+
+/**
+ * Parses a Shapefile ZIP (shp + dbf + shx [+ prj]) and returns Polygon /
+ * MultiPolygon features as KmlPolygon[].
+ *
+ * Expects WGS84 (EPSG:4326) coordinates — no reprojection is performed.
+ * The polygon name is read from common attribute field names (Name, NOME,
+ * DESCRIZIONE, APPEZZ, FIELD1, …); falls back to "Poligono N".
+ */
+interface GeoJSONFeatureCollection {
+  type: "FeatureCollection";
+  features: Array<{
+    geometry: { type: string; coordinates: unknown } | null;
+    properties: Record<string, unknown> | null;
+  }>;
+}
+
+export async function parseShpPolygons(buffer: ArrayBuffer): Promise<KmlPolygon[]> {
+  const shpjs = (await import("shpjs")).default;
+  const raw   = await (shpjs as (buf: ArrayBuffer) => Promise<GeoJSONFeatureCollection | GeoJSONFeatureCollection[]>)(buffer);
+  const fc: GeoJSONFeatureCollection = Array.isArray(raw) ? raw[0] : raw;
+
+  const nameKeys = ["Name","name","NOME","nome","DESCRIZIONE","descrizione",
+                    "APPEZZ","appezzamento","LABEL","label","FIELD1"];
+
+  const polygons: KmlPolygon[] = [];
+
+  fc.features.forEach((feat, fi) => {
+    const props = feat.properties ?? {};
+    const rawName = nameKeys.reduce<string | null>(
+      (acc, k) => acc ?? (props[k] != null ? String(props[k]) : null), null
+    ) ?? `Poligono ${fi + 1}`;
+
+    const addRing = (coords: [number, number][], suffix = "") => {
+      const ring: [number, number][] = coords.map(([lng, lat]) => [lng, lat]);
+      if (ring.length >= 3) polygons.push({ name: `${rawName}${suffix}`, ring });
+    };
+
+    const geom = feat.geometry;
+    if (!geom) return;
+
+    if (geom.type === "Polygon") {
+      addRing(geom.coordinates[0] as [number, number][]);
+    } else if (geom.type === "MultiPolygon") {
+      (geom.coordinates as [number, number][][][]).forEach((poly, pi) => {
+        addRing(poly[0], (geom.coordinates as unknown[]).length > 1 ? ` (${pi + 1})` : "");
+      });
+    }
+  });
+
+  if (!polygons.length) throw new Error("Nessun poligono trovato nello Shapefile.");
+  return polygons;
+}
+
 // ── Geometry helpers ─────────────────────────────────────────────────────────
 
 /** Ray-casting point-in-polygon (Jordan curve theorem). */

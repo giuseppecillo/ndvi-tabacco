@@ -22,7 +22,8 @@ import shp from "shpjs";
 import { Observation, TipoIntervento } from "./App";
 import {
   KmlPolygon, ControlPoint, PolyIdwResult,
-  parseKml, computeIdwGrid, downloadShapefile, downloadGeoTiff,
+  parseKml, parseKmz, parseShpPolygons,
+  computeIdwGrid, downloadShapefile, downloadGeoTiff,
 } from "./utils/geoUtils";
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
@@ -222,20 +223,54 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
 
   const activeControls: ControlPoint[] = pointSource === "db" ? dbControls : shpPoints;
 
-  // ── KML upload ──────────────────────────────────────────────────────────────
+  // ── Polygon file upload (KML / KMZ / Shapefile ZIP) ─────────────────────────
 
-  const handleKml = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePolygonFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setKmlName(file.name);
     setResults(new Map());
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const polys = parseKml(ev.target?.result as string);
-      setPolygons(polys);
-      setSelPolyIdx(polys.length ? 0 : null);
-    };
-    reader.readAsText(file);
+
+    const ext = file.name.toLowerCase().split(".").pop() ?? "";
+
+    if (ext === "kml") {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const polys = parseKml(ev.target?.result as string);
+          setPolygons(polys);
+          setSelPolyIdx(polys.length ? 0 : null);
+          if (!polys.length) alert("Nessun poligono trovato nel file KML.");
+        } catch { alert("Errore nel parsing del file KML."); }
+      };
+      reader.readAsText(file);
+    } else if (ext === "kmz") {
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        try {
+          const polys = await parseKmz(ev.target?.result as ArrayBuffer);
+          setPolygons(polys);
+          setSelPolyIdx(polys.length ? 0 : null);
+          if (!polys.length) alert("Nessun poligono trovato nel file KMZ.");
+        } catch (err) { alert(`Errore KMZ: ${(err as Error).message}`); }
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (ext === "zip") {
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        try {
+          const polys = await parseShpPolygons(ev.target?.result as ArrayBuffer);
+          setPolygons(polys);
+          setSelPolyIdx(polys.length ? 0 : null);
+        } catch (err) { alert(`Errore Shapefile: ${(err as Error).message}`); }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      alert("Formato non supportato. Usa .kml, .kmz o .zip (Shapefile).");
+    }
+
+    // Reset input so the same file can be re-selected
+    e.target.value = "";
   }, []);
 
   // ── Shapefile upload ────────────────────────────────────────────────────────
@@ -328,12 +363,16 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
         {showNotes && (
           <div className="px-5 pb-4 text-sm text-blue-900 space-y-3 border-t border-blue-200 pt-3">
             <div>
-              <p className="font-semibold mb-1">🗺 Poligoni (KML)</p>
+              <p className="font-semibold mb-1">🗺 Poligoni — Formati accettati</p>
               <ul className="list-disc ml-4 space-y-0.5 text-blue-800">
-                <li>Formato: <code className="bg-blue-100 px-1 rounded">.kml</code> — esportato da Google Earth, QGIS, ArcGIS o dispositivi GPS</li>
-                <li>Geometria: Poligoni (<code>Polygon</code>)</li>
-                <li>Sistema di riferimento: WGS 84 geografico (EPSG:4326) — coordinate in gradi decimali</li>
-                <li>Il campo <strong>Name</strong> del Placemark viene usato per il matching automatico con il campo <em>Appezzamento</em> delle osservazioni</li>
+                <li><code className="bg-blue-100 px-1 rounded">.kml</code> — KML standard (Google Earth, QGIS, ArcGIS, GPS)</li>
+                <li><code className="bg-blue-100 px-1 rounded">.kmz</code> — KMZ compresso (Google Earth, dispositivi GPS Garmin/Trimble)</li>
+                <li><code className="bg-blue-100 px-1 rounded">.zip</code> — Shapefile ESRI (ZIP contenente <code>.shp</code> + <code>.dbf</code> + <code>.shx</code>)</li>
+              </ul>
+              <ul className="list-disc ml-4 mt-1.5 space-y-0.5 text-blue-800">
+                <li>Geometria: <strong>Polygon</strong> o <strong>MultiPolygon</strong></li>
+                <li>Sistema di riferimento: <strong>WGS 84 geografico (EPSG:4326)</strong> — gradi decimali</li>
+                <li>Il nome del poligono (campo <em>Name</em> in KML/KMZ, oppure <em>NOME / Name / APPEZZ</em> in Shapefile) è usato per il matching con <em>Appezzamento</em></li>
               </ul>
             </div>
             <div>
@@ -360,20 +399,20 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
         )}
       </div>
 
-      {/* ── Step 1: Polygon KML ─────────────────────────────────────────────── */}
+      {/* ── Step 1: Polygon import (KML / KMZ / Shapefile ZIP) ──────────────── */}
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-5">
         <h3 className="font-bold text-green-900 mb-3 flex items-center gap-2">
           <span className="bg-green-800 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center font-bold">1</span>
-          Importa Poligoni (KML)
+          Importa Poligoni <span className="font-normal text-stone-400 text-sm ml-1">KML · KMZ · Shapefile ZIP</span>
         </h3>
         <label className="flex items-center gap-3 cursor-pointer">
           <span className="flex-1 text-sm text-stone-500 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 truncate">
             {kmlName || "Nessun file selezionato"}
           </span>
           <span className="bg-green-800 hover:bg-green-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap">
-            📂 Sfoglia KML
+            📂 Sfoglia
           </span>
-          <input type="file" accept=".kml" className="hidden" onChange={handleKml} />
+          <input type="file" accept=".kml,.kmz,.zip" className="hidden" onChange={handlePolygonFile} />
         </label>
 
         {polygons.length > 0 && (
