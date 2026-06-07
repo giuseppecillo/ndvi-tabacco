@@ -28,6 +28,10 @@ type VarietaDati = {
   azotoDefault: number;
   azotoMin: number;
   azotoMax: number;
+  // Asportazione azoto per tonnellata di produzione (kg N/t).
+  // Fonte: disciplinari regionali + PDF Taurus. Usato per calcolare
+  // il fabbisogno reale quando la resa supera il limite di disciplinare.
+  kgNPerTon: number;
 };
 
 export const VARIETA_DB: Record<string, VarietaDati> = {
@@ -36,54 +40,63 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     categoria: "Light Air-Cured",
     resaDefault: 4.5, resaMin: 4.0, resaMax: 5.6,
     azotoDefault: 175, azotoMin: 150, azotoMax: 200,
+    kgNPerTon: 36,   // 200 kg / 5.6 t ≈ 35.7 → arrotondato a 36
   },
   "Burley (Cimato)": {
     label: "Burley (Cimato)",
     categoria: "Light Air-Cured",
     resaDefault: 3.0, resaMin: 2.5, resaMax: 4.0,
     azotoDefault: 115, azotoMin: 80, azotoMax: 150,
+    kgNPerTon: 38,   // 150 kg / 4.0 t = 37.5 → arrotondato a 38
   },
   "Virginia Bright": {
     label: "Virginia Bright",
     categoria: "Flue-Cured",
     resaDefault: 3.5, resaMin: 2.8, resaMax: 4.2,
     azotoDefault: 130, azotoMin: 100, azotoMax: 160,
+    kgNPerTon: 38,   // 160 kg / 4.2 t ≈ 38.1
   },
   "Kentucky": {
     label: "Kentucky",
     categoria: "Fire-Cured",
     resaDefault: 2.2, resaMin: 1.8, resaMax: 3.3,
     azotoDefault: 135, azotoMin: 100, azotoMax: 160,
+    kgNPerTon: 48,   // 160 kg / 3.3 t ≈ 48.5 → arrotondato a 48
   },
   "Dark Air-Cured (DAC)": {
     label: "Dark Air-Cured (DAC)",
     categoria: "Dark Air-Cured",
     resaDefault: 3.0, resaMin: 2.5, resaMax: 3.7,
     azotoDefault: 175, azotoMin: 150, azotoMax: 200,
+    kgNPerTon: 54,   // 200 kg / 3.7 t ≈ 54.1
   },
   "Nostrano del Brenta": {
     label: "Nostrano del Brenta",
     categoria: "Light Air-Cured",
     resaDefault: 2.4, resaMin: 2.0, resaMax: 2.8,
     azotoDefault: 110, azotoMin: 100, azotoMax: 120,
+    kgNPerTon: 43,   // 120 kg / 2.8 t ≈ 42.9 → arrotondato a 43
   },
   "Beneventano": {
     label: "Beneventano",
     categoria: "Dark Air-Cured",
     resaDefault: 1.5, resaMin: 1.0, resaMax: 2.0,
     azotoDefault: 90, azotoMin: 80, azotoMax: 100,
+    kgNPerTon: 50,   // 100 kg / 2.0 t = 50
   },
   "Orientali (Samsun/Xanti Yaka)": {
     label: "Orientali (Samsun/Xanti Yaka)",
     categoria: "Sun-Cured",
     resaDefault: 1.5, resaMin: 1.0, resaMax: 2.0,
     azotoDefault: 40, azotoMin: 0, azotoMax: 50,
+    kgNPerTon: 55,   // esplicitamente 5.5 kg N/quintal dal documento Taurus
   },
   "Tabacco Sigari (Wrapper)": {
     label: "Tabacco Sigari (Wrapper)",
     categoria: "Shade-Grown",
     resaDefault: 2.0, resaMin: 1.5, resaMax: 2.5,
     azotoDefault: 165, azotoMin: 140, azotoMax: 190,
+    kgNPerTon: 76,   // 190 kg / 2.5 t = 76
   },
 };
 
@@ -260,6 +273,21 @@ export default function App() {
       setAzotoTot(dati.azotoDefault);
     }
   }, [varieta]);
+
+  // Azoto calcolato da asportazioni quando resa supera il limite di disciplinare.
+  // Formula: kg N/ha = resa (t/ha) × coefficiente asportazione (kg N/t)
+  const azotoAsportazioni = useMemo(() => {
+    const dati = VARIETA_DB[varieta];
+    if (!dati || resa <= dati.resaMax) return null;
+    return Math.round(resa * dati.kgNPerTon);
+  }, [resa, varieta]);
+
+  // Auto-aggiorna il campo azoto quando la resa supera il massimo di disciplinare
+  useEffect(() => {
+    if (azotoAsportazioni !== null) {
+      setAzotoTot(azotoAsportazioni);
+    }
+  }, [azotoAsportazioni]);
 
   const [errors, setErrors]             = useState<Record<string, string>>({});
 
@@ -524,7 +552,16 @@ export default function App() {
               value={azotoTot}
               onChange={setAzotoTot}
               min={0}
-              hint={VARIETA_DB[varieta] ? `Range consigliato: ${VARIETA_DB[varieta].azotoMin}–${VARIETA_DB[varieta].azotoMax} kg/ha` : undefined}
+              warning={
+                azotoAsportazioni !== null
+                  ? `Calcolato da asportazioni: ${resa.toFixed(1)} t/ha × ${VARIETA_DB[varieta]?.kgNPerTon} kg N/t = ${azotoAsportazioni} kg/ha`
+                  : undefined
+              }
+              hint={
+                azotoAsportazioni === null && VARIETA_DB[varieta]
+                  ? `Range disciplinare: ${VARIETA_DB[varieta].azotoMin}–${VARIETA_DB[varieta].azotoMax} kg/ha`
+                  : undefined
+              }
             />
 
             {/* Data Trapianto — occupa tutta la larghezza */}
