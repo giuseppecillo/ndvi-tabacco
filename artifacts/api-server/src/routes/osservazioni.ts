@@ -10,6 +10,7 @@ router.get("/osservazioni", async (_req, res) => {
       `SELECT
          id, data, data_trapianto AS "dataTrapianto",
          tipo_intervento AS "tipoIntervento", giorni,
+         eta_piantina AS "etaPiantina",
          cliente, appezzamento, resa, varieta,
          n1, n2, n3, n4, n5,
          media, ottimale, discostamento, dose,
@@ -33,6 +34,7 @@ router.get("/osservazioni", async (_req, res) => {
       dose:          Number(r.dose),
       lat:           r.lat != null ? Number(r.lat) : null,
       lng:           r.lng != null ? Number(r.lng) : null,
+      etaPiantina:   r.etaPiantina ?? "standard",
     }));
     res.json(parsed);
   } catch (err) {
@@ -46,20 +48,21 @@ router.post("/osservazioni", async (req, res) => {
   try {
     await pool.query(
       `INSERT INTO osservazioni
-         (id, data, data_trapianto, tipo_intervento, giorni,
+         (id, data, data_trapianto, tipo_intervento, giorni, eta_piantina,
           cliente, appezzamento, resa, varieta,
           n1, n2, n3, n4, n5,
           media, ottimale, discostamento, dose,
           lat, lng)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        ON CONFLICT (id) DO UPDATE SET
-         data=$2, data_trapianto=$3, tipo_intervento=$4, giorni=$5,
-         cliente=$6, appezzamento=$7, resa=$8, varieta=$9,
-         n1=$10, n2=$11, n3=$12, n4=$13, n5=$14,
-         media=$15, ottimale=$16, discostamento=$17, dose=$18,
-         lat=$19, lng=$20`,
+         data=$2, data_trapianto=$3, tipo_intervento=$4, giorni=$5, eta_piantina=$6,
+         cliente=$7, appezzamento=$8, resa=$9, varieta=$10,
+         n1=$11, n2=$12, n3=$13, n4=$14, n5=$15,
+         media=$16, ottimale=$17, discostamento=$18, dose=$19,
+         lat=$20, lng=$21`,
       [
         o.id, o.data, o.dataTrapianto || null, o.tipoIntervento, o.giorni,
+        o.etaPiantina ?? "standard",
         o.cliente, o.appezzamento, o.resa, o.varieta,
         o.n1, o.n2, o.n3, o.n4, o.n5,
         o.media, o.ottimale, o.discostamento, o.dose,

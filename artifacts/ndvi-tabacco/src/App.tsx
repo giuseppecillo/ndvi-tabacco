@@ -16,12 +16,27 @@ export const TIPO_LABELS: Record<TipoIntervento, string> = {
   fertirrigazione:   "Fertirrigazione (copertura)",
 };
 
+export type EtaPiantina = "standard" | "avanzata" | "extra";
+
+export const ETA_PIANTINA_LABELS: Record<EtaPiantina, { label: string; short: string; giorni: string }> = {
+  standard: { label: "Standard",       short: "Std",  giorni: "25–35 gg vivaio" },
+  avanzata: { label: "Avanzata",       short: "Av.",  giorni: "35–45 gg vivaio" },
+  extra:    { label: "Extra-avanzata", short: "Ext.", giorni: "> 45 gg vivaio"  },
+};
+
+const ETA_SHIFT: Record<EtaPiantina, number> = {
+  standard: 0.00,
+  avanzata: 0.05,
+  extra:    0.08,
+};
+
 export type Observation = {
   id: string;
   data: string;
   dataTrapianto: string;
   tipoIntervento: TipoIntervento;
   giorni: number;
+  etaPiantina: EtaPiantina;
   cliente: string;
   appezzamento: string;
   resa: number;
@@ -43,6 +58,8 @@ export type Observation = {
 // Valori basati su curve di crescita del tabacco da letteratura agronomica:
 // rapida ascesa nella fase vegetativa, picco a piena copertura canopy (51–65 gg),
 // leggero calo nella fase di maturazione (> 65 gg).
+// Valori base = piantina standard (25–35 gg vivaio). Per piantine più sviluppate
+// viene applicato uno shift positivo (ETA_SHIFT) con cap a 0.85.
 const NDVI_FASCE: Array<{ maxGiorni: number; ottimale: number; label: string }> = [
   { maxGiorni: 20,  ottimale: 0.30, label: "≤ 20 gg"  },
   { maxGiorni: 35,  ottimale: 0.40, label: "21–35 gg"  },
@@ -51,9 +68,13 @@ const NDVI_FASCE: Array<{ maxGiorni: number; ottimale: number; label: string }> 
   { maxGiorni: 999, ottimale: 0.70, label: "> 65 gg"   },
 ];
 
-function ndviOttimale(giorni: number): { ottimale: number; label: string } {
+function ndviOttimale(
+  giorni: number,
+  etaPiantina: EtaPiantina = "standard"
+): { ottimale: number; label: string } {
   const fascia = NDVI_FASCE.find((f) => giorni <= f.maxGiorni) ?? NDVI_FASCE[NDVI_FASCE.length - 1];
-  return { ottimale: fascia.ottimale, label: fascia.label };
+  const ottimale = Math.min(0.85, fascia.ottimale + ETA_SHIFT[etaPiantina]);
+  return { ottimale, label: fascia.label };
 }
 
 function calcola(
@@ -64,10 +85,11 @@ function calcola(
   n2: number,
   n3: number,
   n4: number,
-  n5: number
+  n5: number,
+  etaPiantina: EtaPiantina = "standard"
 ) {
   const media = (n1 + n2 + n3 + n4 + n5) / 5;
-  const { ottimale } = ndviOttimale(giorni);
+  const { ottimale } = ndviOttimale(giorni, etaPiantina);
   const discostamento = Math.max(0, ottimale - media);
   let dose = discostamento * 500 * (resa / 4.5);
   const limiteMax = azotoTot / 2;
@@ -162,6 +184,7 @@ export default function App() {
   const [n3, setN3] = useState(0.41);
   const [n4, setN4] = useState(0.39);
   const [n5, setN5] = useState(0.4);
+  const [etaPiantina, setEtaPiantina] = useState<EtaPiantina>("standard");
   const [osservazioni, setOsservazioni] = useState<Observation[]>([]);
   const [loadingOss, setLoadingOss] = useState(true);
 
@@ -179,7 +202,7 @@ export default function App() {
   const giorni = giorniAuto ?? giorniManuale;
   const autoCalcolato = giorniAuto !== null;
 
-  const risultati = calcola(resa, azotoTot, giorni, n1, n2, n3, n4, n5);
+  const risultati = calcola(resa, azotoTot, giorni, n1, n2, n3, n4, n5, etaPiantina);
 
   const salvaOsservazione = useCallback(() => {
     const newErrors: Record<string, string> = {};
@@ -202,6 +225,7 @@ export default function App() {
         dataTrapianto,
         tipoIntervento,
         giorni,
+        etaPiantina,
         cliente: cliente.trim(),
         appezzamento: appezzamento.trim(),
         resa,
@@ -229,7 +253,7 @@ export default function App() {
     }
 
     setObsId(isNaN(num) ? "" : String(num + 1));
-  }, [obsId, data, dataTrapianto, tipoIntervento, giorni, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
+  }, [obsId, data, dataTrapianto, tipoIntervento, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
 
   const eliminaOsservazione = useCallback((id: string) => {
     fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -338,8 +362,11 @@ export default function App() {
     : risultati.dose > 50 ? "text-red-700"
     : "text-amber-600";
 
-  const { label: ndviFasciaLabel } = ndviOttimale(giorni);
-  const ndviOttimaleNote = `Fascia ${ndviFasciaLabel} → NDVI ottimale: ${risultati.ottimale.toFixed(3)}`;
+  const { label: ndviFasciaLabel } = ndviOttimale(giorni, etaPiantina);
+  const etaShiftLabel = ETA_SHIFT[etaPiantina] > 0
+    ? ` (+${(ETA_SHIFT[etaPiantina] * 100).toFixed(0)} pt piantina ${ETA_PIANTINA_LABELS[etaPiantina].label.toLowerCase()})`
+    : "";
+  const ndviOttimaleNote = `Fascia ${ndviFasciaLabel} → NDVI ottimale: ${risultati.ottimale.toFixed(3)}${etaShiftLabel}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-100 to-green-50 py-8 px-4">
@@ -447,6 +474,42 @@ export default function App() {
               />
             </div>
 
+            {/* Età Piantina al Trapianto */}
+            <div className="col-span-2 flex flex-col gap-2">
+              <label className="text-sm font-semibold text-stone-700">
+                Età Piantina al Trapianto
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(ETA_PIANTINA_LABELS) as EtaPiantina[]).map((key) => (
+                  <label
+                    key={key}
+                    className={`flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors text-center
+                      ${etaPiantina === key
+                        ? "bg-green-800 text-white border-green-800"
+                        : "bg-white text-stone-700 border-stone-300 hover:border-green-700"}`}
+                  >
+                    <input
+                      type="radio"
+                      name="etaPiantina"
+                      value={key}
+                      checked={etaPiantina === key}
+                      onChange={() => setEtaPiantina(key)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm font-semibold">{ETA_PIANTINA_LABELS[key].label}</span>
+                    <span className={`text-xs ${etaPiantina === key ? "text-green-200" : "text-stone-400"}`}>
+                      {ETA_PIANTINA_LABELS[key].giorni}
+                    </span>
+                    {key !== "standard" && (
+                      <span className={`text-xs font-mono font-bold ${etaPiantina === key ? "text-green-100" : "text-green-700"}`}>
+                        +{(ETA_SHIFT[key] * 100).toFixed(0)} NDVI
+                      </span>
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+
             {/* Giorni dal Trapianto — auto o manuale */}
             <div className="col-span-2 sm:col-span-1">
               <NumberInput
@@ -481,14 +544,21 @@ export default function App() {
             <div className="text-xs text-green-800 bg-green-100 rounded-lg px-3 py-2 space-y-1">
               <div className="font-semibold">📐 {ndviOttimaleNote}</div>
               <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-green-700 font-mono pt-0.5">
-                {NDVI_FASCE.map((f) => (
-                  <span
-                    key={f.label}
-                    className={`whitespace-nowrap ${f.label === ndviFasciaLabel ? "font-bold underline underline-offset-2" : "opacity-60"}`}
-                  >
-                    {f.label}: {f.ottimale.toFixed(2)}
-                  </span>
-                ))}
+                {NDVI_FASCE.map((f) => {
+                  const adj = Math.min(0.85, f.ottimale + ETA_SHIFT[etaPiantina]);
+                  const isActive = f.label === ndviFasciaLabel;
+                  return (
+                    <span
+                      key={f.label}
+                      className={`whitespace-nowrap ${isActive ? "font-bold underline underline-offset-2" : "opacity-60"}`}
+                    >
+                      {f.label}: {adj.toFixed(2)}
+                      {ETA_SHIFT[etaPiantina] > 0 && (
+                        <span className="opacity-60 text-[10px]"> ({f.ottimale.toFixed(2)})</span>
+                      )}
+                    </span>
+                  );
+                })}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -551,6 +621,7 @@ export default function App() {
                     <th className="px-2 py-2 text-center">Appezz.</th>
                     <th className="px-2 py-2 text-center">Tipo</th>
                     <th className="px-2 py-2 text-center">Gg</th>
+                    <th className="px-2 py-2 text-center">Età Piant.</th>
                     <th className="px-2 py-2 text-center">Media</th>
                     <th className="px-2 py-2 text-center">Ottimale</th>
                     <th className="px-2 py-2 text-center">Diff.</th>
@@ -561,7 +632,7 @@ export default function App() {
                 </thead>
                 <tbody>
                   {loadingOss ? (
-                    <tr><td colSpan={13} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
+                    <tr><td colSpan={14} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
                   ) : osservazioni.map((obs, i) => (
                     <tr key={obs.id} className={i % 2 === 0 ? "bg-stone-50" : "bg-white"}>
                       <td className="px-2 py-2 text-center font-mono font-semibold text-green-800">{obs.id}</td>
@@ -585,6 +656,17 @@ export default function App() {
                         </span>
                       </td>
                       <td className="px-2 py-2 text-center">{obs.giorni}</td>
+                      <td className="px-2 py-2 text-center whitespace-nowrap">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          (obs.etaPiantina ?? "standard") === "extra"
+                            ? "bg-purple-100 text-purple-700"
+                            : (obs.etaPiantina ?? "standard") === "avanzata"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-stone-100 text-stone-600"
+                        }`}>
+                          {ETA_PIANTINA_LABELS[obs.etaPiantina ?? "standard"]?.short ?? "Std"}
+                        </span>
+                      </td>
                       <td className="px-2 py-2 text-center font-semibold bg-green-50 text-green-800">
                         {obs.media.toFixed(3)}
                       </td>
