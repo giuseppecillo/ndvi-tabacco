@@ -30,6 +30,74 @@ const ETA_SHIFT: Record<EtaPiantina, number> = {
   extra:    0.08,
 };
 
+type VarietaDati = {
+  label: string;
+  categoria: string;
+  resaDefault: number;
+  resaMin: number;
+  resaMax: number;
+  azotoDefault: number;
+  azotoMin: number;
+  azotoMax: number;
+};
+
+export const VARIETA_DB: Record<string, VarietaDati> = {
+  "Burley (Non Cimato)": {
+    label: "Burley (Non Cimato)",
+    categoria: "Light Air-Cured",
+    resaDefault: 4.5, resaMin: 4.0, resaMax: 5.6,
+    azotoDefault: 175, azotoMin: 150, azotoMax: 200,
+  },
+  "Burley (Cimato)": {
+    label: "Burley (Cimato)",
+    categoria: "Light Air-Cured",
+    resaDefault: 3.0, resaMin: 2.5, resaMax: 4.0,
+    azotoDefault: 115, azotoMin: 80, azotoMax: 150,
+  },
+  "Virginia Bright": {
+    label: "Virginia Bright",
+    categoria: "Flue-Cured",
+    resaDefault: 3.5, resaMin: 2.8, resaMax: 4.2,
+    azotoDefault: 130, azotoMin: 100, azotoMax: 160,
+  },
+  "Kentucky": {
+    label: "Kentucky",
+    categoria: "Fire-Cured",
+    resaDefault: 2.2, resaMin: 1.8, resaMax: 3.3,
+    azotoDefault: 135, azotoMin: 100, azotoMax: 160,
+  },
+  "Dark Air-Cured (DAC)": {
+    label: "Dark Air-Cured (DAC)",
+    categoria: "Dark Air-Cured",
+    resaDefault: 3.0, resaMin: 2.5, resaMax: 3.7,
+    azotoDefault: 175, azotoMin: 150, azotoMax: 200,
+  },
+  "Nostrano del Brenta": {
+    label: "Nostrano del Brenta",
+    categoria: "Light Air-Cured",
+    resaDefault: 2.4, resaMin: 2.0, resaMax: 2.8,
+    azotoDefault: 110, azotoMin: 100, azotoMax: 120,
+  },
+  "Beneventano": {
+    label: "Beneventano",
+    categoria: "Dark Air-Cured",
+    resaDefault: 1.5, resaMin: 1.0, resaMax: 2.0,
+    azotoDefault: 90, azotoMin: 80, azotoMax: 100,
+  },
+  "Orientali (Samsun/Xanti Yaka)": {
+    label: "Orientali (Samsun/Xanti Yaka)",
+    categoria: "Sun-Cured",
+    resaDefault: 1.5, resaMin: 1.0, resaMax: 2.0,
+    azotoDefault: 40, azotoMin: 0, azotoMax: 50,
+  },
+  "Tabacco Sigari (Wrapper)": {
+    label: "Tabacco Sigari (Wrapper)",
+    categoria: "Shade-Grown",
+    resaDefault: 2.0, resaMin: 1.5, resaMax: 2.5,
+    azotoDefault: 165, azotoMin: 140, azotoMax: 190,
+  },
+};
+
 export type Observation = {
   id: string;
   data: string;
@@ -145,10 +213,10 @@ function DateInput({
 }
 
 function NumberInput({
-  label, value, onChange, step = 1, min, max, hint, readonly,
+  label, value, onChange, step = 1, min, max, hint, warning, readonly,
 }: {
   label: string; value: number; onChange: (v: number) => void;
-  step?: number; min?: number; max?: number; hint?: string; readonly?: boolean;
+  step?: number; min?: number; max?: number; hint?: string; warning?: string; readonly?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -158,9 +226,10 @@ function NumberInput({
       ) : (
         <input type="number" value={value} step={step} min={min} max={max}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className={inputCls} />
+          className={`${inputCls} ${warning ? "border-amber-400 text-amber-700 focus:ring-amber-400" : ""}`} />
       )}
-      {hint && <p className="text-xs text-stone-400">{hint}</p>}
+      {warning && <p className="text-xs text-amber-600 font-medium">⚠ {warning}</p>}
+      {!warning && hint && <p className="text-xs text-stone-400">{hint}</p>}
     </div>
   );
 }
@@ -175,9 +244,9 @@ export default function App() {
   const [tipoIntervento, setTipoIntervento] = useState<TipoIntervento>("copertura_prima");
   const [cliente, setCliente]           = useState("");
   const [appezzamento, setAppezzamento] = useState("");
-  const [varieta, setVarieta]           = useState("Burley");
-  const [resa, setResa]                 = useState(4.5);
-  const [azotoTot, setAzotoTot]         = useState(200);
+  const [varieta, setVarieta]           = useState("Burley (Non Cimato)");
+  const [resa, setResa]                 = useState(VARIETA_DB["Burley (Non Cimato)"].resaDefault);
+  const [azotoTot, setAzotoTot]         = useState(VARIETA_DB["Burley (Non Cimato)"].azotoDefault);
   const [giorniManuale, setGiorniManuale] = useState(31);
   const [n1, setN1] = useState(0.42);
   const [n2, setN2] = useState(0.38);
@@ -195,6 +264,16 @@ export default function App() {
       .catch(() => {})
       .finally(() => setLoadingOss(false));
   }, []);
+
+  // Auto-fill resa e azoto quando cambia la varietà
+  useEffect(() => {
+    const dati = VARIETA_DB[varieta];
+    if (dati) {
+      setResa(dati.resaDefault);
+      setAzotoTot(dati.azotoDefault);
+    }
+  }, [varieta]);
+
   const [errors, setErrors]             = useState<Record<string, string>>({});
 
   // Giorni auto-calcolati se c'è la data trapianto, altrimenti manuali
@@ -454,15 +533,41 @@ export default function App() {
               <label className="text-sm font-semibold text-stone-700">Coltura</label>
               <input type="text" value="Tabacco" disabled className={disabledCls} />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="col-span-2 flex flex-col gap-1">
               <label className="text-sm font-semibold text-stone-700">Varietà</label>
               <select value={varieta} onChange={(e) => setVarieta(e.target.value)} className={inputCls}>
-                <option value="Burley">Burley</option>
-                <option value="Virginia">Virginia</option>
+                {Object.values(VARIETA_DB).map((v) => (
+                  <option key={v.label} value={v.label}>
+                    {v.label} — {v.categoria} · resa {v.resaMin}–{v.resaMax} t/ha
+                  </option>
+                ))}
               </select>
+              {VARIETA_DB[varieta] && (
+                <p className="text-xs text-stone-400">
+                  {VARIETA_DB[varieta].categoria} · azoto consigliato {VARIETA_DB[varieta].azotoMin}–{VARIETA_DB[varieta].azotoMax} kg/ha · resa max {VARIETA_DB[varieta].resaMax} t/ha
+                </p>
+              )}
             </div>
-            <NumberInput label="Resa Desiderata (t/ha)" value={resa} onChange={setResa} step={0.1} />
-            <NumberInput label="Kg Azoto Totale" value={azotoTot} onChange={setAzotoTot} />
+            <NumberInput
+              label="Resa Desiderata (t/ha)"
+              value={resa}
+              onChange={setResa}
+              step={0.1}
+              min={0.1}
+              warning={
+                VARIETA_DB[varieta] && resa > VARIETA_DB[varieta].resaMax
+                  ? `Supera il limite massimo di ${VARIETA_DB[varieta].resaMax} t/ha per questa varietà`
+                  : undefined
+              }
+              hint={VARIETA_DB[varieta] ? `Range consigliato: ${VARIETA_DB[varieta].resaMin}–${VARIETA_DB[varieta].resaMax} t/ha` : undefined}
+            />
+            <NumberInput
+              label="Kg Azoto Totale"
+              value={azotoTot}
+              onChange={setAzotoTot}
+              min={0}
+              hint={VARIETA_DB[varieta] ? `Range consigliato: ${VARIETA_DB[varieta].azotoMin}–${VARIETA_DB[varieta].azotoMax} kg/ha` : undefined}
+            />
 
             {/* Data Trapianto — occupa tutta la larghezza */}
             <div className="col-span-2">
