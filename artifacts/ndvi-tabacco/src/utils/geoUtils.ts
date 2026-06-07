@@ -65,7 +65,17 @@ export function parseKml(text: string): KmlPolygon[] {
   const results: KmlPolygon[] = [];
 
   doc.querySelectorAll("Placemark").forEach((pm) => {
-    const name = pm.querySelector("name")?.textContent?.trim() || "Senza nome";
+    // Standard <name> tag first; fall back to SchemaData SimpleData with Name*/name* attribute
+    const stdName = pm.querySelector("name")?.textContent?.trim();
+    const schemaName = (() => {
+      const sds = pm.querySelectorAll("SimpleData");
+      for (const sd of Array.from(sds)) {
+        const attr = sd.getAttribute("name") ?? "";
+        if (/^[Nn]ame/i.test(attr) && sd.textContent?.trim()) return sd.textContent.trim();
+      }
+      return null;
+    })();
+    const name = stdName || schemaName || "Senza nome";
 
     // Try outerBoundaryIs first, then fall back to any LinearRing / coordinates
     const selectors = [
