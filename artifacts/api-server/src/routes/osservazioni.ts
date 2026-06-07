@@ -9,7 +9,7 @@ router.get("/osservazioni", async (_req, res) => {
     const { rows } = await pool.query(
       `SELECT
          id, data, data_trapianto AS "dataTrapianto",
-         tipo_intervento AS "tipoIntervento", giorni,
+         giorni,
          eta_piantina AS "etaPiantina",
          cliente, appezzamento, resa, varieta,
          n1, n2, n3, n4, n5,
@@ -61,7 +61,7 @@ router.post("/osservazioni", async (req, res) => {
          media=$16, ottimale=$17, discostamento=$18, dose=$19,
          lat=$20, lng=$21`,
       [
-        o.id, o.data, o.dataTrapianto || null, o.tipoIntervento, o.giorni,
+        o.id, o.data, o.dataTrapianto || null, o.tipoIntervento ?? "n/d", o.giorni,
         o.etaPiantina ?? "standard",
         o.cliente, o.appezzamento, o.resa, o.varieta,
         o.n1, o.n2, o.n3, o.n4, o.n5,

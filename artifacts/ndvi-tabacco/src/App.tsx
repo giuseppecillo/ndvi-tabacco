@@ -5,17 +5,6 @@ import autoTable from "jspdf-autotable";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { exportObservationsCsv } from "./utils/geoUtils";
 
-export type TipoIntervento =
-  | "copertura_prima"
-  | "copertura_seconda"
-  | "fertirrigazione";
-
-export const TIPO_LABELS: Record<TipoIntervento, string> = {
-  copertura_prima:   "Concimazione copertura — 1ª",
-  copertura_seconda: "Concimazione copertura — 2ª",
-  fertirrigazione:   "Fertirrigazione (copertura)",
-};
-
 export type EtaPiantina = "standard" | "avanzata" | "extra";
 
 export const ETA_PIANTINA_LABELS: Record<EtaPiantina, { label: string; short: string; giorni: string }> = {
@@ -102,7 +91,6 @@ export type Observation = {
   id: string;
   data: string;
   dataTrapianto: string;
-  tipoIntervento: TipoIntervento;
   giorni: number;
   etaPiantina: EtaPiantina;
   cliente: string;
@@ -241,7 +229,6 @@ export default function App() {
   const [obsId, setObsId]               = useState("1");
   const [data, setData]                 = useState(today);
   const [dataTrapianto, setDataTrapianto] = useState("");
-  const [tipoIntervento, setTipoIntervento] = useState<TipoIntervento>("copertura_prima");
   const [cliente, setCliente]           = useState("");
   const [appezzamento, setAppezzamento] = useState("");
   const [varieta, setVarieta]           = useState("Burley (Non Cimato)");
@@ -302,7 +289,6 @@ export default function App() {
         id: trimmedIdFinal,
         data,
         dataTrapianto,
-        tipoIntervento,
         giorni,
         etaPiantina,
         cliente: cliente.trim(),
@@ -332,7 +318,7 @@ export default function App() {
     }
 
     setObsId(isNaN(num) ? "" : String(num + 1));
-  }, [obsId, data, dataTrapianto, tipoIntervento, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
+  }, [obsId, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
 
   const eliminaOsservazione = useCallback((id: string) => {
     fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -375,7 +361,7 @@ export default function App() {
       autoTable(doc, {
         startY: 43,
         head: [[
-          "ID", "Rilev.", "Trapianto", "Cliente", "Appezz.", "Tipo", "Gg",
+          "ID", "Rilev.", "Trapianto", "Cliente", "Appezz.", "Gg",
           "M1", "M2", "M3", "M4", "M5",
           "Media", "Ottimale", "Diff.", "Dose\n(kg/ha)", "Lat", "Lng",
         ]],
@@ -385,9 +371,6 @@ export default function App() {
           o.dataTrapianto || "—",
           o.cliente,
           o.appezzamento,
-          o.tipoIntervento === "copertura_prima"   ? "Cop. 1ª"
-            : o.tipoIntervento === "copertura_seconda" ? "Cop. 2ª"
-            : "Fertirrrig.",
           o.giorni,
           o.n1.toFixed(2), o.n2.toFixed(2), o.n3.toFixed(2), o.n4.toFixed(2), o.n5.toFixed(2),
           o.media.toFixed(3),
@@ -499,31 +482,6 @@ export default function App() {
               onChange={(v) => { setAppezzamento(v); setErrors((e) => ({ ...e, appezzamento: "" })); }}
               placeholder="es. Parcella A, Campo Nord" error={errors.appezzamento} />
 
-            {/* Tipo intervento — occupa tutta la larghezza */}
-            <div className="col-span-2 flex flex-col gap-2">
-              <label className="text-sm font-semibold text-stone-700">Tipo Monitoraggio</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {(Object.keys(TIPO_LABELS) as TipoIntervento[]).map((key) => (
-                  <label
-                    key={key}
-                    className={`flex items-center gap-2 px-4 py-3 rounded-lg border cursor-pointer transition-colors text-sm font-medium
-                      ${tipoIntervento === key
-                        ? "bg-green-800 text-white border-green-800"
-                        : "bg-white text-stone-700 border-stone-300 hover:border-green-700"}`}
-                  >
-                    <input
-                      type="radio"
-                      name="tipoIntervento"
-                      value={key}
-                      checked={tipoIntervento === key}
-                      onChange={() => setTipoIntervento(key)}
-                      className="accent-white"
-                    />
-                    {TIPO_LABELS[key]}
-                  </label>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* — Parametri Colturali — */}
@@ -724,7 +682,6 @@ export default function App() {
                     <th className="px-2 py-2 text-center">Trapianto</th>
                     <th className="px-2 py-2 text-center">Cliente</th>
                     <th className="px-2 py-2 text-center">Appezz.</th>
-                    <th className="px-2 py-2 text-center">Tipo</th>
                     <th className="px-2 py-2 text-center">Gg</th>
                     <th className="px-2 py-2 text-center">Età Piant.</th>
                     <th className="px-2 py-2 text-center">Media</th>
@@ -737,7 +694,7 @@ export default function App() {
                 </thead>
                 <tbody>
                   {loadingOss ? (
-                    <tr><td colSpan={14} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
+                    <tr><td colSpan={13} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
                   ) : osservazioni.map((obs, i) => (
                     <tr key={obs.id} className={i % 2 === 0 ? "bg-stone-50" : "bg-white"}>
                       <td className="px-2 py-2 text-center font-mono font-semibold text-green-800">{obs.id}</td>
@@ -747,19 +704,6 @@ export default function App() {
                       </td>
                       <td className="px-2 py-2 text-center">{obs.cliente}</td>
                       <td className="px-2 py-2 text-center">{obs.appezzamento}</td>
-                      <td className="px-2 py-2 text-center whitespace-nowrap">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          obs.tipoIntervento === "fertirrigazione"
-                            ? "bg-blue-100 text-blue-700"
-                            : obs.tipoIntervento === "copertura_seconda"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-green-100 text-green-700"
-                        }`}>
-                          {obs.tipoIntervento === "copertura_prima"   ? "Cop. 1ª"
-                           : obs.tipoIntervento === "copertura_seconda" ? "Cop. 2ª"
-                           : "Fertirrrig."}
-                        </span>
-                      </td>
                       <td className="px-2 py-2 text-center">{obs.giorni}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
