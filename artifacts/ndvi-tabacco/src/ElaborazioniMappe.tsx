@@ -195,7 +195,6 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
 
   // UI
   const [showNotes,     setShowNotes]     = useState(false);
-  const [useAllGps,     setUseAllGps]     = useState(false);
 
   // GPS-enabled observations
   const gpsObs = useMemo(
@@ -203,26 +202,9 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
     [osservazioni]
   );
 
-  // Auto-derive controls for selected polygon (DB source)
-  const dbControlsMatched = useMemo<ControlPoint[]>(() => {
-    if (selPolyIdx === null || !polygons[selPolyIdx]) return [];
-    const norm = polygons[selPolyIdx].name.toLowerCase().trim();
-    return gpsObs
-      .filter(o => {
-        const a = o.appezzamento.toLowerCase().trim();
-        return a.includes(norm) || norm.includes(a);
-      })
-      .map(o => ({
-        obsId:        o.id,
-        cliente:      o.cliente,
-        appezzamento: o.appezzamento,
-        lng:          o.lng!,
-        lat:          o.lat!,
-        dose:         o.dose,
-      }));
-  }, [selPolyIdx, polygons, gpsObs]);
-
-  const dbControlsAll = useMemo<ControlPoint[]>(() =>
+  // Tutti i punti GPS disponibili — il poligono definisce solo la superficie
+  // di rasterizzazione IDW, non filtra i punti per nome appezzamento.
+  const dbControls = useMemo<ControlPoint[]>(() =>
     gpsObs.map(o => ({
       obsId:        o.id,
       cliente:      o.cliente,
@@ -232,8 +214,6 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
       dose:         o.dose,
     })),
   [gpsObs]);
-
-  const dbControls = useAllGps ? dbControlsAll : dbControlsMatched;
 
   const activeControls: ControlPoint[] = pointSource === "db" ? dbControls : shpPoints;
 
@@ -386,7 +366,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
               <ul className="list-disc ml-4 mt-1.5 space-y-0.5 text-blue-800">
                 <li>Geometria: <strong>Polygon</strong> o <strong>MultiPolygon</strong></li>
                 <li>Sistema di riferimento: <strong>WGS 84 geografico (EPSG:4326)</strong> — gradi decimali</li>
-                <li>Il nome del poligono (campo <em>Name</em> in KML/KMZ, oppure <em>NOME / Name / APPEZZ</em> in Shapefile) è usato per il matching con <em>Appezzamento</em></li>
+                <li>Il nome del poligono (campo <em>Name</em> in KML/KMZ, oppure <em>NOME / Name / APPEZZ</em> in Shapefile) viene usato solo come etichetta — non è richiesta corrispondenza con il campo <em>Appezzamento</em></li>
               </ul>
             </div>
             <div>
@@ -434,29 +414,22 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
             <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">
               {polygons.length} poligono{polygons.length !== 1 ? "i" : ""} rilevato{polygons.length !== 1 ? "i" : ""}
             </p>
-            {polygons.map((p, i) => {
-              const matchCount = gpsObs.filter(o => {
-                const a = o.appezzamento.toLowerCase().trim();
-                const b = p.name.toLowerCase().trim();
-                return a.includes(b) || b.includes(a);
-              }).length;
-              return (
-                <button
-                  key={i}
-                  onClick={() => { setSelPolyIdx(i); setResults(prev => { const m = new Map(prev); return m; }); }}
-                  className={`w-full flex items-center justify-between text-sm px-3 py-2 rounded-lg border transition-colors ${
-                    selPolyIdx === i
-                      ? "bg-green-800 text-white border-green-700"
-                      : "bg-stone-50 text-stone-700 border-stone-200 hover:bg-green-50"
-                  }`}
-                >
-                  <span className="font-medium truncate">{p.name}</span>
-                  <span className={`text-xs ml-2 shrink-0 ${selPolyIdx === i ? "text-green-200" : "text-stone-400"}`}>
-                    {matchCount} oss. GPS
-                  </span>
-                </button>
-              );
-            })}
+            {polygons.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => { setSelPolyIdx(i); setResults(prev => new Map(prev)); }}
+                className={`w-full flex items-center justify-between text-sm px-3 py-2 rounded-lg border transition-colors ${
+                  selPolyIdx === i
+                    ? "bg-green-800 text-white border-green-700"
+                    : "bg-stone-50 text-stone-700 border-stone-200 hover:bg-green-50"
+                }`}
+              >
+                <span className="font-medium truncate">{p.name}</span>
+                <span className={`text-xs ml-2 shrink-0 ${selPolyIdx === i ? "text-green-200" : "text-stone-400"}`}>
+                  {gpsObs.length} oss. GPS
+                </span>
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -494,33 +467,11 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
               </p>
             ) : selPolyIdx === null ? (
               <p className="text-sm text-stone-400 italic">Seleziona prima un poligono.</p>
-            ) : !useAllGps && dbControlsMatched.length === 0 ? (
-              <div className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2 space-y-2">
-                <p>⚠️ Nessuna osservazione GPS corrisponde al poligono <strong>{polygons[selPolyIdx]?.name}</strong>.</p>
-                <p className="text-xs text-amber-600">
-                  Il matching confronta il nome del poligono con il campo <em>Appezzamento</em> del registro.
-                  Se i nomi non coincidono, usa il pulsante qui sotto per includere tutte le osservazioni GPS.
-                </p>
-                <button
-                  onClick={() => setUseAllGps(true)}
-                  className="mt-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  📍 Usa tutte le {gpsObs.length} osservazioni GPS
-                </button>
-              </div>
             ) : (
               <>
-              {useAllGps && (
-                <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3 text-xs text-blue-800">
-                  <span>📍 Modalità <strong>tutte le osservazioni GPS</strong> attiva — {dbControlsAll.length} punti inclusi</span>
-                  <button
-                    onClick={() => setUseAllGps(false)}
-                    className="ml-3 text-blue-600 hover:text-blue-800 underline shrink-0"
-                  >
-                    Torna al matching automatico
-                  </button>
-                </div>
-              )}
+              <p className="text-xs text-stone-400 mb-2">
+                📍 {dbControls.length} osservazioni GPS disponibili — tutti i punti vengono usati per l'interpolazione IDW sul poligono selezionato.
+              </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs border-collapse">
                   <thead>
