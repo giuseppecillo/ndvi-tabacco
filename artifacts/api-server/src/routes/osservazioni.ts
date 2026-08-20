@@ -96,18 +96,15 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
   const sommaQuoteRiferimento = Object.values(FASI_N_GRANO)
     .reduce((somma, voce) => somma + (voce.min + voce.max) / 2, 0);
   const quotaBase = Math.round(azotoTotale * ((fase.min + fase.max) / 2) / sommaQuoteRiferimento);
-  const fattoreNdvi = Math.max(0.85, Math.min(1.15, 1 + ((ottimale - media) / ottimale) * 0.5));
-  const quotaModulata = Math.round(quotaBase * fattoreNdvi);
-  const quotaNellaFase = Math.max(fase.min, Math.min(fase.max, quotaModulata));
-  const quotaAttesa = Math.min(residuo, quotaNellaFase);
+  const deficitNdvi = Math.max(0, ottimale - media);
+  const deficitRelativo = ottimale > 0 ? Math.min(1, deficitNdvi / ottimale) : 0;
+  const quotaDaDeficitNdvi = deficitNdvi > 0 ? Math.round(quotaBase * deficitRelativo) : 0;
+  const quotaAttesa = Math.min(residuo, quotaDaDeficitNdvi);
   if (Math.abs(dose - quotaAttesa) > 0.01) {
     return "La dose non corrisponde alla quota ricalcolata da BBCH, NDVI e azoto residuo.";
   }
-  if (dose > residuo + 0.01 || dose > fase.max + 0.01) {
-    return "La dose supera il residuo del piano o il limite della fase BBCH.";
-  }
-  if (residuo >= fase.min && dose + 0.01 < fase.min) {
-    return "La dose è inferiore al minimo della fase pur avendo azoto residuo disponibile.";
+  if (dose > residuo + 0.01 || dose > quotaBase + 0.01) {
+    return "La dose supera il residuo del piano o la quota N ottimale della fase.";
   }
   return null;
 }

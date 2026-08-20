@@ -1256,7 +1256,7 @@ export default function App() {
             <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-4">
               <div>
                 <h2 className="text-base font-bold text-green-900">Piano azoto del punto · grano duro</h2>
-                <p className="text-xs text-green-800 mt-1">Resa e densità stimano il piano; BBCH confermato e media NDVI stimano l’indicazione N del punto. Il risultato è un consiglio da validare in campo.</p>
+                <p className="text-xs text-green-800 mt-1">Resa e densità stimano il piano; il deficit tra NDVI medio e riferimento determina la quota N indicata nel punto. Il risultato è un consiglio da validare in campo.</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                 <ResultRow label="Fabbisogno base" value={`${risultatiGrano.fabbisognoBase} kg N/ha`} />
@@ -1265,6 +1265,7 @@ export default function App() {
                 <ResultRow label="N residuo del piano" value={`${risultatiGrano.residuoPiano} kg N/ha`} highlight />
                 <ResultRow label="NDVI medio punto" value={risultatiGrano.media.toFixed(3)} />
                 <ResultRow label="NDVI riferimento" value={risultatiGrano.ndviOttimale.toFixed(3)} />
+                <ResultRow label="Deficit NDVI" value={risultatiGrano.deficitNdvi.toFixed(3)} />
                 <ResultRow label="Fase attesa dai DAS" value={risultatiGrano.profiloDAS ? `${risultatiGrano.profiloDAS.bbch} · ${risultatiGrano.profiloDAS.label}` : "fuori calendario"} />
                 <ResultRow label="BBCH confermato" value={faseGrano ? faseGrano.bbch : "da confermare"} highlight />
                 <ResultRow label="N indicato dal punto NDVI" value={faseGrano && risultatiGrano.valoriValidi ? `${risultatiGrano.quotaProposta} kg N/ha` : "da confermare"} highlight />
@@ -1274,7 +1275,11 @@ export default function App() {
                   <p className="font-semibold text-green-900">Indicazione N del punto dalla media NDVI: {risultatiGrano.quotaProposta} kg N/ha</p>
                   <p>
                     Intervallo di consiglio per {faseGrano.bbch} · {faseGrano.label}: {faseGrano.azotoMin}–{faseGrano.azotoMax} kg N/ha.
-                    Media NDVI {risultatiGrano.media.toFixed(3)} rispetto a {risultatiGrano.ndviOttimale.toFixed(3)} → fattore {risultatiGrano.fattoreNdvi.toFixed(2)} sulla quota base di {risultatiGrano.quotaBase} kg N/ha; indicazione limitata all’intervallo guida e ai {risultatiGrano.residuoPiano} kg N/ha residui.
+                    {risultatiGrano.deficitNdvi > 0 ? (
+                      <> Deficit NDVI: {risultatiGrano.ndviOttimale.toFixed(3)} − {risultatiGrano.media.toFixed(3)} = {risultatiGrano.deficitNdvi.toFixed(3)} ({(risultatiGrano.deficitRelativo * 100).toFixed(1)}%). La quota N ottimale della fase è {risultatiGrano.quotaBase} kg N/ha: {risultatiGrano.quotaBase} × {(risultatiGrano.deficitRelativo * 100).toFixed(1)}% = {risultatiGrano.quotaDaDeficitNdvi} kg N/ha, limitati ai {risultatiGrano.residuoPiano} kg N/ha residui.</>
+                    ) : (
+                      <> La media NDVI ({risultatiGrano.media.toFixed(3)}) è uguale o superiore al riferimento ({risultatiGrano.ndviOttimale.toFixed(3)}): non è indicato alcun apporto di azoto.</>
+                    )}
                   </p>
                 </> : (
                   <p className="font-semibold text-amber-800">

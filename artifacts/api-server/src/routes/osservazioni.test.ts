@@ -18,12 +18,30 @@ const pianoGranoValido = (): Record<string, unknown> => ({
   discostamento: 0.1411764705882353,
   azotoTotale: 150,
   azotoGiaDistribuito: 60,
-  dose: 50,
-  quotaAzoto: 50,
+  dose: 12,
+  quotaAzoto: 12,
 });
 
 test("accepts the canonical grain plan produced by the app", () => {
   assert.equal(erroreOsservazioneGrano(pianoGranoValido()), null);
+});
+
+test("requires zero N when the observed NDVI is at or above its reference", () => {
+  const piano = pianoGranoValido();
+  piano.n1 = 0.6;
+  piano.n2 = 0.6;
+  piano.n3 = 0.6;
+  piano.n4 = 0.6;
+  piano.n5 = 0.6;
+  piano.media = 0.6;
+  piano.discostamento = -0.05882352941176472;
+  piano.dose = 0;
+  piano.quotaAzoto = 0;
+  assert.equal(erroreOsservazioneGrano(piano), null);
+
+  piano.dose = 12;
+  piano.quotaAzoto = 12;
+  assert.match(erroreOsservazioneGrano(piano) ?? "", /quota ricalcolata/);
 });
 
 test("rejects missing, blank, and boolean NDVI readings", () => {

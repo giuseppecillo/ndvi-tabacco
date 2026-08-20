@@ -253,8 +253,10 @@ export function calcolaPianoNGrano(input: {
 }): NdviStats & {
   ndviOttimale: number;
   scostamentoNdvi: number;
-  fattoreNdvi: number;
+  deficitNdvi: number;
+  deficitRelativo: number;
   quotaBase: number;
+  quotaDaDeficitNdvi: number;
   residuoPiano: number;
   quotaProposta: number;
   profiloDAS: ProfiloFenologicoGrano | null;
@@ -265,29 +267,32 @@ export function calcolaPianoNGrano(input: {
   const stats = statisticheNdvi(input.lettureNdvi);
   const ndviOttimale = ndviOttimaleGrano(input.das);
   const scostamentoNdvi = ndviOttimale - stats.media;
-  const deficitRelativo = ndviOttimale > 0 ? scostamentoNdvi / ndviOttimale : 0;
+  const deficitNdvi = Math.max(0, scostamentoNdvi);
+  const deficitRelativo = ndviOttimale > 0
+    ? Math.min(1, deficitNdvi / ndviOttimale)
+    : 0;
   const profiloDAS = profiloFenologicoGranoDaDas(input.das);
   const profiloBbch = input.fase ? profiloFenologicoGranoDaBbch(input.fase.bbch) : null;
   const ndviFaseCoerente = !profiloBbch
     || (ndviOttimale >= profiloBbch.ndviMin - 0.02 && ndviOttimale <= profiloBbch.ndviMax + 0.02);
-  // L'NDVI regola una quota già agronomicamente determinata: non è una
-  // conversione diretta NDVI → kg N e resta volutamente limitata a ±15%.
-  const fattoreNdvi = Math.max(0.85, Math.min(1.15, 1 + deficitRelativo * 0.5));
   const quotaBase = input.fase ? calcolaQuotaNGrano(input.fabbisognoN, input.fase) : 0;
   const residuoPiano = Math.max(0, Math.round(input.fabbisognoN - input.azotoGiaDistribuito));
-  const quotaModulata = Math.round(quotaBase * fattoreNdvi);
-  const quotaNellaFase = input.fase
-    ? Math.max(input.fase.azotoMin, Math.min(input.fase.azotoMax, quotaModulata))
+  // Il deficit NDVI attiva solo la quota proporzionale che serve a colmarlo:
+  // quando la media è uguale o superiore al riferimento, non viene indicato N.
+  const quotaDaDeficitNdvi = stats.valoriValidi && input.fase && deficitNdvi > 0
+    ? Math.round(quotaBase * deficitRelativo)
     : 0;
   const quotaProposta = stats.valoriValidi && input.fase
-    ? Math.min(residuoPiano, quotaNellaFase)
+    ? Math.min(residuoPiano, quotaDaDeficitNdvi)
     : 0;
   return {
     ...stats,
     ndviOttimale,
     scostamentoNdvi,
-    fattoreNdvi,
+    deficitNdvi,
+    deficitRelativo,
     quotaBase,
+    quotaDaDeficitNdvi,
     residuoPiano,
     quotaProposta,
     profiloDAS,

@@ -204,7 +204,7 @@ describe("grano duro nitrogen planning", () => {
     }, { min: 0.73, max: 0.85 });
   });
 
-  it("modulates a confirmed phase quota by NDVI without exceeding the phase range or residual plan", () => {
+  it("indicates N only for the proportional NDVI deficit and never above the residual plan", () => {
     const fase = faseGranoDaBbch("20–29");
     assert.ok(fase);
 
@@ -216,7 +216,8 @@ describe("grano duro nitrogen planning", () => {
       lettureNdvi: [0.49, 0.49, 0.49, 0.49, 0.49],
     });
     assert.equal(adequate.quotaBase, 45);
-    assert.equal(adequate.quotaProposta, 45);
+    assert.equal(adequate.deficitNdvi, 0);
+    assert.equal(adequate.quotaProposta, 0);
     assert.equal(adequate.residuoPiano, 90);
     assert.equal(adequate.verificaCampo, false);
 
@@ -227,8 +228,9 @@ describe("grano duro nitrogen planning", () => {
       das: 100,
       lettureNdvi: [0.2, 0.2, 0.2, 0.2, 0.2],
     });
-    assert.equal(deficit.fattoreNdvi, 1.15);
-    assert.equal(deficit.quotaProposta, fase.azotoMax);
+    assert.ok(Math.abs(deficit.deficitRelativo - 0.5903614457831325) < 0.000001);
+    assert.equal(deficit.quotaDaDeficitNdvi, 27);
+    assert.equal(deficit.quotaProposta, 27);
     assert.equal(deficit.verificaCampo, true);
 
     const residualExhausted = calcolaPianoNGrano({
@@ -250,6 +252,16 @@ describe("grano duro nitrogen planning", () => {
     });
     assert.equal(decimalResidual.residuoPiano, 10);
     assert.equal(decimalResidual.quotaProposta, 10);
+
+    const aboveReference = calcolaPianoNGrano({
+      fabbisognoN: 150,
+      azotoGiaDistribuito: 60,
+      fase,
+      das: 100,
+      lettureNdvi: [0.6, 0.6, 0.6, 0.6, 0.6],
+    });
+    assert.equal(aboveReference.deficitNdvi, 0);
+    assert.equal(aboveReference.quotaProposta, 0);
   });
 
   it("does not produce a grain dose without a confirmed phase or valid NDVI readings", () => {
