@@ -557,32 +557,38 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
 
 export function exportObservationsCsv(
   osservazioni: {
-    id: string; data: string; dataTrapianto: string;
+    id: string; coltura?: string; data: string; dataTrapianto: string; dataSemina?: string;
     giorni: number;
+    faseFenologica?: string;
     cliente: string; appezzamento: string; varieta: string;
     densitaValore?: number | null; densitaUnita?: string | null; pianteHaEquivalenti?: number | null;
     n1: number; n2: number; n3: number; n4: number; n5: number;
     media: number; ottimale: number; discostamento: number; dose: number;
+    azotoTotale?: number | null; quotaAzoto?: number | null;
     lat: number | null; lng: number | null;
   }[],
 ): void {
   const header = [
-    "ID","Data","Trapianto","Giorni",
+    "ID","Coltura","Data","Data_Semina","Data_Trapianto","DAS_o_Giorni","Fase",
     "Cliente","Appezzamento","Varieta",
     "Densita_Valore","Densita_Unita","Piante_ha_Equiv",
     "M1","M2","M3","M4","M5",
-    "Media_NDVI","NDVI_Ottimale","Discostamento","Dose_kg_ha",
+    "Media_NDVI","NDVI_Ottimale","Discostamento","Dose_kg_ha","Azoto_Totale_kg_ha","Quota_Azoto_kg_ha",
     "Lat_WGS84","Lng_WGS84",
   ];
+  const cell = (value: string | number | null | undefined) => {
+    const text = value == null ? "" : String(value);
+    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, "\"\"")}"` : text;
+  };
   const rows = osservazioni.map(o => [
-    o.id, o.data, o.dataTrapianto, o.giorni,
-    `"${o.cliente}"`, `"${o.appezzamento}"`, `"${o.varieta}"`,
+    o.id, o.coltura ?? "tabacco", o.data, o.dataSemina ?? "", o.dataTrapianto, o.giorni, o.faseFenologica ?? "",
+    o.cliente, o.appezzamento, o.varieta,
     o.densitaValore ?? "", o.densitaUnita ?? "", o.pianteHaEquivalenti ?? "",
     o.n1, o.n2, o.n3, o.n4, o.n5,
-    o.media.toFixed(4), o.ottimale.toFixed(4), o.discostamento.toFixed(4), o.dose.toFixed(2),
+    o.media.toFixed(4), o.ottimale.toFixed(4), o.discostamento.toFixed(4), o.dose.toFixed(2), o.azotoTotale ?? "", o.quotaAzoto ?? "",
     o.lat ?? "", o.lng ?? "",
   ]);
-  const csv  = [header, ...rows].map(r => r.join(",")).join("\r\n");
+  const csv  = [header, ...rows].map(r => r.map(cell).join(",")).join("\r\n");
   const date = new Date().toISOString().slice(0, 10);
   trigger(
     URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" })),

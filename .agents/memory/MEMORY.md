@@ -4,3 +4,4 @@
 - [NDVI phenology reference](ndvi-phenology.md) — Model plant age as equivalent phenological days on a continuous curve; report nitrogen adequacy and NDVI dispersion separately.
 - [Observation GPS capture](observation-gps-capture.md) — Location enrichment must be best-effort and never delay persistence of a field observation.
 - [Campaign calibration safeguards](campaign-calibration-safeguards.md) — Nitrogen comparisons require real, complete closed-campaign data; generic defaults must never yield a verdict.
+- [Grano duro nitrogen planning](grano-duro-nitrogen-planning.md) — Convert seed rates with PMG and constrain scaled phase advice to each disciplinary range.

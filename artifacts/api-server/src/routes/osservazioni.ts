@@ -9,6 +9,8 @@ router.get("/osservazioni", async (_req, res) => {
     const { rows } = await pool.query(
       `SELECT
          id, data, data_trapianto AS "dataTrapianto",
+         data_trapianto AS "dataSemina",
+         tipo_intervento AS coltura,
          giorni,
          eta_piantina AS "etaPiantina",
          cliente, appezzamento, resa, varieta,
@@ -17,13 +19,17 @@ router.get("/osservazioni", async (_req, res) => {
          piante_ha_equivalenti AS "pianteHaEquivalenti",
          n1, n2, n3, n4, n5,
          media, ottimale, discostamento, dose,
+         fase_fenologica AS "faseFenologica",
+         azoto_totale AS "azotoTotale",
+         quota_azoto AS "quotaAzoto",
          lat, lng,
          created_at AS "createdAt"
        FROM osservazioni
        ORDER BY created_at DESC`
     );
     const parsed = rows.map((r) => ({
-      ...r,
+       ...r,
+       coltura: r.coltura === "grano duro" ? "grano duro" : "tabacco",
       giorni:        Number(r.giorni),
       resa:          Number(r.resa),
       n1:            Number(r.n1),
@@ -35,6 +41,8 @@ router.get("/osservazioni", async (_req, res) => {
       ottimale:      Number(r.ottimale),
       discostamento: Number(r.discostamento),
       dose:          Number(r.dose),
+       azotoTotale:   r.azotoTotale != null ? Number(r.azotoTotale) : null,
+       quotaAzoto:     r.quotaAzoto != null ? Number(r.quotaAzoto) : null,
       lat:           r.lat != null ? Number(r.lat) : null,
       lng:           r.lng != null ? Number(r.lng) : null,
       etaPiantina:   r.etaPiantina ?? "standard",
@@ -56,22 +64,25 @@ router.post("/osservazioni", async (req, res) => {
       `INSERT INTO osservazioni
          (id, data, data_trapianto, tipo_intervento, giorni, eta_piantina,
            cliente, appezzamento, resa, varieta, piante_semi_ha, piante_semi_unita, piante_ha_equivalenti,
-           n1, n2, n3, n4, n5, media, ottimale, discostamento, dose, lat, lng)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+            n1, n2, n3, n4, n5, media, ottimale, discostamento, dose,
+            fase_fenologica, azoto_totale, quota_azoto, lat, lng)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
        ON CONFLICT (id) DO UPDATE SET
          data=$2, data_trapianto=$3, tipo_intervento=$4, giorni=$5, eta_piantina=$6,
           cliente=$7, appezzamento=$8, resa=$9, varieta=$10,
           piante_semi_ha=$11, piante_semi_unita=$12, piante_ha_equivalenti=$13,
           n1=$14, n2=$15, n3=$16, n4=$17, n5=$18,
-          media=$19, ottimale=$20, discostamento=$21, dose=$22,
-          lat=$23, lng=$24`,
+           media=$19, ottimale=$20, discostamento=$21, dose=$22,
+           fase_fenologica=$23, azoto_totale=$24, quota_azoto=$25,
+           lat=$26, lng=$27`,
       [
-        o.id, o.data, o.dataTrapianto || null, o.tipoIntervento ?? "n/d", o.giorni,
+         o.id, o.data, o.dataSemina || o.dataTrapianto || null, o.coltura ?? o.tipoIntervento ?? "tabacco", o.giorni,
         o.etaPiantina ?? "standard",
         o.cliente, o.appezzamento, o.resa, o.varieta,
         o.densitaValore ?? null, o.densitaUnita ?? null, o.pianteHaEquivalenti ?? null,
-        o.n1, o.n2, o.n3, o.n4, o.n5, o.media, o.ottimale, o.discostamento, o.dose,
-        o.lat ?? null, o.lng ?? null,
+         o.n1, o.n2, o.n3, o.n4, o.n5, o.media, o.ottimale, o.discostamento, o.dose,
+         o.faseFenologica ?? null, o.azotoTotale ?? null, o.quotaAzoto ?? null,
+         o.lat ?? null, o.lng ?? null,
       ]
     );
     res.status(201).json({ ok: true });

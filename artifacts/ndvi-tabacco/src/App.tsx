@@ -6,7 +6,8 @@ import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { exportObservationsCsv } from "./utils/geoUtils";
 
 export type EtaPiantina = "standard" | "avanzata" | "extra";
-export type DensitaUnita = "piante/ha" | "kg/ha";
+export type Coltura = "tabacco" | "grano duro";
+export type DensitaUnita = "piante/ha" | "semi/ha" | "kg/ha";
 
 export const ETA_PIANTINA_LABELS: Record<EtaPiantina, { label: string; short: string; giorni: string }> = {
   standard: { label: "Standard",       short: "Std",  giorni: "25–35 gg vivaio" },
@@ -40,6 +41,99 @@ type VarietaDati = {
   densitaPianteDefault: number;
   kgSemiDefault: number;
 };
+
+export type GranoVarietaDati = {
+  label: string;
+  densitaSemiMqMin: number;
+  densitaSemiMqMax: number;
+  densitaSemiMqDefault: number;
+  pesoMilleSemiG: number;
+};
+
+// Dati dalla tabella varietale del disciplinare De Matteis 2023–2024.
+// Il disciplinare esprime la dose in semi/m²; la conversione kg/ha è
+// indicativa e resa esplicita usando il peso di 1.000 semi.
+export const GRANO_DURO_DB: Record<string, GranoVarietaDati> = {
+  Redidenari: { label: "Redidenari", densitaSemiMqMin: 200, densitaSemiMqMax: 230, densitaSemiMqDefault: 215, pesoMilleSemiG: 45 },
+  Telemaco: { label: "Telemaco", densitaSemiMqMin: 190, densitaSemiMqMax: 220, densitaSemiMqDefault: 205, pesoMilleSemiG: 45 },
+  President: { label: "President", densitaSemiMqMin: 165, densitaSemiMqMax: 220, densitaSemiMqDefault: 192.5, pesoMilleSemiG: 45 },
+  "Federico II": { label: "Federico II", densitaSemiMqMin: 170, densitaSemiMqMax: 190, densitaSemiMqDefault: 180, pesoMilleSemiG: 45 },
+  Egeo: { label: "Egeo", densitaSemiMqMin: 200, densitaSemiMqMax: 230, densitaSemiMqDefault: 215, pesoMilleSemiG: 45 },
+  Minosse: { label: "Minosse", densitaSemiMqMin: 210, densitaSemiMqMax: 240, densitaSemiMqDefault: 225, pesoMilleSemiG: 45 },
+  Spineto: { label: "Spineto", densitaSemiMqMin: 240, densitaSemiMqMax: 240, densitaSemiMqDefault: 240, pesoMilleSemiG: 45 },
+  Farah: { label: "Farah", densitaSemiMqMin: 270, densitaSemiMqMax: 270, densitaSemiMqDefault: 270, pesoMilleSemiG: 45 },
+  "Furio Camillo": { label: "Furio Camillo", densitaSemiMqMin: 200, densitaSemiMqMax: 230, densitaSemiMqDefault: 215, pesoMilleSemiG: 45 },
+  "Marco Aurelio": { label: "Marco Aurelio", densitaSemiMqMin: 200, densitaSemiMqMax: 230, densitaSemiMqDefault: 215, pesoMilleSemiG: 45 },
+  Nazareno: { label: "Nazareno", densitaSemiMqMin: 170, densitaSemiMqMax: 170, densitaSemiMqDefault: 170, pesoMilleSemiG: 45 },
+  Quadrato: { label: "Quadrato", densitaSemiMqMin: 220, densitaSemiMqMax: 260, densitaSemiMqDefault: 240, pesoMilleSemiG: 45 },
+  Giulio: { label: "Giulio", densitaSemiMqMin: 190, densitaSemiMqMax: 220, densitaSemiMqDefault: 205, pesoMilleSemiG: 45 },
+};
+
+export type FaseGrano = {
+  label: "Semina" | "Accestimento" | "Levata" | "Foglia a bandiera";
+  dasMin: number;
+  dasMax: number | null;
+  azotoMin: number;
+  azotoMax: number;
+};
+
+export const FASI_GRANO: FaseGrano[] = [
+  { label: "Semina", dasMin: 0, dasMax: 10, azotoMin: 27, azotoMax: 36 },
+  { label: "Accestimento", dasMin: 11, dasMax: 35, azotoMin: 40, azotoMax: 50 },
+  { label: "Levata", dasMin: 36, dasMax: 65, azotoMin: 40, azotoMax: 60 },
+  { label: "Foglia a bandiera", dasMin: 66, dasMax: null, azotoMin: 20, azotoMax: 30 },
+];
+
+export function granoSemiMqDaKgHa(kgHa: number, dati: GranoVarietaDati): number {
+  return kgHa / (dati.pesoMilleSemiG / 100);
+}
+
+export function granoKgHaDaSemiMq(semiMq: number, dati: GranoVarietaDati): number {
+  return semiMq * dati.pesoMilleSemiG / 100;
+}
+
+export function calcolaDensitaGrano(
+  valore: number,
+  unita: DensitaUnita,
+  dati: GranoVarietaDati,
+): { semiMqEquivalenti: number; semiHaEquivalenti: number; rapportoDensita: number; fattoreAzoto: number; fuoriRange: boolean } {
+  const semiMqEquivalenti = unita === "semi/ha"
+    ? valore / 10_000
+    : unita === "kg/ha"
+    ? granoSemiMqDaKgHa(valore, dati)
+    : valore / 10_000;
+  const rapportoDensita = dati.densitaSemiMqDefault > 0
+    ? semiMqEquivalenti / dati.densitaSemiMqDefault
+    : 1;
+  const fattoreAzoto = Math.max(0.90, Math.min(1.10, 0.75 + rapportoDensita * 0.25));
+  return {
+    semiMqEquivalenti,
+    semiHaEquivalenti: semiMqEquivalenti * 10_000,
+    rapportoDensita,
+    fattoreAzoto,
+    fuoriRange: semiMqEquivalenti < dati.densitaSemiMqMin || semiMqEquivalenti > dati.densitaSemiMqMax,
+  };
+}
+
+export function faseGranoDaDas(giorni: number): FaseGrano {
+  return [...FASI_GRANO].reverse().find((fase) => giorni >= fase.dasMin) ?? FASI_GRANO[0];
+}
+
+export function calcolaFabbisognoNGrano(resaQHa: number, fattoreDensita: number): { base: number; corretto: number } {
+  // Tab. 2 del disciplinare: 40 q = 120, 50 q = 150, 60 q = 180 kg N/ha.
+  const base = Math.max(0, Math.round(resaQHa * 3));
+  return { base, corretto: Math.round(base * fattoreDensita) };
+}
+
+export function calcolaQuotaNGrano(
+  fabbisognoN: number,
+  fase: FaseGrano,
+): number {
+  const sommaRiferimenti = FASI_GRANO.reduce((sum, item) => sum + (item.azotoMin + item.azotoMax) / 2, 0);
+  const quotaRiferimento = (fase.azotoMin + fase.azotoMax) / 2;
+  const quotaScalata = Math.round(fabbisognoN * quotaRiferimento / sommaRiferimenti);
+  return Math.max(fase.azotoMin, Math.min(fase.azotoMax, quotaScalata));
+}
 
 export type ParametriAziendali = {
   densitaPianteHa: number;
@@ -147,9 +241,12 @@ export const PARAMETRI_AZIENDALI_DEFAULT: Record<string, ParametriAziendali> =
 
 export type Observation = {
   id: string;
+  coltura: Coltura;
   data: string;
   dataTrapianto: string;
+  dataSemina?: string;
   giorni: number;
+  faseFenologica?: string;
   etaPiantina: EtaPiantina;
   cliente: string;
   appezzamento: string;
@@ -167,6 +264,8 @@ export type Observation = {
   ottimale: number;
   discostamento: number;
   dose: number;
+  azotoTotale?: number | null;
+  quotaAzoto?: number | null;
   lat: number | null;
   lng: number | null;
 };
@@ -459,6 +558,7 @@ const today = new Date().toISOString().slice(0, 10);
 export default function App() {
   const [activeTab, setActiveTab]       = useState<"calcolatore" | "elaborazioni">("calcolatore");
   const [obsId, setObsId]               = useState("1");
+  const [coltura, setColtura]           = useState<Coltura>("tabacco");
   const [data, setData]                 = useState(today);
   const [dataTrapianto, setDataTrapianto] = useState("");
   const [cliente, setCliente]           = useState("");
@@ -483,7 +583,9 @@ export default function App() {
   const [campagne, setCampagne] = useState<Record<string, CampagnaCalibrazione>>(
     caricaCampagneAziendali
   );
-  const datiBaseVarieta = VARIETA_DB[varieta];
+  const isGranoDuro = coltura === "grano duro";
+  const datiGrano = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
+  const datiBaseVarieta = VARIETA_DB[varieta] ?? VARIETA_DB["Burley (Non Cimato)"];
   const riferimentoAziendale = parametriAziendali[varieta] ?? {
     densitaPianteHa: datiBaseVarieta.densitaPianteDefault,
     kgSemiHa: datiBaseVarieta.kgSemiDefault,
@@ -523,6 +625,14 @@ export default function App() {
   // I dati delle campagne restano separati per varietà e non vengono mai
   // sovrascritti da una modifica ai parametri di riferimento.
   useEffect(() => {
+    if (isGranoDuro) {
+      const dati = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
+      setResa(50);
+      setAzotoTot(150);
+      setDensitaUnita("semi/ha");
+      setDensitaValore(dati.densitaSemiMqDefault * 10_000);
+      return;
+    }
     const dati = VARIETA_DB[varieta];
     const riferimento = parametriAziendali[varieta] ?? {
       densitaPianteHa: dati.densitaPianteDefault,
@@ -533,22 +643,32 @@ export default function App() {
       setAzotoTot(dati.azotoDefault);
       setDensitaValore(densitaUnita === "piante/ha" ? riferimento.densitaPianteHa : riferimento.kgSemiHa);
     }
-  }, [varieta]);
+  }, [varieta, isGranoDuro]);
 
   const densita = useMemo(
     () => calcolaDensita(densitaValore, densitaUnita, datiVarieta),
     [densitaValore, densitaUnita, datiVarieta]
   );
+  const densitaGrano = useMemo(
+    () => calcolaDensitaGrano(densitaValore, densitaUnita, datiGrano),
+    [densitaValore, densitaUnita, datiGrano]
+  );
   const fabbisognoNBase = useMemo(
-    () => Math.round(resa * datiVarieta.kgNPerTon),
-    [datiVarieta, resa]
+    () => isGranoDuro
+      ? calcolaFabbisognoNGrano(resa, densitaGrano.fattoreAzoto).base
+      : Math.round(resa * datiVarieta.kgNPerTon),
+    [datiVarieta, densitaGrano.fattoreAzoto, isGranoDuro, resa]
   );
   // Formula: asportazione da resa × correzione moderata della densità colturale.
-  const fabbisognoN = Math.round(fabbisognoNBase * densita.fattoreAzoto);
-  const azotoConsigliato = resa > datiVarieta.resaMax
+  const fabbisognoN = isGranoDuro
+    ? Math.round(fabbisognoNBase * densitaGrano.fattoreAzoto)
+    : Math.round(fabbisognoNBase * densita.fattoreAzoto);
+  const azotoConsigliato = isGranoDuro
+    ? fabbisognoN
+    : resa > datiVarieta.resaMax
     ? fabbisognoN
     : Math.min(datiVarieta.azotoMax, Math.max(datiVarieta.azotoMin, fabbisognoN));
-  const azotoAsportazioni = resa > datiVarieta.resaMax ? azotoConsigliato : null;
+  const azotoAsportazioni = !isGranoDuro && resa > datiVarieta.resaMax ? azotoConsigliato : null;
   const campagnaDensita = useMemo(
     () => calcolaDensita(campagna.pianteHa, "piante/ha", datiVarieta),
     [campagna.pianteHa, datiVarieta]
@@ -603,12 +723,16 @@ export default function App() {
 
   const cambiaDensitaUnita = useCallback((unita: DensitaUnita) => {
     if (unita === densitaUnita) return;
-    const valoreEquivalente = unita === "piante/ha"
-      ? densita.pianteHaEquivalenti
-      : (densita.pianteHaEquivalenti / datiVarieta.densitaPianteDefault) * datiVarieta.kgSemiDefault;
+    const valoreEquivalente = isGranoDuro
+      ? unita === "kg/ha"
+        ? granoKgHaDaSemiMq(densitaGrano.semiMqEquivalenti, datiGrano)
+        : densitaGrano.semiHaEquivalenti
+      : unita === "piante/ha"
+        ? densita.pianteHaEquivalenti
+        : (densita.pianteHaEquivalenti / datiVarieta.densitaPianteDefault) * datiVarieta.kgSemiDefault;
     setDensitaUnita(unita);
-    setDensitaValore(Number(valoreEquivalente.toFixed(unita === "piante/ha" ? 0 : 4)));
-  }, [datiVarieta, densita, densitaUnita]);
+    setDensitaValore(Number(valoreEquivalente.toFixed(unita === "piante/ha" || unita === "semi/ha" ? 0 : 1)));
+  }, [datiGrano, densita, densitaGrano, densitaUnita, datiVarieta, isGranoDuro]);
 
   // Auto-aggiorna il campo azoto quando la resa supera il massimo di disciplinare
   useEffect(() => {
@@ -626,9 +750,19 @@ export default function App() {
   const giorni = giorniAuto ?? giorniManuale;
   const autoCalcolato = giorniAuto !== null;
 
+  const faseGrano = faseGranoDaDas(giorni);
+  const fabbisognoGrano = calcolaFabbisognoNGrano(resa, densitaGrano.fattoreAzoto);
+  const quotaAzotoGrano = calcolaQuotaNGrano(fabbisognoGrano.corretto, faseGrano);
+
   const risultati = calcola(
     resa, azotoTot, giorni, n1, n2, n3, n4, n5, fabbisognoN, etaPiantina
   );
+  const risultatiGrano = {
+    fase: faseGrano,
+    fabbisognoBase: fabbisognoGrano.base,
+    fabbisognoN: fabbisognoGrano.corretto,
+    quotaAzoto: quotaAzotoGrano,
+  };
 
   const salvaOsservazione = useCallback(() => {
     const newErrors: Record<string, string> = {};
@@ -639,8 +773,9 @@ export default function App() {
     if (!cliente.trim()) newErrors.cliente = "Campo obbligatorio.";
     if (!appezzamento.trim()) newErrors.appezzamento = "Campo obbligatorio.";
     if (densitaValore <= 0) newErrors.densita = "Inserisci una densità maggiore di zero.";
-    if (dataTrapiantoFutura) newErrors.dataTrapianto = "La data di trapianto è successiva al rilevamento.";
-    if (!risultati.valoriValidi) newErrors.ndvi = "Ogni lettura NDVI deve essere compresa tra 0 e 1.";
+    if (dataTrapiantoFutura) newErrors.dataTrapianto = `La data di ${isGranoDuro ? "semina" : "trapianto"} è successiva al rilevamento.`;
+    if (isGranoDuro && !dataTrapianto) newErrors.dataTrapianto = "Inserisci la data di semina per calcolare i DAS.";
+    if (!isGranoDuro && !risultati.valoriValidi) newErrors.ndvi = "Ogni lettura NDVI deve essere compresa tra 0 e 1.";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setErrors({});
@@ -650,19 +785,35 @@ export default function App() {
     const doSave = (lat: number | null, lng: number | null) => {
       const nuova: Observation = {
         id: trimmedIdFinal,
+        coltura,
         data,
-        dataTrapianto,
+        dataTrapianto: isGranoDuro ? "" : dataTrapianto,
+        dataSemina: isGranoDuro ? dataTrapianto : "",
         giorni,
         etaPiantina,
+        faseFenologica: isGranoDuro ? risultatiGrano.fase.label : ndviOttimale(giorni, etaPiantina).label,
         cliente: cliente.trim(),
         appezzamento: appezzamento.trim(),
         resa,
         varieta,
         densitaValore,
         densitaUnita,
-        pianteHaEquivalenti: Math.round(densita.pianteHaEquivalenti),
-        n1, n2, n3, n4, n5,
-        ...risultati,
+        pianteHaEquivalenti: Math.round(isGranoDuro ? densitaGrano.semiHaEquivalenti : densita.pianteHaEquivalenti),
+        n1: isGranoDuro ? 0 : n1,
+        n2: isGranoDuro ? 0 : n2,
+        n3: isGranoDuro ? 0 : n3,
+        n4: isGranoDuro ? 0 : n4,
+        n5: isGranoDuro ? 0 : n5,
+        ...(isGranoDuro
+          ? {
+              media: 0,
+              ottimale: 0,
+              discostamento: 0,
+              dose: risultatiGrano.quotaAzoto,
+              azotoTotale: risultatiGrano.fabbisognoN,
+              quotaAzoto: risultatiGrano.quotaAzoto,
+            }
+          : risultati),
         lat,
         lng,
       };
@@ -707,7 +858,7 @@ export default function App() {
     } else {
       doSave(null, null);
     }
-  }, [obsId, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, n1, n2, n3, n4, n5, risultati, dataTrapiantoFutura]);
+  }, [obsId, coltura, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, densitaGrano.semiHaEquivalenti, n1, n2, n3, n4, n5, risultati, risultatiGrano, dataTrapiantoFutura, isGranoDuro]);
 
   const eliminaOsservazione = useCallback((id: string) => {
     fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -834,7 +985,7 @@ export default function App() {
         {/* Header */}
         <div className="text-center flex flex-col items-center gap-2">
           <img src={taurusLogo} alt="Taurus Agriculture Solution" className="h-28 w-auto drop-shadow-md" />
-          <h1 className="text-3xl font-bold text-green-900">Calcolatore NDVI Tabacco</h1>
+          <h1 className="text-3xl font-bold text-green-900">{isGranoDuro ? "Pianificatore azoto grano duro" : "Calcolatore NDVI Tabacco"}</h1>
           <p className="text-green-700 mt-0.5 text-sm">Strumento di supporto alla fertilizzazione azotata</p>
         </div>
 
@@ -850,7 +1001,7 @@ export default function App() {
                   : "bg-white text-green-800 hover:bg-green-50"
               }`}
             >
-              {tab === "calcolatore" ? "🌿 Calcolatore NDVI" : "🗺 Elaborazioni e Mappe"}
+              {tab === "calcolatore" ? isGranoDuro ? "🌾 Pianificatore azoto" : "🌿 Calcolatore NDVI" : "🗺 Elaborazioni e Mappe"}
             </button>
           ))}
         </div>
@@ -886,52 +1037,79 @@ export default function App() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-semibold text-stone-700">Coltura</label>
-              <input type="text" value="Tabacco" disabled className={disabledCls} />
+              <select
+                aria-label="Coltura"
+                value={coltura}
+                onChange={(event) => {
+                  const nuovaColtura = event.target.value as Coltura;
+                  setColtura(nuovaColtura);
+                  setVarieta(nuovaColtura === "grano duro" ? "Redidenari" : "Burley (Non Cimato)");
+                  setDensitaUnita(nuovaColtura === "grano duro" ? "semi/ha" : "piante/ha");
+                  setErrors({});
+                }}
+                className={inputCls}
+              >
+                <option value="tabacco">Tabacco</option>
+                <option value="grano duro">Grano duro</option>
+              </select>
             </div>
             <div className="col-span-2 flex flex-col gap-1">
               <label className="text-sm font-semibold text-stone-700">Varietà</label>
               <select value={varieta} onChange={(e) => setVarieta(e.target.value)} className={inputCls}>
-                {Object.values(VARIETA_DB).map((v) => (
+                {(isGranoDuro ? Object.values(GRANO_DURO_DB) : Object.values(VARIETA_DB)).map((v) => (
                   <option key={v.label} value={v.label}>
-                    {v.label} — {v.categoria} · resa {v.resaMin}–{v.resaMax} t/ha
+                    {isGranoDuro
+                      ? `${v.label} · ${(v as GranoVarietaDati).densitaSemiMqMin}${(v as GranoVarietaDati).densitaSemiMqMin === (v as GranoVarietaDati).densitaSemiMqMax ? "" : `–${(v as GranoVarietaDati).densitaSemiMqMax}`} semi/m²`
+                      : `${v.label} — ${(v as VarietaDati).categoria} · resa ${(v as VarietaDati).resaMin}–${(v as VarietaDati).resaMax} t/ha`}
                   </option>
                 ))}
               </select>
-              {datiVarieta && (
+              {isGranoDuro ? (
+                <p className="text-xs text-stone-400">
+                  Disciplinare: {datiGrano.densitaSemiMqMin}{datiGrano.densitaSemiMqMin === datiGrano.densitaSemiMqMax ? "" : `–${datiGrano.densitaSemiMqMax}`} semi/m² · dose convertita con peso di 1.000 semi di {datiGrano.pesoMilleSemiG} g.
+                </p>
+              ) : (
                 <p className="text-xs text-stone-400">
                   {datiVarieta.categoria} · azoto consigliato {datiVarieta.azotoMin}–{datiVarieta.azotoMax} kg/ha · resa max {datiVarieta.resaMax} t/ha
                 </p>
               )}
             </div>
             <div className="col-span-2 flex flex-col gap-1">
-              <label className="text-sm font-semibold text-stone-700">Piante / semi per ettaro</label>
+              <label className="text-sm font-semibold text-stone-700">{isGranoDuro ? "Densità di semina" : "Piante / semi per ettaro"}</label>
               <div className="grid grid-cols-[1fr_9rem] gap-2">
                 <input
                   type="number"
-                  aria-label="Piante o semi per ettaro"
+                  aria-label={isGranoDuro ? "Densità di semina" : "Piante o semi per ettaro"}
                   value={densitaValore}
-                  min={densitaUnita === "piante/ha" ? 1000 : 0.0001}
-                  step={densitaUnita === "piante/ha" ? 100 : 0.0001}
+                  min={densitaUnita === "kg/ha" ? 0.1 : 1000}
+                  step={densitaUnita === "kg/ha" ? 0.1 : 100}
                   onChange={(event) => {
                     setDensitaValore(parseFloat(event.target.value) || 0);
                     setErrors((current) => ({ ...current, densita: "" }));
                   }}
                   className={`${inputCls} ${errors.densita ? "border-red-400 focus:ring-red-400" : ""}`}
                 />
-                <select aria-label="Unità piante o semi per ettaro" value={densitaUnita} onChange={(event) => cambiaDensitaUnita(event.target.value as DensitaUnita)} className={inputCls}>
-                  <option value="piante/ha">piante/ha</option>
+                <select aria-label="Unità densità" value={densitaUnita} onChange={(event) => cambiaDensitaUnita(event.target.value as DensitaUnita)} className={inputCls}>
+                  {isGranoDuro ? <option value="semi/ha">semi/ha</option> : <option value="piante/ha">piante/ha</option>}
                   <option value="kg/ha">kg seme/ha</option>
                 </select>
               </div>
               {errors.densita ? (
                 <p className="text-xs text-red-600">{errors.densita}</p>
               ) : (
-                <p className="text-xs text-stone-400">
-                  Equivalente aziendale: {Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha · riferimento: {datiVarieta.densitaPianteDefault.toLocaleString("it-IT")} piante/ha · conversione: {Math.round(datiVarieta.densitaPianteDefault / datiVarieta.kgSemiDefault).toLocaleString("it-IT")} piante/kg · coefficiente densità azoto: ×{densita.fattoreAzoto.toFixed(2)}
-                </p>
+                isGranoDuro ? (
+                  <p className={densitaGrano.fuoriRange ? "text-xs font-medium text-amber-700" : "text-xs text-stone-500"}>
+                    Equivalente: {Math.round(densitaGrano.semiHaEquivalenti).toLocaleString("it-IT")} semi/ha ({densitaGrano.semiMqEquivalenti.toFixed(0)} semi/m²) · range disciplinare: {datiGrano.densitaSemiMqMin}–{datiGrano.densitaSemiMqMax} semi/m² · coefficiente densità N: ×{densitaGrano.fattoreAzoto.toFixed(2)}
+                    {densitaGrano.fuoriRange ? " · Fuori dal range varietale: verifica la dose di semina." : ""}
+                  </p>
+                ) : (
+                  <p className="text-xs text-stone-400">
+                    Equivalente aziendale: {Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha · riferimento: {datiVarieta.densitaPianteDefault.toLocaleString("it-IT")} piante/ha · conversione: {Math.round(datiVarieta.densitaPianteDefault / datiVarieta.kgSemiDefault).toLocaleString("it-IT")} piante/kg · coefficiente densità azoto: ×{densita.fattoreAzoto.toFixed(2)}
+                  </p>
+                )
               )}
             </div>
-            <div className="col-span-2 rounded-xl border border-green-200 bg-green-50/60 p-4 space-y-3">
+            {!isGranoDuro && <div className="col-span-2 rounded-xl border border-green-200 bg-green-50/60 p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-bold text-green-900">Parametri aziendali confermati</h3>
@@ -964,8 +1142,8 @@ export default function App() {
                 Conversione confermata: <strong>{Math.round(riferimentoAziendale.densitaPianteHa / riferimentoAziendale.kgSemiHa).toLocaleString("it-IT")} piante per kg di seme</strong>.
                 Questo rapporto sostituisce il valore generico quando usi kg seme/ha.
               </p>
-            </div>
-            <div className="col-span-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
+            </div>}
+            {!isGranoDuro && <div className="col-span-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
               <details>
                 <summary className="cursor-pointer text-sm font-bold text-stone-700">
                   Vedi i riferimenti aziendali di tutte le varietà
@@ -1002,47 +1180,54 @@ export default function App() {
                   La riga evidenziata è la varietà in uso. Aggiorna i due valori sopra quando l’azienda conferma una nuova densità o dose di seme.
                 </p>
               </details>
-            </div>
+            </div>}
             <NumberInput
-              label="Resa Desiderata (t/ha)"
+              label={isGranoDuro ? "Resa desiderata (q/ha)" : "Resa Desiderata (t/ha)"}
               value={resa}
               onChange={setResa}
-              step={0.1}
-              min={0.1}
+              step={isGranoDuro ? 1 : 0.1}
+              min={isGranoDuro ? 1 : 0.1}
               warning={
-                datiVarieta && resa > datiVarieta.resaMax
+                !isGranoDuro && resa > datiVarieta.resaMax
                   ? `Supera il limite massimo di ${datiVarieta.resaMax} t/ha per questa varietà`
+                  : isGranoDuro && (resa < 40 || resa > 60)
+                  ? "La tabella disciplinare riporta riferimenti tra 40 e 60 q/ha; il calcolo resta lineare a 3 kg N/q."
                   : undefined
               }
-              hint={datiVarieta ? `Range consigliato: ${datiVarieta.resaMin}–${datiVarieta.resaMax} t/ha` : undefined}
+              hint={isGranoDuro ? "Tabella disciplinare: 40 q/ha = 120, 50 = 150, 60 = 180 kg N/ha." : `Range consigliato: ${datiVarieta.resaMin}–${datiVarieta.resaMax} t/ha`}
             />
             <div className="flex flex-col gap-2">
               <NumberInput
-                label="Kg Azoto Totale"
-                value={azotoTot}
+                label={isGranoDuro ? "Fabbisogno azoto totale calcolato" : "Kg Azoto Totale"}
+                value={isGranoDuro ? fabbisognoN : azotoTot}
                 onChange={setAzotoTot}
                 min={0}
+                readonly={isGranoDuro}
                 warning={
-                  azotoAsportazioni !== null
+                  isGranoDuro
+                    ? undefined
+                    : azotoAsportazioni !== null
                     ? `Asportazioni corrette per densità: ${fabbisognoNBase} × ${densita.fattoreAzoto.toFixed(2)} = ${azotoAsportazioni} kg/ha`
                     : undefined
                 }
                 hint={
-                  azotoAsportazioni === null && datiVarieta
+                  isGranoDuro
+                    ? `Fabbisogno: ${fabbisognoNBase} kg N/ha × densità ${densitaGrano.fattoreAzoto.toFixed(2)} = ${fabbisognoN} kg N/ha`
+                    : azotoAsportazioni === null && datiVarieta
                     ? `Consiglio: ${azotoConsigliato} kg N/ha · resa ${resa.toFixed(1)} × ${datiVarieta.kgNPerTon} kg N/t × densità ${densita.fattoreAzoto.toFixed(2)}`
                     : undefined
                 }
               />
-              <button
+              {!isGranoDuro && <button
                 type="button"
                 onClick={() => setAzotoTot(azotoConsigliato)}
                 className="w-full rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-800 transition-colors hover:bg-green-100"
               >
                 Usa azoto consigliato: {azotoConsigliato} kg/ha
-              </button>
+              </button>}
             </div>
 
-            <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+            {!isGranoDuro && <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
               <div>
                 <h3 className="text-sm font-bold text-amber-900">Confronto correttivo densità · campagna raccolta</h3>
                 <p className="text-xs text-amber-800 mt-0.5">
@@ -1137,21 +1322,34 @@ export default function App() {
                   </>
                 )}
               </div>
-            </div>
+            </div>}
 
-            {/* Data Trapianto — occupa tutta la larghezza */}
+            {isGranoDuro && (
+              <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950 space-y-2">
+                <p className="font-bold">Correttivo densità dichiarato</p>
+                <p>
+                  Il fabbisogno base segue la tabella del disciplinare (3 kg N per quintale atteso). La densità modifica questo valore solo in modo limitato:
+                  coefficiente da ×0,90 a ×1,10, calcolato rispetto a {datiGrano.densitaSemiMqDefault} semi/m².
+                </p>
+                <p className="font-medium">
+                  Restano necessarie le valutazioni tecniche su analisi del suolo, coltura precedente, piogge e azoto residuo: l’app non applica correzioni automatiche per questi fattori.
+                </p>
+              </div>
+            )}
+
+            {/* Data trapianto / semina — occupa tutta la larghezza */}
             <div className="col-span-2">
               <DateInput
-                label="Data Trapianto"
+                label={isGranoDuro ? "Data semina" : "Data Trapianto"}
                 value={dataTrapianto}
                 onChange={(value) => { setDataTrapianto(value); setErrors((current) => ({ ...current, dataTrapianto: "" })); }}
-                hint={dataTrapianto ? undefined : "Opzionale — se inserita calcola i giorni in automatico"}
-                warning={errors.dataTrapianto || (dataTrapiantoFutura ? "Non può essere successiva alla data di rilevamento." : undefined)}
+                hint={dataTrapianto ? undefined : isGranoDuro ? "Obbligatoria — calcola automaticamente i giorni dalla semina (DAS)" : "Opzionale — se inserita calcola i giorni in automatico"}
+                warning={errors.dataTrapianto || (dataTrapiantoFutura ? `Non può essere successiva alla data di rilevamento.` : undefined)}
               />
             </div>
 
             {/* Età Piantina al Trapianto */}
-            <div className="col-span-2 flex flex-col gap-2">
+            {!isGranoDuro && <div className="col-span-2 flex flex-col gap-2">
               <label className="text-sm font-semibold text-stone-700">
                 Età Piantina al Trapianto
               </label>
@@ -1184,19 +1382,23 @@ export default function App() {
                   </label>
                 ))}
               </div>
-            </div>
+            </div>}
 
-            {/* Giorni dal Trapianto — auto o manuale */}
+            {/* Giorni dal trapianto / DAS — auto o manuale */}
             <div className="col-span-2 sm:col-span-1">
               <NumberInput
-                label="Giorni dal Trapianto"
+                label={isGranoDuro ? "DAS · giorni dalla semina" : "Giorni dal Trapianto"}
                 value={giorni}
                 onChange={setGiorniManuale}
-                min={1}
-                max={120}
+                min={isGranoDuro ? 0 : 1}
+                max={isGranoDuro ? 220 : 120}
                 readonly={autoCalcolato}
                 hint={
-                  autoCalcolato
+                  isGranoDuro
+                    ? autoCalcolato
+                      ? `Calcolato dalla data di semina · fase attuale: ${faseGrano.label}`
+                      : `Inserisci la data di semina per calcolare automaticamente la fase · fase stimata: ${faseGrano.label}`
+                    : autoCalcolato
                     ? `Calcolato dalla data trapianto · equivalenti: ${risultati.giorniFenologici} gg · NDVI ref: ${risultati.ottimale.toFixed(3)}`
                     : `Giorni fenologici equivalenti: ${risultati.giorniFenologici} · NDVI ref: ${risultati.ottimale.toFixed(3)}`
                 }
@@ -1205,17 +1407,17 @@ export default function App() {
           </div>
 
           {/* — Letture NDVI — */}
-          <h2 className="text-lg font-bold text-green-900 border-b border-stone-100 pb-2">Letture NDVI</h2>
+          {!isGranoDuro && <><h2 className="text-lg font-bold text-green-900 border-b border-stone-100 pb-2">Letture NDVI</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <NumberInput label="Misura 1" value={n1} onChange={setN1} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 2" value={n2} onChange={setN2} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 3" value={n3} onChange={setN3} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 4" value={n4} onChange={setN4} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 5" value={n5} onChange={setN5} step={0.01} min={0} max={1} />
-          </div>
+          </div></>}
 
           {/* — Risultati — */}
-          <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-3">
+          {!isGranoDuro ? <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-3">
             <h2 className="text-base font-bold text-green-900 mb-1">Risultati</h2>
             <div className="text-xs text-green-800 bg-green-100 rounded-lg px-3 py-2 space-y-1">
               <div className="font-semibold">📐 {ndviOttimaleNote}</div>
@@ -1279,7 +1481,40 @@ export default function App() {
                 <span className="text-base font-semibold text-stone-500">kg/ha</span>
               </span>
             </div>
-          </div>
+          </div> : (
+            <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-green-900">Piano azoto grano duro</h2>
+                <p className="text-xs text-green-800 mt-1">Fabbisogno da tabella disciplinare e frazionamento per la fase fenologica corrente.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <ResultRow label="Fabbisogno base" value={`${risultatiGrano.fabbisognoBase} kg N/ha`} />
+                <ResultRow label="Fabbisogno corretto" value={`${risultatiGrano.fabbisognoN} kg N/ha`} highlight />
+                <ResultRow label="DAS" value={`${giorni} giorni`} />
+                <ResultRow label="Fase attuale" value={risultatiGrano.fase.label} highlight />
+              </div>
+              <div className="rounded-lg border border-green-200 bg-white p-3 text-xs text-stone-700 space-y-1">
+                <p className="font-semibold text-green-900">Quota consigliata ora: {risultatiGrano.quotaAzoto} kg N/ha</p>
+                <p>
+                  Schema disciplinare per {risultatiGrano.fase.label}: {risultatiGrano.fase.azotoMin}–{risultatiGrano.fase.azotoMax} kg N/ha.
+                  La quota proposta è scalata in proporzione al fabbisogno totale calcolato e limitata al relativo intervallo disciplinare.
+                </p>
+                {(risultatiGrano.fabbisognoN < 127 || risultatiGrano.fabbisognoN > 176) && (
+                  <p className="font-medium text-amber-800">
+                    Il totale calcolato è fuori dalla somma degli intervalli di riferimento (127–176 kg N/ha): conferma il frazionamento con il tecnico aziendale.
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {FASI_GRANO.map((fase) => {
+                  const attiva = fase.label === risultatiGrano.fase.label;
+                  return <div key={fase.label} className={`rounded-lg border p-2 ${attiva ? "border-green-600 bg-green-100 text-green-950 font-semibold" : "border-stone-200 bg-white text-stone-600"}`}>
+                    {fase.label} · {fase.azotoMin}–{fase.azotoMax} kg N/ha
+                  </div>;
+                })}
+              </div>
+            </div>
+          )}
 
           <button onClick={salvaOsservazione}
             className="w-full bg-green-800 hover:bg-green-900 active:bg-green-950 text-white font-bold py-3.5 rounded-xl text-base transition-colors">
@@ -1318,17 +1553,20 @@ export default function App() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse min-w-[1000px]">
+              <table className="w-full text-sm border-collapse min-w-[1250px]">
                 <thead>
                   <tr className="bg-green-800 text-white">
                     <th className="px-2 py-2 text-center rounded-tl-lg">ID</th>
+                    <th className="px-2 py-2 text-center">Coltura</th>
+                    <th className="px-2 py-2 text-center">Varietà</th>
                     <th className="px-2 py-2 text-center">Rilev.</th>
-                    <th className="px-2 py-2 text-center">Trapianto</th>
+                    <th className="px-2 py-2 text-center">Semina / trapianto</th>
                     <th className="px-2 py-2 text-center">Cliente</th>
                     <th className="px-2 py-2 text-center">Appezz.</th>
-                    <th className="px-2 py-2 text-center">Gg</th>
+                    <th className="px-2 py-2 text-center">DAS / gg</th>
+                    <th className="px-2 py-2 text-center">Fase</th>
                     <th className="px-2 py-2 text-center">Età Piant.</th>
-                    <th className="px-2 py-2 text-center">Piante/ha</th>
+                    <th className="px-2 py-2 text-center">Densità</th>
                     <th className="px-2 py-2 text-center">Media</th>
                     <th className="px-2 py-2 text-center">CV NDVI</th>
                     <th className="px-2 py-2 text-center">Ottimale</th>
@@ -1340,53 +1578,60 @@ export default function App() {
                 </thead>
                 <tbody>
                   {loadingOss ? (
-                    <tr><td colSpan={15} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
+                    <tr><td colSpan={18} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
                   ) : osservazioni.map((obs, i) => {
                     const stats = statisticheNdvi([obs.n1, obs.n2, obs.n3, obs.n4, obs.n5]);
+                    const isObsGrano = obs.coltura === "grano duro";
                     return (
                     <tr key={obs.id} className={i % 2 === 0 ? "bg-stone-50" : "bg-white"}>
                       <td className="px-2 py-2 text-center font-mono font-semibold text-green-800">{obs.id}</td>
+                      <td className="px-2 py-2 text-center capitalize">{obs.coltura ?? "tabacco"}</td>
+                      <td className="px-2 py-2 text-center whitespace-nowrap">{obs.varieta}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap">{obs.data}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap text-stone-400">
-                        {obs.dataTrapianto || "—"}
+                        {(isObsGrano ? obs.dataSemina : obs.dataTrapianto) || "—"}
                       </td>
                       <td className="px-2 py-2 text-center">{obs.cliente}</td>
                       <td className="px-2 py-2 text-center">{obs.appezzamento}</td>
                       <td className="px-2 py-2 text-center">{obs.giorni}</td>
+                      <td className="px-2 py-2 text-center text-xs whitespace-nowrap">{obs.faseFenologica || "—"}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        {isObsGrano ? "—" : <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
                           (obs.etaPiantina ?? "standard") === "extra"
                             ? "bg-purple-100 text-purple-700"
                             : (obs.etaPiantina ?? "standard") === "avanzata"
                             ? "bg-amber-100 text-amber-700"
                             : "bg-stone-100 text-stone-600"
-                        }`}>
-                          {ETA_PIANTINA_LABELS[obs.etaPiantina ?? "standard"]?.short ?? "Std"}
-                        </span>
+                        }`}>{ETA_PIANTINA_LABELS[obs.etaPiantina ?? "standard"]?.short ?? "Std"}</span>}
                       </td>
                       <td className="px-2 py-2 text-center text-xs font-mono text-stone-600">
-                        {obs.pianteHaEquivalenti != null
-                          ? Math.round(obs.pianteHaEquivalenti).toLocaleString("it-IT")
+                        {obs.densitaValore != null
+                          ? <>
+                              {Number(obs.densitaValore).toLocaleString("it-IT")} {obs.densitaUnita ?? ""}
+                              {isObsGrano && obs.pianteHaEquivalenti != null && obs.densitaUnita !== "semi/ha"
+                                ? <><br /><span className="text-stone-400">≈ {Math.round(obs.pianteHaEquivalenti).toLocaleString("it-IT")} semi/ha</span></>
+                                : null}
+                            </>
                           : "—"}
                       </td>
                       <td className="px-2 py-2 text-center font-semibold bg-green-50 text-green-800">
-                        {obs.media.toFixed(3)}
+                        {isObsGrano ? `${obs.azotoTotale ?? "—"} N` : obs.media.toFixed(3)}
                       </td>
                       <td className={`px-2 py-2 text-center font-mono text-xs ${
-                        stats.coefficienteVariazione <= 8
+                        isObsGrano || stats.coefficienteVariazione <= 8
                           ? "text-green-700"
                           : stats.coefficienteVariazione <= 15
                           ? "text-amber-700"
                           : "text-red-700"
                       }`}>
-                        {stats.coefficienteVariazione.toFixed(1)}%
+                        {isObsGrano ? "—" : `${stats.coefficienteVariazione.toFixed(1)}%`}
                       </td>
-                      <td className="px-2 py-2 text-center text-stone-500">{obs.ottimale.toFixed(3)}</td>
-                      <td className="px-2 py-2 text-center">{obs.discostamento.toFixed(3)}</td>
+                      <td className="px-2 py-2 text-center text-stone-500">{isObsGrano ? "—" : obs.ottimale.toFixed(3)}</td>
+                      <td className="px-2 py-2 text-center">{isObsGrano ? "—" : obs.discostamento.toFixed(3)}</td>
                       <td className={`px-2 py-2 text-center font-bold ${
                         obs.dose === 0 ? "text-green-700 bg-green-50" : "text-red-700 bg-red-50"
                       }`}>
-                        {obs.dose.toFixed(1)}
+                        {(isObsGrano ? obs.quotaAzoto ?? obs.dose : obs.dose).toFixed(1)}
                       </td>
                       <td className="px-2 py-2 text-center text-xs text-stone-400 font-mono whitespace-nowrap">
                         {obs.lat != null && obs.lng != null ? (
@@ -1420,7 +1665,9 @@ export default function App() {
         )}
 
         <p className="text-center text-xs text-green-700 pb-4">
-          Formula: Dose = (NDVI_ottimale − NDVI_media) × 500 × (resa / 4.5) · Limite max = azoto totale / 2
+          {isGranoDuro
+            ? "Grano duro: fabbisogno = resa attesa (q/ha) × 3 kg N/q, corretto per densità entro ±10% e frazionato per fase."
+            : "Formula: Dose = (NDVI_ottimale − NDVI_media) × 500 × (resa / 4.5) · Limite max = azoto totale / 2"}
         </p>
 
         </>}
