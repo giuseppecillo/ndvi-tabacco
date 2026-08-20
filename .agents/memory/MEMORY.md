@@ -5,3 +5,4 @@
 - [Observation GPS capture](observation-gps-capture.md) — Location enrichment must be best-effort and never delay persistence of a field observation.
 - [Campaign calibration safeguards](campaign-calibration-safeguards.md) — Nitrogen comparisons require real, complete closed-campaign data; generic defaults must never yield a verdict.
 - [Grano duro nitrogen planning](grano-duro-nitrogen-planning.md) — Convert seed rates with PMG and constrain scaled phase advice to each disciplinary range.
+- [Grain dose API integrity](grain-dose-api-integrity.md) — Recalculate the grain point dose on the API; never trust client-side BBCH, NDVI, or dose values.

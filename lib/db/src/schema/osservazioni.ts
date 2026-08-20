@@ -35,5 +35,6 @@ export const osservazioniTable = pgTable("osservazioni", {
   bbch: text("bbch"),
   faseFonte: text("fase_fonte"),
   azotoTotale: numeric("azoto_totale"),
+  azotoGiaDistribuito: numeric("azoto_gia_distribuito"),
   quotaAzoto: numeric("quota_azoto"),
 });

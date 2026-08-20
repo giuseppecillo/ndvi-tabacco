@@ -86,9 +86,29 @@ export type FinestraDasLocale = {
 // Non è una tabella del disciplinare e deve essere confermato dall'azienda.
 export const FINESTRE_DAS_LOCALI_TEMPLATE: FinestraDasLocale[] = [
   { fase: "Semina / emergenza", dasMin: 0, dasMax: 20 },
-  { fase: "Accestimento", dasMin: 21, dasMax: 120 },
-  { fase: "Inizio levata", dasMin: 121, dasMax: 160 },
-  { fase: "Foglia a bandiera", dasMin: 161, dasMax: 210 },
+  { fase: "Accestimento", dasMin: 21, dasMax: 135 },
+  { fase: "Inizio levata", dasMin: 136, dasMax: 165 },
+  { fase: "Foglia a bandiera", dasMin: 166, dasMax: 190 },
+];
+
+// Calendario fenologico locale di riferimento ricavato dalla tavola allegata:
+// semina 30 ottobre e maturazione cerosa/fisiologica attorno al 7 luglio.
+// I DAS sono una stima per semina autunnale, non sostituiscono il BBCH osservato.
+export const PROFILO_FENOLOGICO_GRANO: Array<{
+  bbch: string;
+  label: string;
+  dasMin: number;
+  dasMax: number;
+  quotaAzotoPrevista: boolean;
+}> = [
+  { bbch: "00–09", label: "Semina / emergenza", dasMin: 0, dasMax: 20, quotaAzotoPrevista: true },
+  { bbch: "10–20", label: "Sviluppo fogliare", dasMin: 21, dasMax: 50, quotaAzotoPrevista: false },
+  { bbch: "21–29", label: "Accestimento", dasMin: 51, dasMax: 135, quotaAzotoPrevista: true },
+  { bbch: "30–32", label: "Inizio levata", dasMin: 136, dasMax: 165, quotaAzotoPrevista: true },
+  { bbch: "37–39", label: "Foglia a bandiera", dasMin: 166, dasMax: 190, quotaAzotoPrevista: true },
+  { bbch: "51–59", label: "Spigatura", dasMin: 191, dasMax: 205, quotaAzotoPrevista: false },
+  { bbch: "61–69", label: "Fioritura", dasMin: 206, dasMax: 220, quotaAzotoPrevista: false },
+  { bbch: "71–89", label: "Riempimento / maturazione cerosa", dasMin: 221, dasMax: 250, quotaAzotoPrevista: false },
 ];
 
 export function granoSemiMqDaKgHa(kgHa: number, dati: GranoVarietaDati): number {
@@ -176,6 +196,79 @@ export function calcolaQuotaNGrano(
   const quotaRiferimento = (fase.azotoMin + fase.azotoMax) / 2;
   const quotaScalata = Math.round(fabbisognoN * quotaRiferimento / sommaRiferimenti);
   return Math.max(fase.azotoMin, Math.min(fase.azotoMax, quotaScalata));
+}
+
+const NDVI_GRANO_CURVA: Array<{ das: number; ottimale: number }> = [
+  { das: 0, ottimale: 0.20 },
+  { das: 20, ottimale: 0.34 },
+  { das: 50, ottimale: 0.55 },
+  { das: 100, ottimale: 0.70 },
+  { das: 135, ottimale: 0.76 },
+  { das: 165, ottimale: 0.82 },
+  { das: 190, ottimale: 0.83 },
+  { das: 205, ottimale: 0.80 },
+  { das: 220, ottimale: 0.72 },
+  { das: 250, ottimale: 0.42 },
+];
+
+export function ndviOttimaleGrano(das: number): number {
+  const first = NDVI_GRANO_CURVA[0];
+  const last = NDVI_GRANO_CURVA[NDVI_GRANO_CURVA.length - 1];
+  if (das <= first.das) return first.ottimale;
+  if (das >= last.das) return last.ottimale;
+
+  for (let i = 1; i < NDVI_GRANO_CURVA.length; i++) {
+    const right = NDVI_GRANO_CURVA[i];
+    if (das <= right.das) {
+      const left = NDVI_GRANO_CURVA[i - 1];
+      const progress = (das - left.das) / (right.das - left.das);
+      return left.ottimale + (right.ottimale - left.ottimale) * progress;
+    }
+  }
+  return last.ottimale;
+}
+
+export function calcolaPianoNGrano(input: {
+  fabbisognoN: number;
+  azotoGiaDistribuito: number;
+  fase: FaseGrano | null;
+  das: number;
+  lettureNdvi: number[];
+}): NdviStats & {
+  ndviOttimale: number;
+  scostamentoNdvi: number;
+  fattoreNdvi: number;
+  quotaBase: number;
+  residuoPiano: number;
+  quotaProposta: number;
+  verificaCampo: boolean;
+} {
+  const stats = statisticheNdvi(input.lettureNdvi);
+  const ndviOttimale = ndviOttimaleGrano(input.das);
+  const scostamentoNdvi = ndviOttimale - stats.media;
+  const deficitRelativo = ndviOttimale > 0 ? scostamentoNdvi / ndviOttimale : 0;
+  // L'NDVI regola una quota già agronomicamente determinata: non è una
+  // conversione diretta NDVI → kg N e resta volutamente limitata a ±15%.
+  const fattoreNdvi = Math.max(0.85, Math.min(1.15, 1 + deficitRelativo * 0.5));
+  const quotaBase = input.fase ? calcolaQuotaNGrano(input.fabbisognoN, input.fase) : 0;
+  const residuoPiano = Math.max(0, Math.round(input.fabbisognoN - input.azotoGiaDistribuito));
+  const quotaModulata = Math.round(quotaBase * fattoreNdvi);
+  const quotaNellaFase = input.fase
+    ? Math.max(input.fase.azotoMin, Math.min(input.fase.azotoMax, quotaModulata))
+    : 0;
+  const quotaProposta = stats.valoriValidi && input.fase
+    ? Math.min(residuoPiano, quotaNellaFase)
+    : 0;
+  return {
+    ...stats,
+    ndviOttimale,
+    scostamentoNdvi,
+    fattoreNdvi,
+    quotaBase,
+    residuoPiano,
+    quotaProposta,
+    verificaCampo: !stats.valoriValidi || stats.coefficienteVariazione > 15 || deficitRelativo > 0.12,
+  };
 }
 
 export type VarietaDati = {

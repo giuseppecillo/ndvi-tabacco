@@ -9,6 +9,7 @@ import {
   calcolaDensita,
   calcolaDensitaGrano,
   calcolaFabbisognoNGrano,
+  calcolaPianoNGrano,
   calcolaQuotaNGrano,
   ETA_GIORNI_EQUIVALENTI,
   FINESTRE_DAS_LOCALI_TEMPLATE,
@@ -17,6 +18,7 @@ import {
   faseGranoDaBbch,
   GRANO_DURO_DB,
   NDVI_FASI,
+  PROFILO_FENOLOGICO_GRANO,
   granoKgHaDaSemiMq,
   granoSemiMqDaKgHa,
   ndviOttimale,
@@ -37,6 +39,7 @@ export {
   calcolaDensita,
   calcolaDensitaGrano,
   calcolaFabbisognoNGrano,
+  calcolaPianoNGrano,
   calcolaQuotaNGrano,
   faseGranoConfermataDaBbch,
   faseGranoDaBbch,
@@ -60,15 +63,6 @@ export { FASI_GRANO, GRANO_DURO_DB } from "./calculations";
 export type ParametriAziendali = {
   densitaPianteHa: number;
   kgSemiHa: number;
-};
-
-export type CampagnaCalibrazione = {
-  nome: string;
-  semeKgHa: number;
-  attecchimento: number;
-  pianteHa: number;
-  resaRaccolta: number;
-  azotoDistribuito: number;
 };
 
 export const VARIETA_DB: Record<string, VarietaDati> = {
@@ -189,13 +183,13 @@ export type Observation = {
   discostamento: number;
   dose: number;
   azotoTotale?: number | null;
+  azotoGiaDistribuito?: number | null;
   quotaAzoto?: number | null;
   lat: number | null;
   lng: number | null;
 };
 
 const PARAMETRI_AZIENDALI_STORAGE_KEY = "ndvi-tabacco-parametri-aziendali";
-const CAMPAGNE_AZIENDALI_STORAGE_KEY = "ndvi-tabacco-campagne-aziendali";
 const FINESTRE_DAS_GRANO_STORAGE_KEY = "ndvi-tabacco-finestre-das-grano";
 
 function caricaParametriAziendali(): Record<string, ParametriAziendali> {
@@ -223,45 +217,6 @@ function caricaParametriAziendali(): Record<string, ParametriAziendali> {
     );
   } catch {
     return PARAMETRI_AZIENDALI_DEFAULT;
-  }
-}
-
-function creaCampagnaRiferimento(
-  _dati: VarietaDati,
-  _riferimento: ParametriAziendali
-): CampagnaCalibrazione {
-  return {
-    nome: "",
-    semeKgHa: 0,
-    attecchimento: 0,
-    pianteHa: 0,
-    resaRaccolta: 0,
-    azotoDistribuito: 0,
-  };
-}
-
-function caricaCampagneAziendali(): Record<string, CampagnaCalibrazione> {
-  if (typeof window === "undefined") return {};
-  try {
-    const salvate = JSON.parse(window.localStorage.getItem(CAMPAGNE_AZIENDALI_STORAGE_KEY) ?? "null");
-    if (!salvate || typeof salvate !== "object") return {};
-    const campagne: Record<string, CampagnaCalibrazione> = {};
-    Object.entries(salvate).forEach(([label, valore]) => {
-      if (!VARIETA_DB[label] || !valore || typeof valore !== "object") return;
-      const campagna = valore as Partial<CampagnaCalibrazione>;
-      const numero = (input: unknown) => Number.isFinite(Number(input)) ? Number(input) : 0;
-      campagne[label] = {
-        nome: typeof campagna.nome === "string" ? campagna.nome : "",
-        semeKgHa: numero(campagna.semeKgHa),
-        attecchimento: numero(campagna.attecchimento),
-        pianteHa: numero(campagna.pianteHa),
-        resaRaccolta: numero(campagna.resaRaccolta),
-        azotoDistribuito: numero(campagna.azotoDistribuito),
-      };
-    });
-    return campagne;
-  } catch {
-    return {};
   }
 }
 
@@ -380,6 +335,7 @@ export default function App() {
   const [giorniManuale, setGiorniManuale] = useState(31);
   const [bbchGrano, setBbchGrano] = useState("");
   const [bbchGranoConfermato, setBbchGranoConfermato] = useState(false);
+  const [azotoGiaDistribuito, setAzotoGiaDistribuito] = useState(0);
   const [finestreDasGrano, setFinestreDasGrano] = useState<FinestraDasLocale[]>(caricaFinestreDasGrano);
   const [n1, setN1] = useState(0.42);
   const [n2, setN2] = useState(0.38);
@@ -391,9 +347,6 @@ export default function App() {
   const [loadingOss, setLoadingOss] = useState(true);
   const [parametriAziendali, setParametriAziendali] = useState<Record<string, ParametriAziendali>>(
     caricaParametriAziendali
-  );
-  const [campagne, setCampagne] = useState<Record<string, CampagnaCalibrazione>>(
-    caricaCampagneAziendali
   );
   const isGranoDuro = coltura === "grano duro";
   const datiGrano = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
@@ -407,7 +360,6 @@ export default function App() {
     densitaPianteDefault: riferimentoAziendale.densitaPianteHa,
     kgSemiDefault: riferimentoAziendale.kgSemiHa,
   };
-  const campagna = campagne[varieta] ?? creaCampagnaRiferimento(datiBaseVarieta, riferimentoAziendale);
 
   useEffect(() => {
     fetch("/api/osservazioni")
@@ -427,14 +379,6 @@ export default function App() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(CAMPAGNE_AZIENDALI_STORAGE_KEY, JSON.stringify(campagne));
-    } catch {
-      // Il confronto resta disponibile nella sessione anche se lo storage è disabilitato.
-    }
-  }, [campagne]);
-
-  useEffect(() => {
-    try {
       window.localStorage.setItem(FINESTRE_DAS_GRANO_STORAGE_KEY, JSON.stringify(finestreDasGrano));
     } catch {
       // Le finestre restano utilizzabili nella sessione se lo storage è disabilitato.
@@ -442,8 +386,6 @@ export default function App() {
   }, [finestreDasGrano]);
 
   // Auto-fill resa, azoto e densità quando cambia la varietà.
-  // I dati delle campagne restano separati per varietà e non vengono mai
-  // sovrascritti da una modifica ai parametri di riferimento.
   useEffect(() => {
     if (isGranoDuro) {
       const dati = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
@@ -489,38 +431,6 @@ export default function App() {
     ? fabbisognoN
     : Math.min(datiVarieta.azotoMax, Math.max(datiVarieta.azotoMin, fabbisognoN));
   const azotoAsportazioni = !isGranoDuro && resa > datiVarieta.resaMax ? azotoConsigliato : null;
-  const campagnaDensita = useMemo(
-    () => calcolaDensita(campagna.pianteHa, "piante/ha", datiVarieta),
-    [campagna.pianteHa, datiVarieta]
-  );
-  const campagnaFabbisognoNBase = Math.round(campagna.resaRaccolta * datiVarieta.kgNPerTon);
-  const campagnaFabbisognoN = Math.round(campagnaFabbisognoNBase * campagnaDensita.fattoreAzoto);
-  const campagnaScostamentoN = campagna.azotoDistribuito - campagnaFabbisognoN;
-  const campagnaRapportoN = campagnaFabbisognoN > 0
-    ? campagna.azotoDistribuito / campagnaFabbisognoN
-    : 1;
-  const campagnaStatoN = campagnaRapportoN < 0.85
-    ? "deficit"
-    : campagnaRapportoN > 1.15
-    ? "surplus"
-    : "allineato";
-  const pianteStimateCampagna = (
-    (campagna.semeKgHa / datiVarieta.kgSemiDefault)
-    * datiVarieta.densitaPianteDefault
-    * (campagna.attecchimento / 100)
-  );
-  const scostamentoPianteCampagna = campagna.pianteHa - pianteStimateCampagna;
-  const pianteCoerentiCampagna = pianteStimateCampagna > 0
-    && Math.abs(scostamentoPianteCampagna / pianteStimateCampagna) <= 0.15;
-  const campagnaValida = Boolean(
-    campagna.nome.trim()
-    && Number.isFinite(campagna.semeKgHa) && campagna.semeKgHa > 0
-    && Number.isFinite(campagna.attecchimento) && campagna.attecchimento > 0 && campagna.attecchimento <= 100
-    && Number.isFinite(campagna.pianteHa) && campagna.pianteHa >= 1000
-    && Number.isFinite(campagna.resaRaccolta) && campagna.resaRaccolta > 0
-    && Number.isFinite(campagna.azotoDistribuito) && campagna.azotoDistribuito >= 0
-  );
-
   const aggiornaParametroAziendale = useCallback((
     campo: keyof ParametriAziendali,
     valore: number
@@ -531,15 +441,6 @@ export default function App() {
       [varieta]: { ...correnti[varieta], [campo]: valore },
     }));
   }, [varieta]);
-  const aggiornaCampagna = useCallback((aggiornamento: Partial<CampagnaCalibrazione>) => {
-    setCampagne((correnti) => ({
-      ...correnti,
-      [varieta]: {
-        ...(correnti[varieta] ?? creaCampagnaRiferimento(datiBaseVarieta, riferimentoAziendale)),
-        ...aggiornamento,
-      },
-    }));
-  }, [varieta, datiBaseVarieta, riferimentoAziendale]);
   const aggiornaFinestraDasGrano = useCallback((
     fase: FinestraDasLocale["fase"],
     campo: "dasMin" | "dasMax",
@@ -587,7 +488,13 @@ export default function App() {
   const faseGranoSelezionata = faseGranoDaBbch(bbchGrano);
   const faseGrano = faseGranoConfermataDaBbch(bbchGrano, bbchGranoConfermato);
   const fabbisognoGrano = calcolaFabbisognoNGrano(resa, densitaGrano.fattoreAzoto);
-  const quotaAzotoGrano = faseGrano ? calcolaQuotaNGrano(fabbisognoGrano.corretto, faseGrano) : 0;
+  const pianoNGrano = calcolaPianoNGrano({
+    fabbisognoN: fabbisognoGrano.corretto,
+    azotoGiaDistribuito,
+    fase: faseGrano,
+    das: giorni,
+    lettureNdvi: [n1, n2, n3, n4, n5],
+  });
 
   const risultati = calcola(
     resa, azotoTot, giorni, n1, n2, n3, n4, n5, fabbisognoN, etaPiantina
@@ -596,7 +503,7 @@ export default function App() {
     fase: faseGrano,
     fabbisognoBase: fabbisognoGrano.base,
     fabbisognoN: fabbisognoGrano.corretto,
-    quotaAzoto: quotaAzotoGrano,
+    ...pianoNGrano,
   };
 
   const salvaOsservazione = useCallback(() => {
@@ -615,7 +522,9 @@ export default function App() {
         ? "Conferma il rilievo BBCH in campo prima di salvare."
         : "Seleziona e conferma la fase BBCH rilevata in campo.";
     }
-    if (!isGranoDuro && !risultati.valoriValidi) newErrors.ndvi = "Ogni lettura NDVI deve essere compresa tra 0 e 1.";
+    if (!(isGranoDuro ? risultatiGrano.valoriValidi : risultati.valoriValidi)) {
+      newErrors.ndvi = "Ogni lettura NDVI deve essere compresa tra 0 e 1.";
+    }
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setErrors({});
@@ -641,19 +550,20 @@ export default function App() {
         densitaValore,
         densitaUnita,
         pianteHaEquivalenti: Math.round(isGranoDuro ? densitaGrano.semiHaEquivalenti : densita.pianteHaEquivalenti),
-        n1: isGranoDuro ? 0 : n1,
-        n2: isGranoDuro ? 0 : n2,
-        n3: isGranoDuro ? 0 : n3,
-        n4: isGranoDuro ? 0 : n4,
-        n5: isGranoDuro ? 0 : n5,
+        n1,
+        n2,
+        n3,
+        n4,
+        n5,
         ...(isGranoDuro
           ? {
-              media: 0,
-              ottimale: 0,
-              discostamento: 0,
-              dose: risultatiGrano.quotaAzoto,
+              media: risultatiGrano.media,
+              ottimale: risultatiGrano.ndviOttimale,
+              discostamento: risultatiGrano.scostamentoNdvi,
+              dose: risultatiGrano.quotaProposta,
               azotoTotale: risultatiGrano.fabbisognoN,
-              quotaAzoto: risultatiGrano.quotaAzoto,
+              azotoGiaDistribuito,
+              quotaAzoto: risultatiGrano.quotaProposta,
             }
           : risultati),
         lat,
@@ -700,7 +610,7 @@ export default function App() {
     } else {
       doSave(null, null);
     }
-  }, [obsId, coltura, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, densitaGrano.semiHaEquivalenti, n1, n2, n3, n4, n5, risultati, risultatiGrano, dataTrapiantoFutura, isGranoDuro, bbchGrano, bbchGranoConfermato, faseGrano, faseGranoSelezionata]);
+  }, [obsId, coltura, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, densitaGrano.semiHaEquivalenti, n1, n2, n3, n4, n5, risultati, risultatiGrano, azotoGiaDistribuito, dataTrapiantoFutura, isGranoDuro, bbchGrano, bbchGranoConfermato, faseGrano, faseGranoSelezionata]);
 
   const eliminaOsservazione = useCallback((id: string) => {
     fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -1083,102 +993,14 @@ export default function App() {
               </button>}
             </div>
 
-            {!isGranoDuro && <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
-              <div>
-                <h3 className="text-sm font-bold text-amber-900">Confronto correttivo densità · campagna raccolta</h3>
-                <p className="text-xs text-amber-800 mt-0.5">
-                  Inserisci almeno una campagna chiusa con seme, attecchimento, piante rilevate, resa raccolta e azoto realmente distribuito.
-                  Il confronto separa il correttivo di densità dalle asportazioni legate alla resa.
-                </p>
-              </div>
-              <TextInput
-                label="Nome o anno campagna"
-                value={campagna.nome}
-                onChange={(value) => aggiornaCampagna({ nome: value })}
-                placeholder="es. Campagna 2025 · Appezzamento Nord"
-              />
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <NumberInput
-                  label="Seme usato (kg/ha)"
-                  value={campagna.semeKgHa}
-                  onChange={(value) => aggiornaCampagna({ semeKgHa: value })}
-                  step={0.0001}
-                  min={0.0001}
-                />
-                <NumberInput
-                  label="Attecchimento (%)"
-                  value={campagna.attecchimento}
-                  onChange={(value) => aggiornaCampagna({ attecchimento: value })}
-                  step={1}
-                  min={0}
-                  max={100}
-                />
-                <NumberInput
-                  label="Piante rilevate (piante/ha)"
-                  value={campagna.pianteHa}
-                  onChange={(value) => aggiornaCampagna({ pianteHa: value })}
-                  step={100}
-                  min={1000}
-                />
-                <NumberInput
-                  label="Resa raccolta (t/ha)"
-                  value={campagna.resaRaccolta}
-                  onChange={(value) => aggiornaCampagna({ resaRaccolta: value })}
-                  step={0.1}
-                  min={0.1}
-                />
-                <NumberInput
-                  label="Azoto distribuito (kg/ha)"
-                  value={campagna.azotoDistribuito}
-                  onChange={(value) => aggiornaCampagna({ azotoDistribuito: value })}
-                  step={1}
-                  min={0}
-                />
-              </div>
-              <div className="rounded-lg border border-amber-200 bg-white px-3 py-3 text-xs text-stone-700 space-y-1.5">
-                {!campagnaValida ? (
-                  <p className="font-semibold text-amber-800">
-                    Completa nome campagna, seme, attecchimento (1–100%), piante rilevate, resa raccolta e azoto distribuito per eseguire il confronto.
-                  </p>
-                ) : (
-                  <>
-                    <p className="font-semibold text-stone-800">
-                      {campagna.nome.trim()} · verifica del correttivo
-                    </p>
-                    <p>
-                      Riferimento: {datiVarieta.densitaPianteDefault.toLocaleString("it-IT")} piante/ha.
-                      Campagna: <strong>{Math.round(campagna.pianteHa).toLocaleString("it-IT")} piante/ha</strong>
-                      {" "}({(campagnaDensita.rapportoDensita * 100).toFixed(0)}% del riferimento), quindi correttivo densità <strong>×{campagnaDensita.fattoreAzoto.toFixed(2)}</strong>.
-                    </p>
-                    <p>
-                      Asportazione da raccolto: {campagna.resaRaccolta.toFixed(1)} t/ha × {datiVarieta.kgNPerTon} kg N/t = {campagnaFabbisognoNBase} kg N/ha;
-                      corretta per densità = <strong>{campagnaFabbisognoN} kg N/ha</strong>.
-                      Azoto realmente distribuito: <strong>{campagna.azotoDistribuito} kg/ha</strong>.
-                    </p>
-                    <p className={`font-semibold ${
-                      campagnaStatoN === "allineato" ? "text-green-700"
-                      : campagnaStatoN === "deficit" ? "text-amber-700" : "text-red-700"
-                    }`}>
-                      {campagnaStatoN === "allineato"
-                        ? `Confronto coerente: azoto distribuito al ${Math.round(campagnaRapportoN * 100)}% del fabbisogno corretto.`
-                        : campagnaStatoN === "deficit"
-                        ? `Nella campagna risultano circa ${Math.abs(Math.round(campagnaScostamentoN))} kg N/ha in meno del fabbisogno corretto.`
-                        : `Nella campagna risultano circa ${Math.abs(Math.round(campagnaScostamentoN))} kg N/ha in più del fabbisogno corretto.`}
-                    </p>
-                    <p className={pianteCoerentiCampagna ? "text-stone-500" : "font-medium text-amber-800"}>
-                      Da seme e attecchimento risultano circa {Math.round(pianteStimateCampagna).toLocaleString("it-IT")} piante/ha;
-                      piante rilevate: {Math.round(campagna.pianteHa).toLocaleString("it-IT")}.
-                      {" "}{pianteCoerentiCampagna
-                        ? "I dati colturali sono coerenti (scostamento entro il 15%)."
-                        : "Verifica unità, attecchimento o conteggio: lo scostamento supera il 15%."}
-                    </p>
-                    <p className="text-stone-500">
-                      Le piante rilevate sono il dato usato per il correttivo, perché riflettono l’esito effettivo in campo.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>}
+            {isGranoDuro && <NumberInput
+              label="Azoto già distribuito (kg N/ha)"
+              value={azotoGiaDistribuito}
+              onChange={setAzotoGiaDistribuito}
+              step={1}
+              min={0}
+              hint="Totale degli apporti già effettuati dall'inizio della coltura: viene sottratto dal fabbisogno del piano."
+            />}
 
             {isGranoDuro && (
               <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950 space-y-2">
@@ -1278,7 +1100,36 @@ export default function App() {
             {isGranoDuro && <div className="col-span-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
               <details>
                 <summary className="cursor-pointer text-sm font-bold text-stone-700">
-                  Configura le finestre DAS locali
+                  Calendario fenologico di riferimento · 30 ottobre → 7 luglio
+                </summary>
+                <p className="mt-2 text-xs text-stone-600">
+                  Profilo indicativo per semina autunnale fino alla maturazione cerosa/fisiologica (circa 250 DAS).
+                  Le finestre DAS servono a orientare il rilievo: il BBCH osservato e confermato resta l’unica fonte per la quota.
+                </p>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-xs">
+                    <thead><tr className="border-b border-stone-200 text-left text-stone-500">
+                      <th className="px-2 py-2">DAS stimati</th><th className="px-2 py-2">BBCH</th><th className="px-2 py-2">Fase</th><th className="px-2 py-2">Esigenza N</th>
+                    </tr></thead>
+                    <tbody>
+                      {PROFILO_FENOLOGICO_GRANO.map((tappa) => (
+                        <tr key={tappa.bbch} className="border-b border-stone-100 last:border-0">
+                          <td className="px-2 py-2 font-mono">{tappa.dasMin}–{tappa.dasMax}</td>
+                          <td className="px-2 py-2 font-mono">{tappa.bbch}</td>
+                          <td className="px-2 py-2">{tappa.label}</td>
+                          <td className="px-2 py-2">{tappa.quotaAzotoPrevista ? "quota di fase prevista" : "nessuna quota automatica"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            </div>}
+
+            {isGranoDuro && <div className="col-span-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <details>
+                <summary className="cursor-pointer text-sm font-bold text-stone-700">
+                  Configura le finestre DAS locali per proporre il BBCH
                 </summary>
                 <p className="mt-2 text-xs text-stone-600">
                   Sono una preimpostazione modificabile salvata su questo dispositivo; non sono soglie ufficiali del disciplinare e non sostituiscono il rilievo BBCH.
@@ -1352,7 +1203,7 @@ export default function App() {
                 value={giorni}
                 onChange={setGiorniManuale}
                 min={isGranoDuro ? 0 : 1}
-                max={isGranoDuro ? 220 : 120}
+                max={isGranoDuro ? 250 : 120}
                 readonly={autoCalcolato}
                 hint={
                   isGranoDuro
@@ -1368,14 +1219,21 @@ export default function App() {
           </div>
 
           {/* — Letture NDVI — */}
-          {!isGranoDuro && <><h2 className="text-lg font-bold text-green-900 border-b border-stone-100 pb-2">Letture NDVI</h2>
+          <><h2 className="text-lg font-bold text-green-900 border-b border-stone-100 pb-2">
+            {isGranoDuro ? "Letture NDVI del punto grano" : "Letture NDVI"}
+          </h2>
+          {isGranoDuro && <p className="text-xs text-stone-500 -mt-3">
+            Inserisci cinque letture rappresentative del punto. La media modula prudentemente la quota BBCH, ma non diagnostica da sola una carenza di azoto.
+          </p>}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <NumberInput label="Misura 1" value={n1} onChange={setN1} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 2" value={n2} onChange={setN2} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 3" value={n3} onChange={setN3} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 4" value={n4} onChange={setN4} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 5" value={n5} onChange={setN5} step={0.01} min={0} max={1} />
-          </div></>}
+          </div>
+          {errors.ndvi && <p className="text-xs font-medium text-red-600">{errors.ndvi}</p>}
+          </>
 
           {/* — Risultati — */}
           {!isGranoDuro ? <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-3">
@@ -1445,25 +1303,39 @@ export default function App() {
           </div> : (
             <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-4">
               <div>
-                <h2 className="text-base font-bold text-green-900">Piano azoto grano duro</h2>
-                <p className="text-xs text-green-800 mt-1">Fabbisogno da tabella disciplinare e frazionamento per la fase fenologica corrente.</p>
+                <h2 className="text-base font-bold text-green-900">Piano azoto del punto · grano duro</h2>
+                <p className="text-xs text-green-800 mt-1">Resa e densità definiscono il piano; BBCH confermato e NDVI del punto definiscono la quota proponibile ora.</p>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                 <ResultRow label="Fabbisogno base" value={`${risultatiGrano.fabbisognoBase} kg N/ha`} />
                 <ResultRow label="Fabbisogno corretto" value={`${risultatiGrano.fabbisognoN} kg N/ha`} highlight />
-                <ResultRow label="DAS calcolati" value={`${giorni} giorni`} />
+                <ResultRow label="N già distribuito" value={`${azotoGiaDistribuito} kg N/ha`} />
+                <ResultRow label="N residuo del piano" value={`${risultatiGrano.residuoPiano} kg N/ha`} highlight />
+                <ResultRow label="NDVI medio punto" value={risultatiGrano.media.toFixed(3)} />
+                <ResultRow label="NDVI riferimento" value={risultatiGrano.ndviOttimale.toFixed(3)} />
                 <ResultRow label="BBCH confermato" value={faseGrano ? faseGrano.bbch : "da confermare"} highlight />
               </div>
               <div className="rounded-lg border border-green-200 bg-white p-3 text-xs text-stone-700 space-y-1">
                 {faseGrano ? <>
-                  <p className="font-semibold text-green-900">Quota consigliata ora: {risultatiGrano.quotaAzoto} kg N/ha</p>
+                  <p className="font-semibold text-green-900">Dose proponibile ora: {risultatiGrano.quotaProposta} kg N/ha</p>
                   <p>
                     Schema disciplinare per {faseGrano.bbch} · {faseGrano.label}: {faseGrano.azotoMin}–{faseGrano.azotoMax} kg N/ha.
-                    La quota proposta è scalata in proporzione al fabbisogno totale calcolato e limitata al relativo intervallo disciplinare.
+                    Quota base: {risultatiGrano.quotaBase} kg N/ha; modulazione NDVI: ×{risultatiGrano.fattoreNdvi.toFixed(2)}; il risultato resta limitato all'intervallo della fase e ai {risultatiGrano.residuoPiano} kg N/ha residui.
                   </p>
                 </> : (
                   <p className="font-semibold text-amber-800">
                     Rileva e conferma il BBCH in campo per ottenere la quota azotata della fase corretta.
+                  </p>
+                )}
+                {!risultatiGrano.valoriValidi && <p className="font-semibold text-red-700">Inserisci tutte le letture NDVI tra 0 e 1 prima di usare il consiglio.</p>}
+                {risultatiGrano.scostamentoNdvi > 0 && risultatiGrano.valoriValidi && (
+                  <p className="font-semibold text-amber-800">
+                    NDVI sotto il riferimento di {risultatiGrano.scostamentoNdvi.toFixed(3)}: verifica in campo prima della distribuzione. Il divario può dipendere anche da acqua, suolo, malattie o disuniformità, non solo dall'azoto.
+                  </p>
+                )}
+                {risultatiGrano.coefficienteVariazione > 15 && risultatiGrano.valoriValidi && (
+                  <p className="font-semibold text-amber-800">
+                    Variabilità NDVI elevata: ricampiona le zone disomogenee prima di distribuire una dose uniforme.
                   </p>
                 )}
                 {(risultatiGrano.fabbisognoN < 127 || risultatiGrano.fabbisognoN > 176) && (
@@ -1480,6 +1352,14 @@ export default function App() {
                   </div>;
                 })}
               </div>
+              <details className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs text-stone-700">
+                <summary className="cursor-pointer font-semibold">Metodo e limiti del riferimento NDVI</summary>
+                <div className="mt-2 space-y-2">
+                  <p>La curva NDVI è una baseline fenologica per semina autunnale, non una soglia universale. Corregge la quota BBCH solo entro ±15%, senza superare il residuo del piano.</p>
+                  <p>Riferimenti: Akmal et al., <em>Sustainability</em> 2021 (NDVI e SPAD nel frumento duro); Denora et al., <em>PLOS ONE</em> 2022 (zone di gestione e N a dose variabile nel frumento duro); Nino et al., <em>Remote Sensing Applications</em> 2024 (stato azotato da Sentinel-2 in Italia centrale).</p>
+                  <p className="font-medium">A copertura elevata l'NDVI può saturare; non distingue autonomamente carenza di N da stress idrico, suolo, patogeni o altre cause. Conferma sempre con osservazione e valutazione tecnica.</p>
+                </div>
+              </details>
             </div>
           )}
 
@@ -1539,6 +1419,7 @@ export default function App() {
                     <th className="px-2 py-2 text-center">CV NDVI</th>
                     <th className="px-2 py-2 text-center">Ottimale</th>
                     <th className="px-2 py-2 text-center">Diff.</th>
+                    <th className="px-2 py-2 text-center">N già distr.</th>
                     <th className="px-2 py-2 text-center">Dose (kg/ha)</th>
                     <th className="px-2 py-2 text-center">GPS</th>
                     <th className="px-2 py-2 text-center rounded-tr-lg">Azioni</th>
@@ -1546,7 +1427,7 @@ export default function App() {
                 </thead>
                 <tbody>
                   {loadingOss ? (
-                    <tr><td colSpan={19} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
+                    <tr><td colSpan={20} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
                   ) : osservazioni.map((obs, i) => {
                     const stats = statisticheNdvi([obs.n1, obs.n2, obs.n3, obs.n4, obs.n5]);
                     const isObsGrano = obs.coltura === "grano duro";
@@ -1584,7 +1465,7 @@ export default function App() {
                           : "—"}
                       </td>
                       <td className="px-2 py-2 text-center font-semibold bg-green-50 text-green-800">
-                        {isObsGrano ? `${obs.azotoTotale ?? "—"} N` : obs.media.toFixed(3)}
+                        {obs.media.toFixed(3)}
                       </td>
                       <td className={`px-2 py-2 text-center font-mono text-xs ${
                         isObsGrano || stats.coefficienteVariazione <= 8
@@ -1593,10 +1474,13 @@ export default function App() {
                           ? "text-amber-700"
                           : "text-red-700"
                       }`}>
-                        {isObsGrano ? "—" : `${stats.coefficienteVariazione.toFixed(1)}%`}
+                        {`${stats.coefficienteVariazione.toFixed(1)}%`}
                       </td>
-                      <td className="px-2 py-2 text-center text-stone-500">{isObsGrano ? "—" : obs.ottimale.toFixed(3)}</td>
-                      <td className="px-2 py-2 text-center">{isObsGrano ? "—" : obs.discostamento.toFixed(3)}</td>
+                      <td className="px-2 py-2 text-center text-stone-500">{obs.ottimale.toFixed(3)}</td>
+                      <td className="px-2 py-2 text-center">{obs.discostamento.toFixed(3)}</td>
+                      <td className="px-2 py-2 text-center font-mono text-xs">
+                        {isObsGrano ? `${obs.azotoGiaDistribuito ?? 0} N` : "—"}
+                      </td>
                       <td className={`px-2 py-2 text-center font-bold ${
                         obs.dose === 0 ? "text-green-700 bg-green-50" : "text-red-700 bg-red-50"
                       }`}>
@@ -1635,7 +1519,7 @@ export default function App() {
 
         <p className="text-center text-xs text-green-700 pb-4">
           {isGranoDuro
-            ? "Grano duro: fabbisogno = resa attesa (q/ha) × 3 kg N/q, corretto per densità entro ±10% e frazionato per fase."
+            ? "Grano duro: quota del punto = fase BBCH confermata, limitata da fabbisogno residuo e intervallo disciplinare; l'NDVI la modula solo entro ±15%."
             : "Formula: Dose = (NDVI_ottimale − NDVI_media) × 500 × (resa / 4.5) · Limite max = azoto totale / 2"}
         </p>
 

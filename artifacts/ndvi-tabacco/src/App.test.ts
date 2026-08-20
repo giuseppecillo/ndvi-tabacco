@@ -8,11 +8,13 @@ import {
   calcolaDensita,
   calcolaDensitaGrano,
   calcolaFabbisognoNGrano,
+  calcolaPianoNGrano,
   calcolaQuotaNGrano,
   faseGranoConfermataDaBbch,
   faseGranoDaBbch,
   granoKgHaDaSemiMq,
   granoSemiMqDaKgHa,
+  ndviOttimaleGrano,
   ndviOttimale,
   statisticheNdvi,
   stimaFaseGranoDaDas,
@@ -150,6 +152,81 @@ describe("grano duro nitrogen planning", () => {
         assert.ok(quota >= fase.azotoMin && quota <= fase.azotoMax, `${fase.label} remains in range`);
       }
     }
+  });
+
+  it("uses a grain-specific NDVI reference across the autumn-to-wax-maturity calendar", () => {
+    assert.equal(ndviOttimaleGrano(0), 0.2);
+    assert.equal(ndviOttimaleGrano(165), 0.82);
+    assert.equal(ndviOttimaleGrano(250), 0.42);
+  });
+
+  it("modulates a confirmed phase quota by NDVI without exceeding the phase range or residual plan", () => {
+    const fase = faseGranoDaBbch("20–29");
+    assert.ok(fase);
+
+    const adequate = calcolaPianoNGrano({
+      fabbisognoN: 150,
+      azotoGiaDistribuito: 60,
+      fase,
+      das: 100,
+      lettureNdvi: [0.7, 0.7, 0.7, 0.7, 0.7],
+    });
+    assert.equal(adequate.quotaBase, 45);
+    assert.equal(adequate.quotaProposta, 45);
+    assert.equal(adequate.residuoPiano, 90);
+    assert.equal(adequate.verificaCampo, false);
+
+    const deficit = calcolaPianoNGrano({
+      fabbisognoN: 150,
+      azotoGiaDistribuito: 60,
+      fase,
+      das: 100,
+      lettureNdvi: [0.4, 0.4, 0.4, 0.4, 0.4],
+    });
+    assert.equal(deficit.fattoreNdvi, 1.15);
+    assert.equal(deficit.quotaProposta, fase.azotoMax);
+    assert.equal(deficit.verificaCampo, true);
+
+    const residualExhausted = calcolaPianoNGrano({
+      fabbisognoN: 150,
+      azotoGiaDistribuito: 140,
+      fase,
+      das: 100,
+      lettureNdvi: [0.4, 0.4, 0.4, 0.4, 0.4],
+    });
+    assert.equal(residualExhausted.residuoPiano, 10);
+    assert.equal(residualExhausted.quotaProposta, 10);
+
+    const decimalResidual = calcolaPianoNGrano({
+      fabbisognoN: 150,
+      azotoGiaDistribuito: 140.4,
+      fase,
+      das: 100,
+      lettureNdvi: [0.4, 0.4, 0.4, 0.4, 0.4],
+    });
+    assert.equal(decimalResidual.residuoPiano, 10);
+    assert.equal(decimalResidual.quotaProposta, 10);
+  });
+
+  it("does not produce a grain dose without a confirmed phase or valid NDVI readings", () => {
+    const noPhase = calcolaPianoNGrano({
+      fabbisognoN: 150,
+      azotoGiaDistribuito: 0,
+      fase: null,
+      das: 100,
+      lettureNdvi: [0.7, 0.7, 0.7, 0.7, 0.7],
+    });
+    assert.equal(noPhase.quotaProposta, 0);
+
+    const invalidNdvi = calcolaPianoNGrano({
+      fabbisognoN: 150,
+      azotoGiaDistribuito: 0,
+      fase: faseGranoDaBbch("20–29"),
+      das: 100,
+      lettureNdvi: [1.1, 0.7, 0.7, 0.7, 0.7],
+    });
+    assert.equal(invalidNdvi.quotaProposta, 0);
+    assert.equal(invalidNdvi.verificaCampo, true);
   });
 });
 
