@@ -22,6 +22,7 @@ import {
   statisticheNdvi,
   stimaFaseGranoDaDas,
 } from "./calculations";
+import { serieDistribuzioneOsservazioni } from "./observationDistribution";
 
 const EPSILON = 1e-9;
 const BURLEY_REFERENCE = {
@@ -355,5 +356,58 @@ describe("tobacco calculations", () => {
     assert.equal(ndviOttimale(95).ottimale, 0.75);
     assert.equal(ndviOttimale(110).ottimale, 0.68);
     assert.equal(ndviOttimale(130).ottimale, 0.60);
+  });
+});
+
+describe("saved observation distribution", () => {
+  it("keeps recorded point-N values while exposing the signed NDVI deviation", () => {
+    const punti = serieDistribuzioneOsservazioni([
+      {
+        id: "tabacco-deficit",
+        coltura: "tabacco",
+        data: "2026-08-20",
+        varieta: "Burley (Non Cimato)",
+        media: 0.55,
+        ottimale: 0.7,
+        dose: 36,
+      },
+      {
+        id: "grano-adeguato",
+        coltura: "grano duro",
+        data: "2026-03-20",
+        varieta: "Redidenari",
+        media: 0.7,
+        ottimale: 0.65,
+        dose: 12,
+        quotaAzoto: 0,
+      },
+    ]);
+
+    assert.equal(punti.length, 2);
+    assert.equal(punti[0].id, "tabacco-deficit");
+    assert.equal(punti[0].coltura, "tabacco");
+    assertApproximately(punti[0].scostamento, 0.15, "tobacco deficit chart position");
+    assertApproximately(punti[0].deficitNdvi, 0.15, "tobacco deficit used for dose");
+    assert.equal(punti[0].azotoIndicato, 36);
+    assert.equal(punti[1].id, "grano-adeguato");
+    assert.equal(punti[1].coltura, "grano duro");
+    assertApproximately(punti[1].scostamento, -0.05, "grain adequate chart position");
+    assert.equal(punti[1].deficitNdvi, 0);
+    assert.equal(punti[1].azotoIndicato, 0);
+  });
+
+  it("does not add chart points with incomplete saved numeric values", () => {
+    const punti = serieDistribuzioneOsservazioni([
+      {
+        id: "non-valido",
+        coltura: "tabacco",
+        data: "2026-08-20",
+        varieta: "Burley (Non Cimato)",
+        media: Number.NaN,
+        ottimale: 0.7,
+        dose: 20,
+      },
+    ]);
+    assert.deepEqual(punti, []);
   });
 });

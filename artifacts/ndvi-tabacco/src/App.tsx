@@ -3,6 +3,7 @@ const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
+import { ObservationDistributionChart } from "./ObservationDistributionChart";
 import { exportObservationsCsv } from "./utils/geoUtils";
 const bibliografiaNdviTabaccoUrl = `${import.meta.env.BASE_URL}bibliografia-ndvi-tabacco.md`;
 import {
@@ -908,9 +909,7 @@ export default function App() {
               step={isGranoDuro ? 1 : 0.1}
               min={isGranoDuro ? 1 : 0.1}
               warning={
-                !isGranoDuro && resa > datiVarieta.resaMax
-                  ? `Supera il limite massimo di ${datiVarieta.resaMax} t/ha per questa varietà`
-                  : isGranoDuro && (resa < 40 || resa > 60)
+                isGranoDuro && (resa < 40 || resa > 60)
                   ? "Il riferimento di consiglio è compreso tra 40 e 60 q/ha; il calcolo resta lineare a 3 kg N/q."
                   : undefined
               }
@@ -1400,6 +1399,7 @@ export default function App() {
                 </button>
               </div>
             </div>
+            <ObservationDistributionChart observations={osservazioni} />
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse min-w-[1250px]">
                 <thead>
