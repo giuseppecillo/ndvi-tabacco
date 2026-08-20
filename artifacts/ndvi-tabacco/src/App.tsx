@@ -6,6 +6,7 @@ import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { exportObservationsCsv } from "./utils/geoUtils";
 
 export type EtaPiantina = "standard" | "avanzata" | "extra";
+export type DensitaUnita = "piante/ha" | "kg/ha";
 
 export const ETA_PIANTINA_LABELS: Record<EtaPiantina, { label: string; short: string; giorni: string }> = {
   standard: { label: "Standard",       short: "Std",  giorni: "25–35 gg vivaio" },
@@ -35,6 +36,9 @@ type VarietaDati = {
   // Fonte: disciplinari regionali + PDF Taurus. Usato per calcolare
   // il fabbisogno reale quando la resa supera il limite di disciplinare.
   kgNPerTon: number;
+  // Densità di riferimento della varietà e quantità indicativa di seme.
+  densitaPianteDefault: number;
+  kgSemiDefault: number;
 };
 
 export const VARIETA_DB: Record<string, VarietaDati> = {
@@ -44,6 +48,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 4.5, resaMin: 4.0, resaMax: 5.6,
     azotoDefault: 175, azotoMin: 150, azotoMax: 200,
     kgNPerTon: 36,   // 200 kg / 5.6 t ≈ 35.7 → arrotondato a 36
+    densitaPianteDefault: 16000, kgSemiDefault: 0.0020,
   },
   "Burley (Cimato)": {
     label: "Burley (Cimato)",
@@ -51,6 +56,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 3.0, resaMin: 2.5, resaMax: 4.0,
     azotoDefault: 115, azotoMin: 80, azotoMax: 150,
     kgNPerTon: 38,   // 150 kg / 4.0 t = 37.5 → arrotondato a 38
+    densitaPianteDefault: 18000, kgSemiDefault: 0.0023,
   },
   "Virginia Bright": {
     label: "Virginia Bright",
@@ -58,6 +64,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 3.5, resaMin: 2.8, resaMax: 4.2,
     azotoDefault: 130, azotoMin: 100, azotoMax: 160,
     kgNPerTon: 38,   // 160 kg / 4.2 t ≈ 38.1
+    densitaPianteDefault: 18000, kgSemiDefault: 0.0023,
   },
   "Kentucky": {
     label: "Kentucky",
@@ -65,6 +72,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 2.2, resaMin: 1.8, resaMax: 3.3,
     azotoDefault: 135, azotoMin: 100, azotoMax: 160,
     kgNPerTon: 48,   // 160 kg / 3.3 t ≈ 48.5 → arrotondato a 48
+    densitaPianteDefault: 15000, kgSemiDefault: 0.0019,
   },
   "Dark Air-Cured (DAC)": {
     label: "Dark Air-Cured (DAC)",
@@ -72,6 +80,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 3.0, resaMin: 2.5, resaMax: 3.7,
     azotoDefault: 175, azotoMin: 150, azotoMax: 200,
     kgNPerTon: 54,   // 200 kg / 3.7 t ≈ 54.1
+    densitaPianteDefault: 16000, kgSemiDefault: 0.0020,
   },
   "Nostrano del Brenta": {
     label: "Nostrano del Brenta",
@@ -79,6 +88,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 2.4, resaMin: 2.0, resaMax: 2.8,
     azotoDefault: 110, azotoMin: 100, azotoMax: 120,
     kgNPerTon: 43,   // 120 kg / 2.8 t ≈ 42.9 → arrotondato a 43
+    densitaPianteDefault: 20000, kgSemiDefault: 0.0025,
   },
   "Beneventano": {
     label: "Beneventano",
@@ -86,6 +96,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 1.5, resaMin: 1.0, resaMax: 2.0,
     azotoDefault: 90, azotoMin: 80, azotoMax: 100,
     kgNPerTon: 50,   // 100 kg / 2.0 t = 50
+    densitaPianteDefault: 22000, kgSemiDefault: 0.0028,
   },
   "Orientali (Samsun/Xanti Yaka)": {
     label: "Orientali (Samsun/Xanti Yaka)",
@@ -93,6 +104,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 1.5, resaMin: 1.0, resaMax: 2.0,
     azotoDefault: 40, azotoMin: 0, azotoMax: 50,
     kgNPerTon: 55,   // esplicitamente 5.5 kg N/quintal dal documento Taurus
+    densitaPianteDefault: 28000, kgSemiDefault: 0.0035,
   },
   "Tabacco Sigari (Wrapper)": {
     label: "Tabacco Sigari (Wrapper)",
@@ -100,6 +112,7 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
     resaDefault: 2.0, resaMin: 1.5, resaMax: 2.5,
     azotoDefault: 165, azotoMin: 140, azotoMax: 190,
     kgNPerTon: 76,   // 190 kg / 2.5 t = 76
+    densitaPianteDefault: 12000, kgSemiDefault: 0.0015,
   },
 };
 
@@ -113,6 +126,9 @@ export type Observation = {
   appezzamento: string;
   resa: number;
   varieta: string;
+  densitaValore?: number | null;
+  densitaUnita?: DensitaUnita | null;
+  pianteHaEquivalenti?: number | null;
   n1: number;
   n2: number;
   n3: number;
@@ -170,6 +186,21 @@ function statisticheNdvi(values: number[]): NdviStats {
     coefficienteVariazione: media > 0 ? (deviazioneStandard / media) * 100 : 0,
     valoriValidi: values.every((value) => value >= 0 && value <= 1),
   };
+}
+
+function calcolaDensita(
+  valore: number,
+  unita: DensitaUnita,
+  dati: VarietaDati
+): { pianteHaEquivalenti: number; rapportoDensita: number; fattoreAzoto: number } {
+  const pianteHaEquivalenti = unita === "piante/ha"
+    ? valore
+    : (valore / dati.kgSemiDefault) * dati.densitaPianteDefault;
+  const rapportoDensita = pianteHaEquivalenti / dati.densitaPianteDefault;
+  // A parità di resa, la densità corregge il fabbisogno solo in parte:
+  // la resa resta il principale indicatore delle asportazioni.
+  const fattoreAzoto = Math.max(0.85, Math.min(1.15, 0.7 + rapportoDensita * 0.3));
+  return { pianteHaEquivalenti, rapportoDensita, fattoreAzoto };
 }
 
 function ndviOttimale(
@@ -278,7 +309,7 @@ function TextInput({
   return (
     <div className="flex flex-col gap-1">
       <label className="text-sm font-semibold text-stone-700">{label}</label>
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
+      <input type="text" aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={`${inputCls} ${error ? "border-red-400 focus:ring-red-400" : ""}`} />
       {error && <p className="text-xs text-red-600">{error}</p>}
@@ -312,9 +343,9 @@ function NumberInput({
     <div className="flex flex-col gap-1">
       <label className="text-sm font-semibold text-stone-700">{label}</label>
       {readonly ? (
-        <input type="number" value={value} readOnly className={disabledCls} />
+        <input type="number" aria-label={label} value={value} readOnly className={disabledCls} />
       ) : (
-        <input type="number" value={value} step={step} min={min} max={max}
+        <input type="number" aria-label={label} value={value} step={step} min={min} max={max}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           className={`${inputCls} ${warning ? "border-amber-400 text-amber-700 focus:ring-amber-400" : ""}`} />
       )}
@@ -336,6 +367,8 @@ export default function App() {
   const [varieta, setVarieta]           = useState("Burley (Non Cimato)");
   const [resa, setResa]                 = useState(VARIETA_DB["Burley (Non Cimato)"].resaDefault);
   const [azotoTot, setAzotoTot]         = useState(VARIETA_DB["Burley (Non Cimato)"].azotoDefault);
+  const [densitaUnita, setDensitaUnita] = useState<DensitaUnita>("piante/ha");
+  const [densitaValore, setDensitaValore] = useState(VARIETA_DB["Burley (Non Cimato)"].densitaPianteDefault);
   const [giorniManuale, setGiorniManuale] = useState(31);
   const [n1, setN1] = useState(0.42);
   const [n2, setN2] = useState(0.38);
@@ -355,22 +388,39 @@ export default function App() {
       .finally(() => setLoadingOss(false));
   }, []);
 
-  // Auto-fill resa e azoto quando cambia la varietà
+  // Auto-fill resa, azoto e densità quando cambia la varietà
   useEffect(() => {
     const dati = VARIETA_DB[varieta];
     if (dati) {
       setResa(dati.resaDefault);
       setAzotoTot(dati.azotoDefault);
+      setDensitaValore(densitaUnita === "piante/ha" ? dati.densitaPianteDefault : dati.kgSemiDefault);
     }
   }, [varieta]);
 
-  // Azoto calcolato da asportazioni quando resa supera il limite di disciplinare.
-  // Formula: kg N/ha = resa (t/ha) × coefficiente asportazione (kg N/t)
-  const fabbisognoN = useMemo(
-    () => datiVarieta ? Math.round(resa * datiVarieta.kgNPerTon) : 0,
+  const densita = useMemo(
+    () => calcolaDensita(densitaValore, densitaUnita, datiVarieta),
+    [densitaValore, densitaUnita, datiVarieta]
+  );
+  const fabbisognoNBase = useMemo(
+    () => Math.round(resa * datiVarieta.kgNPerTon),
     [datiVarieta, resa]
   );
-  const azotoAsportazioni = resa > datiVarieta.resaMax ? fabbisognoN : null;
+  // Formula: asportazione da resa × correzione moderata della densità colturale.
+  const fabbisognoN = Math.round(fabbisognoNBase * densita.fattoreAzoto);
+  const azotoConsigliato = resa > datiVarieta.resaMax
+    ? fabbisognoN
+    : Math.min(datiVarieta.azotoMax, Math.max(datiVarieta.azotoMin, fabbisognoN));
+  const azotoAsportazioni = resa > datiVarieta.resaMax ? azotoConsigliato : null;
+
+  const cambiaDensitaUnita = useCallback((unita: DensitaUnita) => {
+    if (unita === densitaUnita) return;
+    const valoreEquivalente = unita === "piante/ha"
+      ? densita.pianteHaEquivalenti
+      : (densita.pianteHaEquivalenti / datiVarieta.densitaPianteDefault) * datiVarieta.kgSemiDefault;
+    setDensitaUnita(unita);
+    setDensitaValore(Number(valoreEquivalente.toFixed(unita === "piante/ha" ? 0 : 4)));
+  }, [datiVarieta, densita, densitaUnita]);
 
   // Auto-aggiorna il campo azoto quando la resa supera il massimo di disciplinare
   useEffect(() => {
@@ -400,6 +450,7 @@ export default function App() {
       newErrors.id = `ID "${trimmedId}" già utilizzato.`;
     if (!cliente.trim()) newErrors.cliente = "Campo obbligatorio.";
     if (!appezzamento.trim()) newErrors.appezzamento = "Campo obbligatorio.";
+    if (densitaValore <= 0) newErrors.densita = "Inserisci una densità maggiore di zero.";
     if (dataTrapiantoFutura) newErrors.dataTrapianto = "La data di trapianto è successiva al rilevamento.";
     if (!risultati.valoriValidi) newErrors.ndvi = "Ogni lettura NDVI deve essere compresa tra 0 e 1.";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
@@ -419,6 +470,9 @@ export default function App() {
         appezzamento: appezzamento.trim(),
         resa,
         varieta,
+        densitaValore,
+        densitaUnita,
+        pianteHaEquivalenti: Math.round(densita.pianteHaEquivalenti),
         n1, n2, n3, n4, n5,
         ...risultati,
         lat,
@@ -428,21 +482,44 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuova),
-      }).then(() => setOsservazioni((prev) => [nuova, ...prev]));
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error("Salvataggio non riuscito.");
+          return response.json();
+        })
+        .then(() => {
+          setOsservazioni((prev) => [nuova, ...prev]);
+          setObsId(isNaN(num) ? "" : String(num + 1));
+        })
+        .catch(() => setErrors((current) => ({
+          ...current,
+          save: "Impossibile salvare l’osservazione. Riprova tra qualche istante.",
+        })));
     };
 
     if (navigator.geolocation) {
+      let salvata = false;
+      const saveOnce = (lat: number | null, lng: number | null) => {
+        if (salvata) return;
+        salvata = true;
+        doSave(lat, lng);
+      };
+      const fallbackTimer = window.setTimeout(() => saveOnce(null, null), 1500);
       navigator.geolocation.getCurrentPosition(
-        (pos) => doSave(pos.coords.latitude, pos.coords.longitude),
-        ()    => doSave(null, null),
+        (pos) => {
+          window.clearTimeout(fallbackTimer);
+          saveOnce(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          window.clearTimeout(fallbackTimer);
+          saveOnce(null, null);
+        },
         { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
       );
     } else {
       doSave(null, null);
     }
-
-    setObsId(isNaN(num) ? "" : String(num + 1));
-  }, [obsId, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati, dataTrapiantoFutura]);
+  }, [obsId, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, n1, n2, n3, n4, n5, risultati, dataTrapiantoFutura]);
 
   const eliminaOsservazione = useCallback((id: string) => {
     fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -638,6 +715,34 @@ export default function App() {
                 </p>
               )}
             </div>
+            <div className="col-span-2 flex flex-col gap-1">
+              <label className="text-sm font-semibold text-stone-700">Piante / semi per ettaro</label>
+              <div className="grid grid-cols-[1fr_9rem] gap-2">
+                <input
+                  type="number"
+                  aria-label="Piante o semi per ettaro"
+                  value={densitaValore}
+                  min={densitaUnita === "piante/ha" ? 1000 : 0.0001}
+                  step={densitaUnita === "piante/ha" ? 100 : 0.0001}
+                  onChange={(event) => {
+                    setDensitaValore(parseFloat(event.target.value) || 0);
+                    setErrors((current) => ({ ...current, densita: "" }));
+                  }}
+                  className={`${inputCls} ${errors.densita ? "border-red-400 focus:ring-red-400" : ""}`}
+                />
+                <select aria-label="Unità piante o semi per ettaro" value={densitaUnita} onChange={(event) => cambiaDensitaUnita(event.target.value as DensitaUnita)} className={inputCls}>
+                  <option value="piante/ha">piante/ha</option>
+                  <option value="kg/ha">kg seme/ha</option>
+                </select>
+              </div>
+              {errors.densita ? (
+                <p className="text-xs text-red-600">{errors.densita}</p>
+              ) : (
+                <p className="text-xs text-stone-400">
+                  Equivalente stimato: {Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha · riferimento varietale: {datiVarieta.densitaPianteDefault.toLocaleString("it-IT")} piante/ha · coefficiente densità azoto: ×{densita.fattoreAzoto.toFixed(2)}
+                </p>
+              )}
+            </div>
             <NumberInput
               label="Resa Desiderata (t/ha)"
               value={resa}
@@ -651,22 +756,31 @@ export default function App() {
               }
               hint={datiVarieta ? `Range consigliato: ${datiVarieta.resaMin}–${datiVarieta.resaMax} t/ha` : undefined}
             />
-            <NumberInput
-              label="Kg Azoto Totale"
-              value={azotoTot}
-              onChange={setAzotoTot}
-              min={0}
-              warning={
-                azotoAsportazioni !== null
-                  ? `Calcolato da asportazioni: ${resa.toFixed(1)} t/ha × ${datiVarieta.kgNPerTon} kg N/t = ${azotoAsportazioni} kg/ha`
-                  : undefined
-              }
-              hint={
-                azotoAsportazioni === null && datiVarieta
-                  ? `Asportazione stimata per resa: ${fabbisognoN} kg N/ha · range disciplinare ${datiVarieta.azotoMin}–${datiVarieta.azotoMax} kg/ha`
-                  : undefined
-              }
-            />
+            <div className="flex flex-col gap-2">
+              <NumberInput
+                label="Kg Azoto Totale"
+                value={azotoTot}
+                onChange={setAzotoTot}
+                min={0}
+                warning={
+                  azotoAsportazioni !== null
+                    ? `Asportazioni corrette per densità: ${fabbisognoNBase} × ${densita.fattoreAzoto.toFixed(2)} = ${azotoAsportazioni} kg/ha`
+                    : undefined
+                }
+                hint={
+                  azotoAsportazioni === null && datiVarieta
+                    ? `Consiglio: ${azotoConsigliato} kg N/ha · resa ${resa.toFixed(1)} × ${datiVarieta.kgNPerTon} kg N/t × densità ${densita.fattoreAzoto.toFixed(2)}`
+                    : undefined
+                }
+              />
+              <button
+                type="button"
+                onClick={() => setAzotoTot(azotoConsigliato)}
+                className="w-full rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-800 transition-colors hover:bg-green-100"
+              >
+                Usa azoto consigliato: {azotoConsigliato} kg/ha
+              </button>
+            </div>
 
             {/* Data Trapianto — occupa tutta la larghezza */}
             <div className="col-span-2">
@@ -785,8 +899,10 @@ export default function App() {
             <div className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs space-y-1">
               <p className="font-semibold text-stone-700">Coerenza resa e azoto</p>
               <p>
-                Per {resa.toFixed(1)} t/ha, l’asportazione stimata è <strong>{risultati.fabbisognoN} kg N/ha</strong>
-                {" "}({datiVarieta.kgNPerTon} kg N/t). Azoto inserito: <strong>{azotoTot} kg/ha</strong>.
+                Densità: <strong>{Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha</strong>
+                {" "}· resa: <strong>{resa.toFixed(1)} t/ha</strong> · asportazione base: {fabbisognoNBase} kg N/ha
+                {" "}× densità {densita.fattoreAzoto.toFixed(2)} = <strong>{risultati.fabbisognoN} kg N/ha</strong>.
+                {" "}Azoto inserito: <strong>{azotoTot} kg/ha</strong>.
               </p>
               <p className={`font-medium ${azotoClass}`}>
                 {risultati.statoAzoto === "allineato"
@@ -812,6 +928,7 @@ export default function App() {
             className="w-full bg-green-800 hover:bg-green-900 active:bg-green-950 text-white font-bold py-3.5 rounded-xl text-base transition-colors">
             💾 Salva Osservazione
           </button>
+          {errors.save && <p className="text-sm font-medium text-red-600">{errors.save}</p>}
         </div>
 
         {/* Registro */}
@@ -844,7 +961,7 @@ export default function App() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse min-w-[880px]">
+              <table className="w-full text-sm border-collapse min-w-[1000px]">
                 <thead>
                   <tr className="bg-green-800 text-white">
                     <th className="px-2 py-2 text-center rounded-tl-lg">ID</th>
@@ -854,6 +971,7 @@ export default function App() {
                     <th className="px-2 py-2 text-center">Appezz.</th>
                     <th className="px-2 py-2 text-center">Gg</th>
                     <th className="px-2 py-2 text-center">Età Piant.</th>
+                    <th className="px-2 py-2 text-center">Piante/ha</th>
                     <th className="px-2 py-2 text-center">Media</th>
                     <th className="px-2 py-2 text-center">CV NDVI</th>
                     <th className="px-2 py-2 text-center">Ottimale</th>
@@ -865,7 +983,7 @@ export default function App() {
                 </thead>
                 <tbody>
                   {loadingOss ? (
-                    <tr><td colSpan={14} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
+                    <tr><td colSpan={15} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
                   ) : osservazioni.map((obs, i) => {
                     const stats = statisticheNdvi([obs.n1, obs.n2, obs.n3, obs.n4, obs.n5]);
                     return (
@@ -888,6 +1006,11 @@ export default function App() {
                         }`}>
                           {ETA_PIANTINA_LABELS[obs.etaPiantina ?? "standard"]?.short ?? "Std"}
                         </span>
+                      </td>
+                      <td className="px-2 py-2 text-center text-xs font-mono text-stone-600">
+                        {obs.pianteHaEquivalenti != null
+                          ? Math.round(obs.pianteHaEquivalenti).toLocaleString("it-IT")
+                          : "—"}
                       </td>
                       <td className="px-2 py-2 text-center font-semibold bg-green-50 text-green-800">
                         {obs.media.toFixed(3)}

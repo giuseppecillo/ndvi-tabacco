@@ -2,3 +2,4 @@
 - [GeoTIFF writer](geotiff-writer.md) — minimal Float32 GeoTIFF encoder implemented manually in geoUtils.ts; GDAL_NODATA tag (42113) required for QGIS/ArcGIS compatibility.
 - [App.tsx exports](app-exports.md) — TipoIntervento, TIPO_LABELS, Observation are exported; non-component exports cause Vite HMR full-reload (expected, not an error).
 - [NDVI phenology reference](ndvi-phenology.md) — Model plant age as equivalent phenological days on a continuous curve; report nitrogen adequacy and NDVI dispersion separately.
+- [Observation GPS capture](observation-gps-capture.md) — Location enrichment must be best-effort and never delay persistence of a field observation.

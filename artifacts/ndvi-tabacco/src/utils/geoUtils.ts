@@ -560,6 +560,7 @@ export function exportObservationsCsv(
     id: string; data: string; dataTrapianto: string;
     giorni: number;
     cliente: string; appezzamento: string; varieta: string;
+    densitaValore?: number | null; densitaUnita?: string | null; pianteHaEquivalenti?: number | null;
     n1: number; n2: number; n3: number; n4: number; n5: number;
     media: number; ottimale: number; discostamento: number; dose: number;
     lat: number | null; lng: number | null;
@@ -568,6 +569,7 @@ export function exportObservationsCsv(
   const header = [
     "ID","Data","Trapianto","Giorni",
     "Cliente","Appezzamento","Varieta",
+    "Densita_Valore","Densita_Unita","Piante_ha_Equiv",
     "M1","M2","M3","M4","M5",
     "Media_NDVI","NDVI_Ottimale","Discostamento","Dose_kg_ha",
     "Lat_WGS84","Lng_WGS84",
@@ -575,6 +577,7 @@ export function exportObservationsCsv(
   const rows = osservazioni.map(o => [
     o.id, o.data, o.dataTrapianto, o.giorni,
     `"${o.cliente}"`, `"${o.appezzamento}"`, `"${o.varieta}"`,
+    o.densitaValore ?? "", o.densitaUnita ?? "", o.pianteHaEquivalenti ?? "",
     o.n1, o.n2, o.n3, o.n4, o.n5,
     o.media.toFixed(4), o.ottimale.toFixed(4), o.discostamento.toFixed(4), o.dose.toFixed(2),
     o.lat ?? "", o.lng ?? "",

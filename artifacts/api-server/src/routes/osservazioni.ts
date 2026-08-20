@@ -12,6 +12,9 @@ router.get("/osservazioni", async (_req, res) => {
          giorni,
          eta_piantina AS "etaPiantina",
          cliente, appezzamento, resa, varieta,
+         piante_semi_ha AS "densitaValore",
+         piante_semi_unita AS "densitaUnita",
+         piante_ha_equivalenti AS "pianteHaEquivalenti",
          n1, n2, n3, n4, n5,
          media, ottimale, discostamento, dose,
          lat, lng,
@@ -35,6 +38,9 @@ router.get("/osservazioni", async (_req, res) => {
       lat:           r.lat != null ? Number(r.lat) : null,
       lng:           r.lng != null ? Number(r.lng) : null,
       etaPiantina:   r.etaPiantina ?? "standard",
+       densitaValore: r.densitaValore != null ? Number(r.densitaValore) : null,
+       densitaUnita:  r.densitaUnita ?? null,
+       pianteHaEquivalenti: r.pianteHaEquivalenti != null ? Number(r.pianteHaEquivalenti) : null,
     }));
     res.json(parsed);
   } catch (err) {
@@ -49,23 +55,22 @@ router.post("/osservazioni", async (req, res) => {
     await pool.query(
       `INSERT INTO osservazioni
          (id, data, data_trapianto, tipo_intervento, giorni, eta_piantina,
-          cliente, appezzamento, resa, varieta,
-          n1, n2, n3, n4, n5,
-          media, ottimale, discostamento, dose,
-          lat, lng)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+           cliente, appezzamento, resa, varieta, piante_semi_ha, piante_semi_unita, piante_ha_equivalenti,
+           n1, n2, n3, n4, n5, media, ottimale, discostamento, dose, lat, lng)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
        ON CONFLICT (id) DO UPDATE SET
          data=$2, data_trapianto=$3, tipo_intervento=$4, giorni=$5, eta_piantina=$6,
-         cliente=$7, appezzamento=$8, resa=$9, varieta=$10,
-         n1=$11, n2=$12, n3=$13, n4=$14, n5=$15,
-         media=$16, ottimale=$17, discostamento=$18, dose=$19,
-         lat=$20, lng=$21`,
+          cliente=$7, appezzamento=$8, resa=$9, varieta=$10,
+          piante_semi_ha=$11, piante_semi_unita=$12, piante_ha_equivalenti=$13,
+          n1=$14, n2=$15, n3=$16, n4=$17, n5=$18,
+          media=$19, ottimale=$20, discostamento=$21, dose=$22,
+          lat=$23, lng=$24`,
       [
         o.id, o.data, o.dataTrapianto || null, o.tipoIntervento ?? "n/d", o.giorni,
         o.etaPiantina ?? "standard",
         o.cliente, o.appezzamento, o.resa, o.varieta,
-        o.n1, o.n2, o.n3, o.n4, o.n5,
-        o.media, o.ottimale, o.discostamento, o.dose,
+        o.densitaValore ?? null, o.densitaUnita ?? null, o.pianteHaEquivalenti ?? null,
+        o.n1, o.n2, o.n3, o.n4, o.n5, o.media, o.ottimale, o.discostamento, o.dose,
         o.lat ?? null, o.lng ?? null,
       ]
     );
