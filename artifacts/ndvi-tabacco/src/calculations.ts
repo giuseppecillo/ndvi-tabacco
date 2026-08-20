@@ -86,30 +86,45 @@ export type FinestraDasLocale = {
 // Non è una tabella del disciplinare e deve essere confermato dall'azienda.
 export const FINESTRE_DAS_LOCALI_TEMPLATE: FinestraDasLocale[] = [
   { fase: "Semina / emergenza", dasMin: 0, dasMax: 20 },
-  { fase: "Accestimento", dasMin: 21, dasMax: 135 },
+  // 21–50 DAS è sviluppo fogliare (BBCH 10–20), non ancora una quota
+  // azotata della tabella FASI_GRANO. La stima propone quindi l'accestimento
+  // solo nella sua finestra locale 51–135 DAS.
+  { fase: "Accestimento", dasMin: 51, dasMax: 135 },
   { fase: "Inizio levata", dasMin: 136, dasMax: 165 },
   { fase: "Foglia a bandiera", dasMin: 166, dasMax: 190 },
 ];
 
-// Calendario fenologico locale di riferimento ricavato dalla tavola allegata:
-// semina 30 ottobre e maturazione cerosa/fisiologica attorno al 7 luglio.
-// I DAS sono una stima per semina autunnale, non sostituiscono il BBCH osservato.
-export const PROFILO_FENOLOGICO_GRANO: Array<{
+export type ProfiloFenologicoGrano = {
   bbch: string;
   label: string;
   dasMin: number;
   dasMax: number;
+  ndviMin: number;
+  ndviMax: number;
   quotaAzotoPrevista: boolean;
-}> = [
-  { bbch: "00–09", label: "Semina / emergenza", dasMin: 0, dasMax: 20, quotaAzotoPrevista: true },
-  { bbch: "10–20", label: "Sviluppo fogliare", dasMin: 21, dasMax: 50, quotaAzotoPrevista: false },
-  { bbch: "21–29", label: "Accestimento", dasMin: 51, dasMax: 135, quotaAzotoPrevista: true },
-  { bbch: "30–32", label: "Inizio levata", dasMin: 136, dasMax: 165, quotaAzotoPrevista: true },
-  { bbch: "37–39", label: "Foglia a bandiera", dasMin: 166, dasMax: 190, quotaAzotoPrevista: true },
-  { bbch: "51–59", label: "Spigatura", dasMin: 191, dasMax: 205, quotaAzotoPrevista: false },
-  { bbch: "61–69", label: "Fioritura", dasMin: 206, dasMax: 220, quotaAzotoPrevista: false },
-  { bbch: "71–89", label: "Riempimento / maturazione cerosa", dasMin: 221, dasMax: 250, quotaAzotoPrevista: false },
+};
+
+// Calendario fenologico locale di riferimento ricavato dalla tavola allegata:
+// semina 30 ottobre e maturazione cerosa/fisiologica attorno al 7 luglio.
+// I DAS sono una stima per semina autunnale, non sostituiscono il BBCH osservato.
+export const PROFILO_FENOLOGICO_GRANO: ProfiloFenologicoGrano[] = [
+  { bbch: "00–09", label: "Semina / emergenza", dasMin: 0, dasMax: 20, ndviMin: 0.20, ndviMax: 0.34, quotaAzotoPrevista: true },
+  { bbch: "10–20", label: "Sviluppo fogliare", dasMin: 21, dasMax: 50, ndviMin: 0.34, ndviMax: 0.55, quotaAzotoPrevista: false },
+  { bbch: "20–29", label: "Accestimento", dasMin: 51, dasMax: 135, ndviMin: 0.55, ndviMax: 0.76, quotaAzotoPrevista: true },
+  { bbch: "30–32", label: "Inizio levata", dasMin: 136, dasMax: 165, ndviMin: 0.76, ndviMax: 0.82, quotaAzotoPrevista: true },
+  { bbch: "37–39", label: "Foglia a bandiera", dasMin: 166, dasMax: 190, ndviMin: 0.82, ndviMax: 0.83, quotaAzotoPrevista: true },
+  { bbch: "51–59", label: "Spigatura", dasMin: 191, dasMax: 205, ndviMin: 0.80, ndviMax: 0.83, quotaAzotoPrevista: false },
+  { bbch: "61–69", label: "Fioritura", dasMin: 206, dasMax: 220, ndviMin: 0.72, ndviMax: 0.80, quotaAzotoPrevista: false },
+  { bbch: "71–89", label: "Riempimento / maturazione cerosa", dasMin: 221, dasMax: 250, ndviMin: 0.42, ndviMax: 0.72, quotaAzotoPrevista: false },
 ];
+
+export function profiloFenologicoGranoDaDas(das: number): ProfiloFenologicoGrano | null {
+  return PROFILO_FENOLOGICO_GRANO.find((profilo) => das >= profilo.dasMin && das <= profilo.dasMax) ?? null;
+}
+
+export function profiloFenologicoGranoDaBbch(bbch: string): ProfiloFenologicoGrano | null {
+  return PROFILO_FENOLOGICO_GRANO.find((profilo) => profilo.bbch === bbch) ?? null;
+}
 
 export function granoSemiMqDaKgHa(kgHa: number, dati: GranoVarietaDati): number {
   return kgHa / (dati.pesoMilleSemiG / 100);
@@ -241,12 +256,19 @@ export function calcolaPianoNGrano(input: {
   quotaBase: number;
   residuoPiano: number;
   quotaProposta: number;
+  profiloDAS: ProfiloFenologicoGrano | null;
+  profiloBbch: ProfiloFenologicoGrano | null;
+  ndviFaseCoerente: boolean;
   verificaCampo: boolean;
 } {
   const stats = statisticheNdvi(input.lettureNdvi);
   const ndviOttimale = ndviOttimaleGrano(input.das);
   const scostamentoNdvi = ndviOttimale - stats.media;
   const deficitRelativo = ndviOttimale > 0 ? scostamentoNdvi / ndviOttimale : 0;
+  const profiloDAS = profiloFenologicoGranoDaDas(input.das);
+  const profiloBbch = input.fase ? profiloFenologicoGranoDaBbch(input.fase.bbch) : null;
+  const ndviFaseCoerente = !profiloBbch
+    || (ndviOttimale >= profiloBbch.ndviMin - 0.02 && ndviOttimale <= profiloBbch.ndviMax + 0.02);
   // L'NDVI regola una quota già agronomicamente determinata: non è una
   // conversione diretta NDVI → kg N e resta volutamente limitata a ±15%.
   const fattoreNdvi = Math.max(0.85, Math.min(1.15, 1 + deficitRelativo * 0.5));
@@ -267,6 +289,9 @@ export function calcolaPianoNGrano(input: {
     quotaBase,
     residuoPiano,
     quotaProposta,
+    profiloDAS,
+    profiloBbch,
+    ndviFaseCoerente,
     verificaCampo: !stats.valoriValidi || stats.coefficienteVariazione > 15 || deficitRelativo > 0.12,
   };
 }

@@ -4,6 +4,7 @@ import {
   FASI_GRANO,
   FINESTRE_DAS_LOCALI_TEMPLATE,
   GRANO_DURO_DB,
+  PROFILO_FENOLOGICO_GRANO,
   calcola,
   calcolaDensita,
   calcolaDensitaGrano,
@@ -16,6 +17,8 @@ import {
   granoSemiMqDaKgHa,
   ndviOttimaleGrano,
   ndviOttimale,
+  profiloFenologicoGranoDaBbch,
+  profiloFenologicoGranoDaDas,
   statisticheNdvi,
   stimaFaseGranoDaDas,
 } from "./calculations";
@@ -118,9 +121,25 @@ describe("grano duro BBCH and local DAS estimate", () => {
   });
 
   it("keeps the DAS estimate separate and configurable", () => {
+    assert.equal(stimaFaseGranoDaDas(30, FINESTRE_DAS_LOCALI_TEMPLATE), null);
     assert.equal(stimaFaseGranoDaDas(60, FINESTRE_DAS_LOCALI_TEMPLATE)?.label, "Accestimento");
     assert.equal(stimaFaseGranoDaDas(140, FINESTRE_DAS_LOCALI_TEMPLATE)?.label, "Inizio levata");
     assert.equal(stimaFaseGranoDaDas(260, FINESTRE_DAS_LOCALI_TEMPLATE), null);
+  });
+
+  it("covers every DAS from autumn sowing to maturity with one BBCH profile", () => {
+    assert.equal(PROFILO_FENOLOGICO_GRANO[0].dasMin, 0);
+    assert.equal(PROFILO_FENOLOGICO_GRANO.at(-1)?.dasMax, 250);
+    for (const [index, fase] of PROFILO_FENOLOGICO_GRANO.entries()) {
+      const precedente = PROFILO_FENOLOGICO_GRANO[index - 1];
+      if (precedente) assert.equal(fase.dasMin, precedente.dasMax + 1);
+      assert.equal(profiloFenologicoGranoDaDas(fase.dasMin)?.bbch, fase.bbch);
+      assert.equal(profiloFenologicoGranoDaDas(fase.dasMax)?.bbch, fase.bbch);
+      assert.equal(profiloFenologicoGranoDaBbch(fase.bbch)?.label, fase.label);
+    }
+    for (let das = 0; das <= 250; das++) {
+      assert.ok(profiloFenologicoGranoDaDas(das), `DAS ${das} must belong to a phenological profile`);
+    }
   });
 });
 
@@ -158,6 +177,12 @@ describe("grano duro nitrogen planning", () => {
     assert.equal(ndviOttimaleGrano(0), 0.2);
     assert.equal(ndviOttimaleGrano(165), 0.82);
     assert.equal(ndviOttimaleGrano(250), 0.42);
+    for (const fase of PROFILO_FENOLOGICO_GRANO) {
+      const riferimentoInizio = ndviOttimaleGrano(fase.dasMin);
+      const riferimentoFine = ndviOttimaleGrano(fase.dasMax);
+      assert.ok(riferimentoInizio >= fase.ndviMin - 0.02 && riferimentoInizio <= fase.ndviMax + 0.02);
+      assert.ok(riferimentoFine >= fase.ndviMin - 0.02 && riferimentoFine <= fase.ndviMax + 0.02);
+    }
   });
 
   it("modulates a confirmed phase quota by NDVI without exceeding the phase range or residual plan", () => {

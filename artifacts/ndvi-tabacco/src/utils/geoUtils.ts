@@ -574,7 +574,7 @@ export function exportObservationsCsv(
     "Cliente","Appezzamento","Varieta",
     "Densita_Valore","Densita_Unita","Piante_ha_Equiv",
     "M1","M2","M3","M4","M5",
-    "Media_NDVI","NDVI_Ottimale","Discostamento","Dose_kg_ha","Azoto_Totale_kg_ha","Azoto_Gia_Distribuito_kg_ha","Quota_Azoto_kg_ha",
+    "Media_NDVI","NDVI_Ottimale","Discostamento","Dose_o_Indicazione_N_Punto_kg_ha","Azoto_Totale_kg_ha","Azoto_Gia_Distribuito_kg_ha","Quota_Azoto_kg_ha",
     "Lat_WGS84","Lng_WGS84",
   ];
   const cell = (value: string | number | null | undefined) => {

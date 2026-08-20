@@ -34,6 +34,10 @@ import type {
   GranoVarietaDati,
   VarietaDati,
 } from "./calculations";
+export type ParametriAziendali = {
+  densitaPianteHa: number;
+  kgSemiHa: number;
+};
 export {
   calcola,
   calcolaDensita,
@@ -59,11 +63,6 @@ export const ETA_PIANTINA_LABELS: Record<EtaPiantina, { label: string; short: st
 };
 
 export { FASI_GRANO, GRANO_DURO_DB } from "./calculations";
-
-export type ParametriAziendali = {
-  densitaPianteHa: number;
-  kgSemiHa: number;
-};
 
 export const VARIETA_DB: Record<string, VarietaDati> = {
   "Burley (Non Cimato)": {
@@ -140,10 +139,6 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
   },
 };
 
-// Riferimenti aziendali usati dalla conversione kg seme/ha → piante/ha.
-// I valori sono modificabili nel pannello "Parametri aziendali" e vengono
-// mantenuti sul dispositivo, così la conferma di ogni varietà non resta
-// nascosta dentro la formula.
 export const PARAMETRI_AZIENDALI_DEFAULT: Record<string, ParametriAziendali> =
   Object.fromEntries(
     Object.values(VARIETA_DB).map((varieta) => [
@@ -190,7 +185,7 @@ export type Observation = {
 };
 
 const PARAMETRI_AZIENDALI_STORAGE_KEY = "ndvi-tabacco-parametri-aziendali";
-const FINESTRE_DAS_GRANO_STORAGE_KEY = "ndvi-tabacco-finestre-das-grano";
+const FINESTRE_DAS_GRANO_STORAGE_KEY = "ndvi-tabacco-finestre-das-grano-v2";
 
 function caricaParametriAziendali(): Record<string, ParametriAziendali> {
   if (typeof window === "undefined") return PARAMETRI_AZIENDALI_DEFAULT;
@@ -371,19 +366,19 @@ export default function App() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(PARAMETRI_AZIENDALI_STORAGE_KEY, JSON.stringify(parametriAziendali));
-    } catch {
-      // La calibrazione resta disponibile nella sessione anche se lo storage è disabilitato.
-    }
-  }, [parametriAziendali]);
-
-  useEffect(() => {
-    try {
       window.localStorage.setItem(FINESTRE_DAS_GRANO_STORAGE_KEY, JSON.stringify(finestreDasGrano));
     } catch {
       // Le finestre restano utilizzabili nella sessione se lo storage è disabilitato.
     }
   }, [finestreDasGrano]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PARAMETRI_AZIENDALI_STORAGE_KEY, JSON.stringify(parametriAziendali));
+    } catch {
+      // La calibrazione resta disponibile nella sessione anche se lo storage è disabilitato.
+    }
+  }, [parametriAziendali]);
 
   // Auto-fill resa, azoto e densità quando cambia la varietà.
   useEffect(() => {
@@ -397,8 +392,8 @@ export default function App() {
     }
     const dati = VARIETA_DB[varieta];
     const riferimento = parametriAziendali[varieta] ?? {
-      densitaPianteHa: dati.densitaPianteDefault,
-      kgSemiHa: dati.kgSemiDefault,
+      densitaPianteHa: dati?.densitaPianteDefault ?? 0,
+      kgSemiHa: dati?.kgSemiDefault ?? 0,
     };
     if (dati) {
       setResa(dati.resaDefault);
@@ -431,16 +426,6 @@ export default function App() {
     ? fabbisognoN
     : Math.min(datiVarieta.azotoMax, Math.max(datiVarieta.azotoMin, fabbisognoN));
   const azotoAsportazioni = !isGranoDuro && resa > datiVarieta.resaMax ? azotoConsigliato : null;
-  const aggiornaParametroAziendale = useCallback((
-    campo: keyof ParametriAziendali,
-    valore: number
-  ) => {
-    if (!Number.isFinite(valore) || valore <= 0) return;
-    setParametriAziendali((correnti) => ({
-      ...correnti,
-      [varieta]: { ...correnti[varieta], [campo]: valore },
-    }));
-  }, [varieta]);
   const aggiornaFinestraDasGrano = useCallback((
     fase: FinestraDasLocale["fase"],
     campo: "dasMin" | "dasMax",
@@ -452,6 +437,17 @@ export default function App() {
         : finestra
     ));
   }, []);
+
+  const aggiornaParametroAziendale = useCallback((
+    campo: keyof ParametriAziendali,
+    valore: number
+  ) => {
+    if (!Number.isFinite(valore) || valore <= 0) return;
+    setParametriAziendali((correnti) => ({
+      ...correnti,
+      [varieta]: { ...correnti[varieta], [campo]: valore },
+    }));
+  }, [varieta]);
 
   const cambiaDensitaUnita = useCallback((unita: DensitaUnita) => {
     if (unita === densitaUnita) return;
@@ -655,7 +651,7 @@ export default function App() {
         head: [[
           "ID", "Rilev.", "Trapianto", "Cliente", "Appezz.", "Gg",
           "M1", "M2", "M3", "M4", "M5",
-          "Media", "Ottimale", "Diff.", "Dose\n(kg/ha)", "Lat", "Lng",
+          "Media", "Ottimale", "Diff.", "Dose / N punto\n(kg/ha)", "Lat", "Lng",
         ]],
         body: osservazioni.map((o) => [
           o.id,
@@ -820,7 +816,7 @@ export default function App() {
               </select>
               {isGranoDuro ? (
                 <p className="text-xs text-stone-400">
-                  Disciplinare: {datiGrano.densitaSemiMqMin}{datiGrano.densitaSemiMqMin === datiGrano.densitaSemiMqMax ? "" : `–${datiGrano.densitaSemiMqMax}`} semi/m² · {datiGrano.doseSemeKgHaMin}{datiGrano.doseSemeKgHaMin === datiGrano.doseSemeKgHaMax ? "" : `–${datiGrano.doseSemeKgHaMax}`} kg seme/ha.
+                  Densità varietale di riferimento: {datiGrano.densitaSemiMqMin}{datiGrano.densitaSemiMqMin === datiGrano.densitaSemiMqMax ? "" : `–${datiGrano.densitaSemiMqMax}`} semi/m².
                 </p>
               ) : (
                 <p className="text-xs text-stone-400">
@@ -860,11 +856,11 @@ export default function App() {
                     Input: {densitaUnita === "kg/ha"
                       ? `${densitaValore.toFixed(1)} kg seme/ha`
                       : `${Math.round(densitaGrano.semiMqEquivalenti).toLocaleString("it-IT")} semi/m²`}
-                    {" "}· disciplinare: {datiGrano.doseSemeKgHaMin}–{datiGrano.doseSemeKgHaMax} kg/ha e {datiGrano.densitaSemiMqMin}–{datiGrano.densitaSemiMqMax} semi/m².
+                    {" "}· densità varietale di riferimento: {datiGrano.densitaSemiMqMin}–{datiGrano.densitaSemiMqMax} semi/m².
                     {" "}Equivalente stimato: {Math.round(densitaGrano.semiHaEquivalenti).toLocaleString("it-IT")} semi/ha ({densitaGrano.semiMqEquivalenti.toFixed(0)} semi/m²) · coefficiente densità N: ×{densitaGrano.fattoreAzoto.toFixed(2)}
                     {densitaGrano.fuoriRange
                       ? densitaUnita === "kg/ha"
-                        ? " · Fuori dal range di dose del disciplinare: verifica quantità e varietà."
+                        ? " · Quantità da verificare con varietà e tecnico aziendale."
                         : " · Fuori dal range di densità del disciplinare: verifica semi e varietà."
                       : ""}
                   </p>
@@ -875,78 +871,34 @@ export default function App() {
                 )
               )}
             </div>
-            {!isGranoDuro && <div className="col-span-2 rounded-xl border border-green-200 bg-green-50/60 p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-bold text-green-900">Parametri aziendali confermati</h3>
-                  <p className="text-xs text-green-800 mt-0.5">
-                    Sono la base della conversione e del correttivo di densità per la varietà selezionata.
-                    Le modifiche vengono mantenute su questo dispositivo.
+            {!isGranoDuro && (
+              <div className="col-span-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2">
+                <details>
+                  <summary className="cursor-pointer text-xs font-semibold text-stone-700">
+                    Riferimento di conversione aziendale
+                  </summary>
+                  <p className="mt-2 text-xs text-stone-500">
+                    Valori salvati sul dispositivo e usati solo per rendere coerente la conversione tra kg di seme e piante/ha per la varietà selezionata.
                   </p>
-                </div>
-                <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-green-700 border border-green-200">
-                  {varieta}
-                </span>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <NumberInput
+                      label="Densità riferimento (piante/ha)"
+                      value={riferimentoAziendale.densitaPianteHa}
+                      onChange={(value) => aggiornaParametroAziendale("densitaPianteHa", value)}
+                      step={100}
+                      min={1000}
+                    />
+                    <NumberInput
+                      label="Seme riferimento (kg/ha)"
+                      value={riferimentoAziendale.kgSemiHa}
+                      onChange={(value) => aggiornaParametroAziendale("kgSemiHa", value)}
+                      step={0.0001}
+                      min={0.0001}
+                    />
+                  </div>
+                </details>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <NumberInput
-                  label="Densità di riferimento (piante/ha)"
-                  value={riferimentoAziendale.densitaPianteHa}
-                  onChange={(value) => aggiornaParametroAziendale("densitaPianteHa", value)}
-                  step={100}
-                  min={1000}
-                />
-                <NumberInput
-                  label="Seme di riferimento (kg/ha)"
-                  value={riferimentoAziendale.kgSemiHa}
-                  onChange={(value) => aggiornaParametroAziendale("kgSemiHa", value)}
-                  step={0.0001}
-                  min={0.0001}
-                />
-              </div>
-              <p className="text-xs text-green-800">
-                Conversione confermata: <strong>{Math.round(riferimentoAziendale.densitaPianteHa / riferimentoAziendale.kgSemiHa).toLocaleString("it-IT")} piante per kg di seme</strong>.
-                Questo rapporto sostituisce il valore generico quando usi kg seme/ha.
-              </p>
-            </div>}
-            {!isGranoDuro && <div className="col-span-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <details>
-                <summary className="cursor-pointer text-sm font-bold text-stone-700">
-                  Vedi i riferimenti aziendali di tutte le varietà
-                </summary>
-                <div className="overflow-x-auto mt-3">
-                  <table className="w-full min-w-[560px] text-xs">
-                    <thead>
-                      <tr className="border-b border-stone-200 text-left text-stone-500">
-                        <th className="px-2 py-2">Varietà</th>
-                        <th className="px-2 py-2 text-right">Piante/ha</th>
-                        <th className="px-2 py-2 text-right">kg seme/ha</th>
-                        <th className="px-2 py-2 text-right">Piante/kg</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.values(VARIETA_DB).map((voce) => {
-                        const riferimento = parametriAziendali[voce.label] ?? {
-                          densitaPianteHa: voce.densitaPianteDefault,
-                          kgSemiHa: voce.kgSemiDefault,
-                        };
-                        return (
-                          <tr key={voce.label} className={`border-b border-stone-100 last:border-0 ${voce.label === varieta ? "bg-green-100/70 font-semibold" : ""}`}>
-                            <td className="px-2 py-2">{voce.label}</td>
-                            <td className="px-2 py-2 text-right font-mono">{Math.round(riferimento.densitaPianteHa).toLocaleString("it-IT")}</td>
-                            <td className="px-2 py-2 text-right font-mono">{riferimento.kgSemiHa.toFixed(4)}</td>
-                            <td className="px-2 py-2 text-right font-mono">{Math.round(riferimento.densitaPianteHa / riferimento.kgSemiHa).toLocaleString("it-IT")}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-[11px] text-stone-500 mt-2">
-                  La riga evidenziata è la varietà in uso. Aggiorna i due valori sopra quando l’azienda conferma una nuova densità o dose di seme.
-                </p>
-              </details>
-            </div>}
+            )}
             <NumberInput
               label={isGranoDuro ? "Resa desiderata (q/ha)" : "Resa Desiderata (t/ha)"}
               value={resa}
@@ -1104,20 +1056,23 @@ export default function App() {
                 </summary>
                 <p className="mt-2 text-xs text-stone-600">
                   Profilo indicativo per semina autunnale fino alla maturazione cerosa/fisiologica (circa 250 DAS).
-                  Le finestre DAS servono a orientare il rilievo: il BBCH osservato e confermato resta l’unica fonte per la quota.
+                  Per ogni fase sono mostrati BBCH, durata e intervallo NDVI atteso: il riferimento puntuale resta la curva continua del DAS rilevato.
+                  Le finestre DAS orientano il rilievo; il BBCH osservato e confermato resta l’unica fonte per l’indicazione di fase.
                 </p>
                 <div className="mt-3 overflow-x-auto">
                   <table className="w-full min-w-[520px] text-xs">
                     <thead><tr className="border-b border-stone-200 text-left text-stone-500">
-                      <th className="px-2 py-2">DAS stimati</th><th className="px-2 py-2">BBCH</th><th className="px-2 py-2">Fase</th><th className="px-2 py-2">Esigenza N</th>
+                      <th className="px-2 py-2">DAS stimati</th><th className="px-2 py-2">Durata</th><th className="px-2 py-2">BBCH</th><th className="px-2 py-2">Fase</th><th className="px-2 py-2">NDVI riferimento</th><th className="px-2 py-2">Guida N</th>
                     </tr></thead>
                     <tbody>
                       {PROFILO_FENOLOGICO_GRANO.map((tappa) => (
                         <tr key={tappa.bbch} className="border-b border-stone-100 last:border-0">
                           <td className="px-2 py-2 font-mono">{tappa.dasMin}–{tappa.dasMax}</td>
+                          <td className="px-2 py-2">{tappa.dasMax - tappa.dasMin + 1} gg</td>
                           <td className="px-2 py-2 font-mono">{tappa.bbch}</td>
                           <td className="px-2 py-2">{tappa.label}</td>
-                          <td className="px-2 py-2">{tappa.quotaAzotoPrevista ? "quota di fase prevista" : "nessuna quota automatica"}</td>
+                          <td className="px-2 py-2 font-mono">{tappa.ndviMin.toFixed(2)} → {tappa.ndviMax.toFixed(2)}</td>
+                          <td className="px-2 py-2">{tappa.quotaAzotoPrevista ? "intervallo di fase" : "solo monitoraggio"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1304,7 +1259,7 @@ export default function App() {
             <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-4">
               <div>
                 <h2 className="text-base font-bold text-green-900">Piano azoto del punto · grano duro</h2>
-                <p className="text-xs text-green-800 mt-1">Resa e densità definiscono il piano; BBCH confermato e NDVI del punto definiscono la quota proponibile ora.</p>
+                <p className="text-xs text-green-800 mt-1">Resa e densità stimano il piano; BBCH confermato e media NDVI stimano l’indicazione N del punto. Il disciplinare resta una guida da validare in campo.</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                 <ResultRow label="Fabbisogno base" value={`${risultatiGrano.fabbisognoBase} kg N/ha`} />
@@ -1313,14 +1268,16 @@ export default function App() {
                 <ResultRow label="N residuo del piano" value={`${risultatiGrano.residuoPiano} kg N/ha`} highlight />
                 <ResultRow label="NDVI medio punto" value={risultatiGrano.media.toFixed(3)} />
                 <ResultRow label="NDVI riferimento" value={risultatiGrano.ndviOttimale.toFixed(3)} />
+                <ResultRow label="Fase attesa dai DAS" value={risultatiGrano.profiloDAS ? `${risultatiGrano.profiloDAS.bbch} · ${risultatiGrano.profiloDAS.label}` : "fuori calendario"} />
                 <ResultRow label="BBCH confermato" value={faseGrano ? faseGrano.bbch : "da confermare"} highlight />
+                <ResultRow label="N indicato dal punto NDVI" value={faseGrano && risultatiGrano.valoriValidi ? `${risultatiGrano.quotaProposta} kg N/ha` : "da confermare"} highlight />
               </div>
               <div className="rounded-lg border border-green-200 bg-white p-3 text-xs text-stone-700 space-y-1">
                 {faseGrano ? <>
-                  <p className="font-semibold text-green-900">Dose proponibile ora: {risultatiGrano.quotaProposta} kg N/ha</p>
+                  <p className="font-semibold text-green-900">Indicazione N del punto dalla media NDVI: {risultatiGrano.quotaProposta} kg N/ha</p>
                   <p>
-                    Schema disciplinare per {faseGrano.bbch} · {faseGrano.label}: {faseGrano.azotoMin}–{faseGrano.azotoMax} kg N/ha.
-                    Quota base: {risultatiGrano.quotaBase} kg N/ha; modulazione NDVI: ×{risultatiGrano.fattoreNdvi.toFixed(2)}; il risultato resta limitato all'intervallo della fase e ai {risultatiGrano.residuoPiano} kg N/ha residui.
+                    Intervallo guida del disciplinare per {faseGrano.bbch} · {faseGrano.label}: {faseGrano.azotoMin}–{faseGrano.azotoMax} kg N/ha.
+                    Media NDVI {risultatiGrano.media.toFixed(3)} rispetto a {risultatiGrano.ndviOttimale.toFixed(3)} → fattore {risultatiGrano.fattoreNdvi.toFixed(2)} sulla quota base di {risultatiGrano.quotaBase} kg N/ha; indicazione limitata all’intervallo guida e ai {risultatiGrano.residuoPiano} kg N/ha residui.
                   </p>
                 </> : (
                   <p className="font-semibold text-amber-800">
@@ -1331,6 +1288,11 @@ export default function App() {
                 {risultatiGrano.scostamentoNdvi > 0 && risultatiGrano.valoriValidi && (
                   <p className="font-semibold text-amber-800">
                     NDVI sotto il riferimento di {risultatiGrano.scostamentoNdvi.toFixed(3)}: verifica in campo prima della distribuzione. Il divario può dipendere anche da acqua, suolo, malattie o disuniformità, non solo dall'azoto.
+                  </p>
+                )}
+                {faseGrano && !risultatiGrano.ndviFaseCoerente && (
+                  <p className="font-semibold text-amber-800">
+                    Il DAS ({giorni}) genera un riferimento NDVI non coerente con l’intervallo atteso per il BBCH confermato: ricontrolla data di semina e rilievo fenologico prima di usare l’indicazione.
                   </p>
                 )}
                 {risultatiGrano.coefficienteVariazione > 15 && risultatiGrano.valoriValidi && (
@@ -1355,7 +1317,7 @@ export default function App() {
               <details className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs text-stone-700">
                 <summary className="cursor-pointer font-semibold">Metodo e limiti del riferimento NDVI</summary>
                 <div className="mt-2 space-y-2">
-                  <p>La curva NDVI è una baseline fenologica per semina autunnale, non una soglia universale. Corregge la quota BBCH solo entro ±15%, senza superare il residuo del piano.</p>
+                  <p>La curva NDVI è una baseline fenologica per semina autunnale, non una soglia universale. L’indicazione del punto usa la media delle cinque letture per modulare la quota BBCH solo entro ±15%, senza superare il residuo del piano.</p>
                   <p>Riferimenti: Akmal et al., <em>Sustainability</em> 2021 (NDVI e SPAD nel frumento duro); Denora et al., <em>PLOS ONE</em> 2022 (zone di gestione e N a dose variabile nel frumento duro); Nino et al., <em>Remote Sensing Applications</em> 2024 (stato azotato da Sentinel-2 in Italia centrale).</p>
                   <p className="font-medium">A copertura elevata l'NDVI può saturare; non distingue autonomamente carenza di N da stress idrico, suolo, patogeni o altre cause. Conferma sempre con osservazione e valutazione tecnica.</p>
                 </div>
@@ -1420,7 +1382,7 @@ export default function App() {
                     <th className="px-2 py-2 text-center">Ottimale</th>
                     <th className="px-2 py-2 text-center">Diff.</th>
                     <th className="px-2 py-2 text-center">N già distr.</th>
-                    <th className="px-2 py-2 text-center">Dose (kg/ha)</th>
+                    <th className="px-2 py-2 text-center">N punto / dose (kg/ha)</th>
                     <th className="px-2 py-2 text-center">GPS</th>
                     <th className="px-2 py-2 text-center rounded-tr-lg">Azioni</th>
                   </tr>
@@ -1519,7 +1481,7 @@ export default function App() {
 
         <p className="text-center text-xs text-green-700 pb-4">
           {isGranoDuro
-            ? "Grano duro: quota del punto = fase BBCH confermata, limitata da fabbisogno residuo e intervallo disciplinare; l'NDVI la modula solo entro ±15%."
+            ? "Grano duro: l’indicazione N del punto è registrata per ogni media NDVI; BBCH, residuo e intervallo disciplinare la guidano, ma la verifica in campo resta necessaria."
             : "Formula: Dose = (NDVI_ottimale − NDVI_media) × 500 × (resa / 4.5) · Limite max = azoto totale / 2"}
         </p>
 
