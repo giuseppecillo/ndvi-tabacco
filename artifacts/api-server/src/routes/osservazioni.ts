@@ -20,6 +20,8 @@ router.get("/osservazioni", async (_req, res) => {
          n1, n2, n3, n4, n5,
          media, ottimale, discostamento, dose,
          fase_fenologica AS "faseFenologica",
+         bbch,
+         fase_fonte AS "faseFonte",
          azoto_totale AS "azotoTotale",
          quota_azoto AS "quotaAzoto",
          lat, lng,
@@ -65,24 +67,25 @@ router.post("/osservazioni", async (req, res) => {
          (id, data, data_trapianto, tipo_intervento, giorni, eta_piantina,
            cliente, appezzamento, resa, varieta, piante_semi_ha, piante_semi_unita, piante_ha_equivalenti,
             n1, n2, n3, n4, n5, media, ottimale, discostamento, dose,
-            fase_fenologica, azoto_totale, quota_azoto, lat, lng)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+            fase_fenologica, bbch, fase_fonte, azoto_totale, quota_azoto, lat, lng)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
        ON CONFLICT (id) DO UPDATE SET
          data=$2, data_trapianto=$3, tipo_intervento=$4, giorni=$5, eta_piantina=$6,
           cliente=$7, appezzamento=$8, resa=$9, varieta=$10,
           piante_semi_ha=$11, piante_semi_unita=$12, piante_ha_equivalenti=$13,
           n1=$14, n2=$15, n3=$16, n4=$17, n5=$18,
            media=$19, ottimale=$20, discostamento=$21, dose=$22,
-           fase_fenologica=$23, azoto_totale=$24, quota_azoto=$25,
-           lat=$26, lng=$27`,
+            fase_fenologica=$23, bbch=$24, fase_fonte=$25, azoto_totale=$26, quota_azoto=$27,
+            lat=$28, lng=$29`,
       [
          o.id, o.data, o.dataSemina || o.dataTrapianto || null, o.coltura ?? o.tipoIntervento ?? "tabacco", o.giorni,
         o.etaPiantina ?? "standard",
         o.cliente, o.appezzamento, o.resa, o.varieta,
         o.densitaValore ?? null, o.densitaUnita ?? null, o.pianteHaEquivalenti ?? null,
          o.n1, o.n2, o.n3, o.n4, o.n5, o.media, o.ottimale, o.discostamento, o.dose,
-         o.faseFenologica ?? null, o.azotoTotale ?? null, o.quotaAzoto ?? null,
-         o.lat ?? null, o.lng ?? null,
+          o.faseFenologica ?? null, o.bbch ?? null, o.faseFonte ?? null,
+          o.azotoTotale ?? null, o.quotaAzoto ?? null,
+          o.lat ?? null, o.lng ?? null,
       ]
     );
     res.status(201).json({ ok: true });

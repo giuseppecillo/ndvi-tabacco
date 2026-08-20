@@ -32,6 +32,8 @@ export const osservazioniTable = pgTable("osservazioni", {
   densitaUnita: text("piante_semi_unita"),
   pianteHaEquivalenti: numeric("piante_ha_equivalenti"),
   faseFenologica: text("fase_fenologica"),
+  bbch: text("bbch"),
+  faseFonte: text("fase_fonte"),
   azotoTotale: numeric("azoto_totale"),
   quotaAzoto: numeric("quota_azoto"),
 });

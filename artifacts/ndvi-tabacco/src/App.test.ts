@@ -2,16 +2,20 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   FASI_GRANO,
+  FINESTRE_DAS_LOCALI_TEMPLATE,
   GRANO_DURO_DB,
   calcola,
   calcolaDensita,
   calcolaDensitaGrano,
   calcolaFabbisognoNGrano,
   calcolaQuotaNGrano,
+  faseGranoConfermataDaBbch,
+  faseGranoDaBbch,
   granoKgHaDaSemiMq,
   granoSemiMqDaKgHa,
   ndviOttimale,
   statisticheNdvi,
+  stimaFaseGranoDaDas,
 } from "./calculations";
 
 const EPSILON = 1e-9;
@@ -29,19 +33,19 @@ const BURLEY_REFERENCE = {
   kgSemiDefault: 0.002,
 };
 const GRANO_CONVERSION_FIXTURES = [
-  { variety: "Redidenari", semiMq: 215, pmg: 45, kgHa: 96.75 },
-  { variety: "Telemaco", semiMq: 205, pmg: 45, kgHa: 92.25 },
-  { variety: "President", semiMq: 192.5, pmg: 45, kgHa: 86.625 },
-  { variety: "Federico II", semiMq: 180, pmg: 45, kgHa: 81 },
-  { variety: "Egeo", semiMq: 215, pmg: 45, kgHa: 96.75 },
-  { variety: "Minosse", semiMq: 225, pmg: 45, kgHa: 101.25 },
-  { variety: "Spineto", semiMq: 240, pmg: 45, kgHa: 108 },
-  { variety: "Farah", semiMq: 270, pmg: 45, kgHa: 121.5 },
-  { variety: "Furio Camillo", semiMq: 215, pmg: 45, kgHa: 96.75 },
-  { variety: "Marco Aurelio", semiMq: 215, pmg: 45, kgHa: 96.75 },
-  { variety: "Nazareno", semiMq: 170, pmg: 45, kgHa: 76.5 },
-  { variety: "Quadrato", semiMq: 240, pmg: 45, kgHa: 108 },
-  { variety: "Giulio", semiMq: 205, pmg: 45, kgHa: 92.25 },
+  { variety: "Redidenari", semiMq: [360, 410], kgHa: [200, 230] },
+  { variety: "Telemaco", semiMq: [360, 410], kgHa: [190, 220] },
+  { variety: "President", semiMq: [300, 350], kgHa: [165, 220] },
+  { variety: "Federico II", semiMq: [350, 350], kgHa: [170, 190] },
+  { variety: "Egeo", semiMq: [360, 410], kgHa: [200, 230] },
+  { variety: "Minosse", semiMq: [380, 430], kgHa: [210, 240] },
+  { variety: "Spineto", semiMq: [400, 450], kgHa: [240, 240] },
+  { variety: "Farah", semiMq: [450, 500], kgHa: [270, 270] },
+  { variety: "Furio Camillo", semiMq: [400, 450], kgHa: [200, 230] },
+  { variety: "Marco Aurelio", semiMq: [400, 450], kgHa: [200, 230] },
+  { variety: "Nazareno", semiMq: [350, 400], kgHa: [170, 170] },
+  { variety: "Quadrato", semiMq: [400, 450], kgHa: [220, 260] },
+  { variety: "Giulio", semiMq: [370, 400], kgHa: [190, 220] },
 ] as const;
 
 function assertApproximately(actual: number, expected: number, message: string): void {
@@ -49,43 +53,72 @@ function assertApproximately(actual: number, expected: number, message: string):
 }
 
 describe("grano duro seed-rate conversions", () => {
-  it("matches independent kg/ha fixtures for every listed variety PMG", () => {
+  it("keeps disciplinary seed density and seed dose as separate ranges", () => {
     for (const fixture of GRANO_CONVERSION_FIXTURES) {
       const dati = GRANO_DURO_DB[fixture.variety];
       assert.ok(dati, `missing ${fixture.variety} from the variety database`);
-      assert.equal(dati.pesoMilleSemiG, fixture.pmg, `${fixture.variety} PMG`);
-      assert.equal(dati.densitaSemiMqDefault, fixture.semiMq, `${fixture.variety} default seeds/m²`);
-      assertApproximately(
-        granoKgHaDaSemiMq(fixture.semiMq, dati),
-        fixture.kgHa,
-        `${fixture.variety} seeds/m² → kg/ha`,
-      );
-      assertApproximately(
-        granoSemiMqDaKgHa(fixture.kgHa, dati),
-        fixture.semiMq,
-        `${fixture.variety} kg/ha → seeds/m²`,
-      );
+      assert.equal(dati.densitaSemiMqMin, fixture.semiMq[0], `${fixture.variety} minimum seeds/m²`);
+      assert.equal(dati.densitaSemiMqMax, fixture.semiMq[1], `${fixture.variety} maximum seeds/m²`);
+      assert.equal(dati.doseSemeKgHaMin, fixture.kgHa[0], `${fixture.variety} minimum seed kg/ha`);
+      assert.equal(dati.doseSemeKgHaMax, fixture.kgHa[1], `${fixture.variety} maximum seed kg/ha`);
 
-      const fromKg = calcolaDensitaGrano(fixture.kgHa, "kg/ha", dati);
-      const fromSemiHa = calcolaDensitaGrano(fixture.semiMq * 10_000, "semi/ha", dati);
-      assertApproximately(fromKg.semiMqEquivalenti, fixture.semiMq, `${fixture.variety} planner kg/ha conversion`);
-      assertApproximately(fromSemiHa.semiMqEquivalenti, fixture.semiMq, `${fixture.variety} planner seeds/ha conversion`);
-      assert.equal(fromKg.semiHaEquivalenti, fromSemiHa.semiHaEquivalenti);
+      const fromDose = calcolaDensitaGrano(fixture.kgHa[0], "kg/ha", dati);
+      assert.equal(fromDose.fuoriRange, false, `${fixture.variety} lower seed dose remains valid`);
+      assert.equal(fromDose.fuoriRangeDose, false, `${fixture.variety} lower seed dose range`);
+
+      const fromDensity = calcolaDensitaGrano(fixture.semiMq[0], "semi/m²", dati);
+      assert.equal(fromDensity.fuoriRange, false, `${fixture.variety} lower seed density remains valid`);
+      assert.equal(fromDensity.fuoriRangeDensita, false, `${fixture.variety} lower seed density range`);
+
+      const midDose = dati.doseSemeKgHaDefault;
+      const convertedDensity = granoSemiMqDaKgHa(midDose, dati);
+      assertApproximately(
+        granoKgHaDaSemiMq(convertedDensity, dati),
+        midDose,
+        `${fixture.variety} kg/ha conversion round-trip`,
+      );
+      assertApproximately(
+        calcolaDensitaGrano(midDose, "kg/ha", dati).doseKgHaEquivalente,
+        midDose,
+        `${fixture.variety} planner dose conversion`,
+      );
     }
   });
 
-  it("uses the supplied PMG rather than assuming the current 45 g varietal value", () => {
+  it("uses the supplied PMG rather than assuming a generic varietal value", () => {
     const fiftyGramPmg = {
       label: "Fixture 50 g PMG",
       densitaSemiMqMin: 200,
       densitaSemiMqMax: 240,
       densitaSemiMqDefault: 220,
+      doseSemeKgHaMin: 100,
+      doseSemeKgHaMax: 120,
+      doseSemeKgHaDefault: 110,
       pesoMilleSemiG: 50,
     };
 
     assert.equal(granoKgHaDaSemiMq(220, fiftyGramPmg), 110);
     assert.equal(granoSemiMqDaKgHa(110, fiftyGramPmg), 220);
     assert.equal(calcolaDensitaGrano(110, "kg/ha", fiftyGramPmg).semiMqEquivalenti, 220);
+  });
+});
+
+describe("grano duro BBCH and local DAS estimate", () => {
+  it("uses BBCH as the authoritative phase selection", () => {
+    assert.equal(faseGranoDaBbch("20–29")?.label, "Accestimento");
+    assert.equal(faseGranoDaBbch("37–39")?.label, "Foglia a bandiera");
+    assert.equal(faseGranoDaBbch("99"), null);
+  });
+
+  it("does not activate a BBCH phase from a DAS prefill until it is explicitly confirmed", () => {
+    assert.equal(faseGranoConfermataDaBbch("20–29", false), null);
+    assert.equal(faseGranoConfermataDaBbch("20–29", true)?.label, "Accestimento");
+  });
+
+  it("keeps the DAS estimate separate and configurable", () => {
+    assert.equal(stimaFaseGranoDaDas(60, FINESTRE_DAS_LOCALI_TEMPLATE)?.label, "Accestimento");
+    assert.equal(stimaFaseGranoDaDas(140, FINESTRE_DAS_LOCALI_TEMPLATE)?.label, "Inizio levata");
+    assert.equal(stimaFaseGranoDaDas(260, FINESTRE_DAS_LOCALI_TEMPLATE), null);
   });
 });
 

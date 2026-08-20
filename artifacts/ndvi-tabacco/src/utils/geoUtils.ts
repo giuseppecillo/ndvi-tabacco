@@ -560,6 +560,7 @@ export function exportObservationsCsv(
     id: string; coltura?: string; data: string; dataTrapianto: string; dataSemina?: string;
     giorni: number;
     faseFenologica?: string;
+    bbch?: string | null; faseFonte?: string | null;
     cliente: string; appezzamento: string; varieta: string;
     densitaValore?: number | null; densitaUnita?: string | null; pianteHaEquivalenti?: number | null;
     n1: number; n2: number; n3: number; n4: number; n5: number;
@@ -569,7 +570,7 @@ export function exportObservationsCsv(
   }[],
 ): void {
   const header = [
-    "ID","Coltura","Data","Data_Semina","Data_Trapianto","DAS_o_Giorni","Fase",
+    "ID","Coltura","Data","Data_Semina","Data_Trapianto","DAS_o_Giorni","BBCH","Fase","Fonte_Fase",
     "Cliente","Appezzamento","Varieta",
     "Densita_Valore","Densita_Unita","Piante_ha_Equiv",
     "M1","M2","M3","M4","M5",
@@ -581,7 +582,7 @@ export function exportObservationsCsv(
     return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, "\"\"")}"` : text;
   };
   const rows = osservazioni.map(o => [
-    o.id, o.coltura ?? "tabacco", o.data, o.dataSemina ?? "", o.dataTrapianto, o.giorni, o.faseFenologica ?? "",
+    o.id, o.coltura ?? "tabacco", o.data, o.dataSemina ?? "", o.dataTrapianto, o.giorni, o.bbch ?? "", o.faseFenologica ?? "", o.faseFonte ?? "",
     o.cliente, o.appezzamento, o.varieta,
     o.densitaValore ?? "", o.densitaUnita ?? "", o.pianteHaEquivalenti ?? "",
     o.n1, o.n2, o.n3, o.n4, o.n5,
