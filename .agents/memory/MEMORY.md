@@ -6,3 +6,4 @@
 - [Campaign calibration safeguards](campaign-calibration-safeguards.md) — Nitrogen comparisons require real, complete closed-campaign data; generic defaults must never yield a verdict.
 - [Grano duro nitrogen planning](grano-duro-nitrogen-planning.md) — Convert seed rates with PMG and constrain scaled phase advice to each disciplinary range.
 - [Grain dose API integrity](grain-dose-api-integrity.md) — Recalculate the grain point dose on the API; never trust client-side BBCH, NDVI, or dose values.
+- [NDVI point-N indication](ndvi-point-n-indication.md) — Above-reference NDVI means no point N; below-reference NDVI maps proportionally to the crop’s optimal N quota.

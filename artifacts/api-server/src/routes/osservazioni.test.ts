@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { erroreOsservazioneGrano } from "./osservazioni";
+import { erroreOsservazioneGrano, erroreOsservazioneTabacco } from "./osservazioni";
 
 const pianoGranoValido = (): Record<string, unknown> => ({
   coltura: "grano duro",
@@ -22,8 +22,46 @@ const pianoGranoValido = (): Record<string, unknown> => ({
   quotaAzoto: 12,
 });
 
+const pianoTabaccoValido = (): Record<string, unknown> => ({
+  coltura: "tabacco",
+  giorni: 42,
+  etaPiantina: "standard",
+  resa: 4.5,
+  n1: 0.5,
+  n2: 0.5,
+  n3: 0.5,
+  n4: 0.5,
+  n5: 0.5,
+  media: 0.5,
+  ottimale: 0.64,
+  discostamento: 0.14,
+  fabbisognoN: 120,
+  azotoTotale: 120,
+  dose: 26.3,
+});
+
 test("accepts the canonical grain plan produced by the app", () => {
   assert.equal(erroreOsservazioneGrano(pianoGranoValido()), null);
+});
+
+test("accepts the proportional tobacco NDVI plan", () => {
+  assert.equal(erroreOsservazioneTabacco(pianoTabaccoValido()), null);
+});
+
+test("requires zero N for tobacco at or above its NDVI reference", () => {
+  const piano = pianoTabaccoValido();
+  piano.n1 = 0.8;
+  piano.n2 = 0.8;
+  piano.n3 = 0.8;
+  piano.n4 = 0.8;
+  piano.n5 = 0.8;
+  piano.media = 0.8;
+  piano.discostamento = 0;
+  piano.dose = 0;
+  assert.equal(erroreOsservazioneTabacco(piano), null);
+
+  piano.dose = 1;
+  assert.match(erroreOsservazioneTabacco(piano) ?? "", /dose tabacco/);
 });
 
 test("requires zero N when the observed NDVI is at or above its reference", () => {

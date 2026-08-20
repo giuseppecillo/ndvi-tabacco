@@ -296,7 +296,9 @@ describe("tobacco calculations", () => {
 
     const result = calcola(4.5, 120, 42, 0.5, 0.5, 0.5, 0.5, 0.5, 120);
     assertApproximately(result.ottimale, 0.64, "tobacco NDVI optimum at 42 days");
-    assertApproximately(result.dose, 60, "tobacco nitrogen dose cap");
+    assertApproximately(result.dose, 26.3, "tobacco nitrogen indication from NDVI deficit");
+    assertApproximately(result.deficitRelativo, 0.21875, "tobacco relative NDVI deficit");
+    assertApproximately(result.quotaDaDeficitNdvi, 26.3, "tobacco proportional N quota");
     assert.equal(result.fabbisognoN, 120);
     assert.equal(result.rapportoAzoto, 1);
     assert.equal(result.statoAzoto, "allineato");
@@ -321,6 +323,16 @@ describe("tobacco calculations", () => {
     assert.equal(result.dose, 0);
     assert.equal(result.statoAzoto, "allineato");
     assert.equal(result.valoriValidi, true);
+  });
+
+  it("uses zero N at the reference and proportional N below it", () => {
+    const atReference = calcola(4.5, 120, 42, 0.64, 0.64, 0.64, 0.64, 0.64, 120);
+    assert.equal(atReference.discostamento, 0);
+    assert.equal(atReference.dose, 0);
+
+    const belowReference = calcola(4.5, 120, 42, 0.5, 0.5, 0.5, 0.5, 0.5, 120);
+    assertApproximately(belowReference.dose, 26.3, "tobacco deficit dose");
+    assert.ok(belowReference.dose <= 120 / 2);
   });
 
   it("keeps nursery age adjustments on the continuous NDVI curve", () => {

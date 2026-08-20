@@ -419,10 +419,10 @@ export function calcola(
   const { ottimale, giorniFenologici } = ndviOttimale(giorni, etaPiantina);
   const media = stats.media;
   const discostamento = Math.max(0, ottimale - media);
-  let dose = discostamento * 500 * (resa / 4.5);
+  const deficitRelativo = ottimale > 0 ? Math.min(1, discostamento / ottimale) : 0;
+  const quotaDaDeficitNdvi = Math.round(fabbisognoN * deficitRelativo * 10) / 10;
   const limiteMax = azotoTot / 2;
-  if (dose > limiteMax) dose = limiteMax;
-  if (media >= ottimale) dose = 0;
+  const dose = Math.min(limiteMax, quotaDaDeficitNdvi);
   const rapportoAzoto = fabbisognoN > 0 ? azotoTot / fabbisognoN : 1;
   const statoAzoto = rapportoAzoto < 0.85
     ? "deficit"
@@ -441,6 +441,8 @@ export function calcola(
     ...stats,
     ottimale,
     discostamento,
+    deficitRelativo,
+    quotaDaDeficitNdvi,
     dose,
     giorniFenologici,
     fabbisognoN,

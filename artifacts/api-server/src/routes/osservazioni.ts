@@ -24,6 +24,20 @@ const CURVA_NDVI_GRANO = [
   { das: 250, ottimale: 0.42 },
 ];
 
+const CURVA_NDVI_TABACCO = [
+  { giorni: 0, ottimale: 0.28 },
+  { giorni: 14, ottimale: 0.34 },
+  { giorni: 28, ottimale: 0.48 },
+  { giorni: 42, ottimale: 0.64 },
+  { giorni: 56, ottimale: 0.74 },
+  { giorni: 70, ottimale: 0.76 },
+  { giorni: 84, ottimale: 0.72 },
+  { giorni: 105, ottimale: 0.66 },
+  { giorni: 130, ottimale: 0.60 },
+];
+
+const ETA_PIANTINA: Record<string, number> = { standard: 0, avanzata: 7, extra: 14 };
+
 const numero = (value: unknown): number | null => {
   if (typeof value !== "number" && (typeof value !== "string" || value.trim() === "")) {
     return null;
@@ -46,6 +60,73 @@ function ndviRiferimentoGrano(das: number): number {
     }
   }
   return ultimo.ottimale;
+}
+
+function ndviRiferimentoTabacco(giorni: number, etaPiantina: string): number {
+  const giorniFenologici = Math.max(0, giorni + (ETA_PIANTINA[etaPiantina] ?? 0));
+  const primo = CURVA_NDVI_TABACCO[0];
+  const ultimo = CURVA_NDVI_TABACCO[CURVA_NDVI_TABACCO.length - 1];
+  if (giorniFenologici <= primo.giorni) return primo.ottimale;
+  if (giorniFenologici >= ultimo.giorni) return ultimo.ottimale;
+  for (let index = 1; index < CURVA_NDVI_TABACCO.length; index++) {
+    const destro = CURVA_NDVI_TABACCO[index];
+    if (giorniFenologici <= destro.giorni) {
+      const sinistro = CURVA_NDVI_TABACCO[index - 1];
+      const t = (giorniFenologici - sinistro.giorni) / (destro.giorni - sinistro.giorni);
+      const smoothT = t * t * (3 - 2 * t);
+      return sinistro.ottimale + (destro.ottimale - sinistro.ottimale) * smoothT;
+    }
+  }
+  return ultimo.ottimale;
+}
+
+export function erroreOsservazioneTabacco(o: Record<string, unknown>): string | null {
+  const letture = [o.n1, o.n2, o.n3, o.n4, o.n5].map(numero);
+  if (letture.some((valore) => valore === null || valore < 0 || valore > 1)) {
+    return "Le letture NDVI del tabacco devono essere comprese tra 0 e 1.";
+  }
+
+  const media = numero(o.media);
+  const ottimale = numero(o.ottimale);
+  const discostamento = numero(o.discostamento);
+  const giorni = numero(o.giorni);
+  const resa = numero(o.resa);
+  const fabbisognoN = numero(o.fabbisognoN);
+  const azotoTotale = numero(o.azotoTotale);
+  const dose = numero(o.dose);
+  if (
+    media === null || ottimale === null || discostamento === null || giorni === null
+    || resa === null || fabbisognoN === null || azotoTotale === null || dose === null
+  ) {
+    return "I parametri del piano azoto tabacco non sono completi.";
+  }
+  if (giorni < 0 || resa < 0 || fabbisognoN < 0 || azotoTotale < 0 || dose < 0 || ottimale < 0 || ottimale > 1) {
+    return "I valori del piano azoto tabacco non sono validi.";
+  }
+
+  const mediaCalcolata = (letture as number[]).reduce((somma, valore) => somma + valore, 0) / letture.length;
+  if (Math.abs(media - mediaCalcolata) > 0.0001) {
+    return "La media NDVI del tabacco non è coerente con le letture inviate.";
+  }
+  const riferimentoAtteso = ndviRiferimentoTabacco(
+    giorni,
+    typeof o.etaPiantina === "string" ? o.etaPiantina : "standard",
+  );
+  if (Math.abs(ottimale - riferimentoAtteso) > 0.0001) {
+    return "Il riferimento NDVI del tabacco non corrisponde al calendario fenologico.";
+  }
+
+  const discostamentoAtteso = Math.max(0, ottimale - media);
+  if (Math.abs(discostamento - discostamentoAtteso) > 0.0001) {
+    return "Il deficit NDVI del tabacco non è coerente con media e riferimento.";
+  }
+  const deficitRelativo = ottimale > 0 ? Math.min(1, discostamentoAtteso / ottimale) : 0;
+  const quotaDaDeficitNdvi = Math.round(fabbisognoN * deficitRelativo * 10) / 10;
+  const doseAttesa = Math.min(azotoTotale / 2, quotaDaDeficitNdvi);
+  if (Math.abs(dose - doseAttesa) > 0.01) {
+    return "La dose tabacco non corrisponde alla quota ricalcolata da NDVI e fabbisogno N.";
+  }
+  return null;
 }
 
 export function erroreOsservazioneGrano(o: Record<string, unknown>): string | null {
@@ -174,12 +255,12 @@ router.post("/osservazioni", async (req, res) => {
     res.status(400).json({ error: "Coltura non supportata." });
     return;
   }
-  if (coltura === "grano duro") {
-    const errore = erroreOsservazioneGrano(o);
-    if (errore) {
-      res.status(400).json({ error: errore });
-      return;
-    }
+  const errore = coltura === "grano duro"
+    ? erroreOsservazioneGrano(o)
+    : erroreOsservazioneTabacco(o);
+  if (errore) {
+    res.status(400).json({ error: errore });
+    return;
   }
   try {
     await pool.query(

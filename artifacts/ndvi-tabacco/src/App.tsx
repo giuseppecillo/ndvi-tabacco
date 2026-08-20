@@ -561,7 +561,10 @@ export default function App() {
               azotoGiaDistribuito,
               quotaAzoto: risultatiGrano.quotaProposta,
             }
-          : risultati),
+          : {
+              ...risultati,
+              azotoTotale: azotoTot,
+            }),
         lat,
         lng,
       };
@@ -1210,7 +1213,8 @@ export default function App() {
             <div className="grid grid-cols-2 gap-2 text-sm">
               <ResultRow label="Media NDVI" value={risultati.media.toFixed(3)} />
               <ResultRow label="NDVI Ottimale" value={risultati.ottimale.toFixed(3)} highlight />
-              <ResultRow label="Discostamento" value={risultati.discostamento.toFixed(3)} />
+              <ResultRow label="Deficit NDVI" value={risultati.discostamento.toFixed(3)} />
+              <ResultRow label="N indicato dal punto NDVI" value={`${risultati.dose.toFixed(1)} kg N/ha`} highlight />
             </div>
             <div className={`rounded-lg border px-3 py-2 text-xs space-y-1 ${variabilitaClass}`}>
               {!risultati.valoriValidi ? (
@@ -1240,6 +1244,11 @@ export default function App() {
                   : risultati.statoAzoto === "deficit"
                   ? `Possibile deficit: mancano circa ${Math.max(0, risultati.fabbisognoN - azotoTot)} kg N/ha rispetto alle asportazioni stimate.`
                   : `Possibile eccesso: +${Math.max(0, azotoTot - risultati.fabbisognoN)} kg N/ha rispetto alle asportazioni stimate.`}
+              </p>
+              <p className="font-medium text-stone-700">
+                {risultati.discostamento > 0
+                  ? <>Deficit NDVI: {risultati.ottimale.toFixed(3)} − {risultati.media.toFixed(3)} = {risultati.discostamento.toFixed(3)} ({(risultati.deficitRelativo * 100).toFixed(1)}%). Quota N ottimale: {risultati.fabbisognoN.toFixed(1)} kg/ha × {(risultati.deficitRelativo * 100).toFixed(1)}% = {risultati.quotaDaDeficitNdvi.toFixed(1)} kg N/ha; limite applicato: {azotoTot.toFixed(1)} / 2 = {(azotoTot / 2).toFixed(1)} kg N/ha.</>
+                  : <>La media NDVI ({risultati.media.toFixed(3)}) è uguale o superiore al riferimento ({risultati.ottimale.toFixed(3)}): non è indicato alcun apporto di azoto.</>}
               </p>
               {risultati.statoVariabilita === "alta" && (
                 <p className="text-red-700 font-medium">Con CV superiore al 15%, ricampiona le zone disomogenee prima di distribuire una dose uniforme.</p>
@@ -1484,7 +1493,7 @@ export default function App() {
         <p className="text-center text-xs text-green-700 pb-4">
           {isGranoDuro
             ? "Grano duro: l’indicazione N del punto è registrata per ogni media NDVI; BBCH, residuo e intervallo di consiglio la guidano, ma la verifica in campo resta necessaria."
-            : "Formula: Dose = (NDVI_ottimale − NDVI_media) × 500 × (resa / 4.5) · Limite max = azoto totale / 2"}
+            : "Formula tabacco: quota N = fabbisogno N ottimale × deficit NDVI relativo · Limite max = azoto totale / 2"}
         </p>
 
         </>}
