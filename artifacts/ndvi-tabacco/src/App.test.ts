@@ -332,7 +332,13 @@ describe("tobacco calculations", () => {
 
     const belowReference = calcola(4.5, 120, 42, 0.5, 0.5, 0.5, 0.5, 0.5, 120);
     assertApproximately(belowReference.dose, 26.3, "tobacco deficit dose");
-    assert.ok(belowReference.dose <= 120 / 2);
+    assert.equal(belowReference.residuoPiano, 120);
+
+    const afterPreviousApplications = calcola(
+      4.5, 120, 42, 0.5, 0.5, 0.5, 0.5, 0.5, 120, "standard", 100
+    );
+    assert.equal(afterPreviousApplications.residuoPiano, 20);
+    assert.equal(afterPreviousApplications.dose, 20);
   });
 
   it("keeps nursery age adjustments on the continuous NDVI curve", () => {

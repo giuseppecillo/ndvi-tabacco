@@ -37,6 +37,7 @@ const pianoTabaccoValido = (): Record<string, unknown> => ({
   discostamento: 0.14,
   fabbisognoN: 120,
   azotoTotale: 120,
+  azotoGiaDistribuito: 0,
   dose: 26.3,
 });
 
@@ -61,6 +62,16 @@ test("requires zero N for tobacco at or above its NDVI reference", () => {
   assert.equal(erroreOsservazioneTabacco(piano), null);
 
   piano.dose = 1;
+  assert.match(erroreOsservazioneTabacco(piano) ?? "", /dose tabacco/);
+});
+
+test("caps the tobacco indication at the residual nitrogen plan", () => {
+  const piano = pianoTabaccoValido();
+  piano.azotoGiaDistribuito = 100;
+  piano.dose = 20;
+  assert.equal(erroreOsservazioneTabacco(piano), null);
+
+  piano.dose = 26.3;
   assert.match(erroreOsservazioneTabacco(piano) ?? "", /dose tabacco/);
 });
 

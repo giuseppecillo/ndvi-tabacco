@@ -493,7 +493,7 @@ export default function App() {
   });
 
   const risultati = calcola(
-    resa, azotoTot, giorni, n1, n2, n3, n4, n5, fabbisognoN, etaPiantina
+    resa, azotoTot, giorni, n1, n2, n3, n4, n5, fabbisognoN, etaPiantina, azotoGiaDistribuito
   );
   const risultatiGrano = {
     fase: faseGrano,
@@ -564,6 +564,7 @@ export default function App() {
           : {
               ...risultati,
               azotoTotale: azotoTot,
+              azotoGiaDistribuito,
             }),
         lat,
         lng,
@@ -945,14 +946,14 @@ export default function App() {
               </button>}
             </div>
 
-            {isGranoDuro && <NumberInput
+            <NumberInput
               label="Azoto già distribuito (kg N/ha)"
               value={azotoGiaDistribuito}
               onChange={setAzotoGiaDistribuito}
               step={1}
               min={0}
-              hint="Totale degli apporti già effettuati dall'inizio della coltura: viene sottratto dal fabbisogno del piano."
-            />}
+              hint="Totale degli apporti già effettuati dall'inizio della coltura: viene sottratto dall’azoto totale del piano."
+            />
 
             {isGranoDuro && (
               <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950 space-y-2">
@@ -1236,7 +1237,7 @@ export default function App() {
                 Densità: <strong>{Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha</strong>
                 {" "}· resa: <strong>{resa.toFixed(1)} t/ha</strong> · asportazione base: {fabbisognoNBase} kg N/ha
                 {" "}× densità {densita.fattoreAzoto.toFixed(2)} = <strong>{risultati.fabbisognoN} kg N/ha</strong>.
-                {" "}Azoto inserito: <strong>{azotoTot} kg/ha</strong>.
+                {" "}Azoto totale del piano: <strong>{azotoTot} kg/ha</strong> · già distribuito: <strong>{azotoGiaDistribuito} kg/ha</strong> · residuo: <strong>{risultati.residuoPiano} kg/ha</strong>.
               </p>
               <p className={`font-medium ${azotoClass}`}>
                 {risultati.statoAzoto === "allineato"
@@ -1247,7 +1248,7 @@ export default function App() {
               </p>
               <p className="font-medium text-stone-700">
                 {risultati.discostamento > 0
-                  ? <>Deficit NDVI: {risultati.ottimale.toFixed(3)} − {risultati.media.toFixed(3)} = {risultati.discostamento.toFixed(3)} ({(risultati.deficitRelativo * 100).toFixed(1)}%). Quota N ottimale: {risultati.fabbisognoN.toFixed(1)} kg/ha × {(risultati.deficitRelativo * 100).toFixed(1)}% = {risultati.quotaDaDeficitNdvi.toFixed(1)} kg N/ha; limite applicato: {azotoTot.toFixed(1)} / 2 = {(azotoTot / 2).toFixed(1)} kg N/ha.</>
+                  ? <>Deficit NDVI: {risultati.ottimale.toFixed(3)} − {risultati.media.toFixed(3)} = {risultati.discostamento.toFixed(3)} ({(risultati.deficitRelativo * 100).toFixed(1)}%). Quota N ottimale: {risultati.fabbisognoN.toFixed(1)} kg/ha × {(risultati.deficitRelativo * 100).toFixed(1)}% = {risultati.quotaDaDeficitNdvi.toFixed(1)} kg N/ha; dose limitata ai {risultati.residuoPiano.toFixed(1)} kg N/ha residui del piano.</>
                   : <>La media NDVI ({risultati.media.toFixed(3)}) è uguale o superiore al riferimento ({risultati.ottimale.toFixed(3)}): non è indicato alcun apporto di azoto.</>}
               </p>
               {risultati.statoVariabilita === "alta" && (
@@ -1452,7 +1453,7 @@ export default function App() {
                       <td className="px-2 py-2 text-center text-stone-500">{obs.ottimale.toFixed(3)}</td>
                       <td className="px-2 py-2 text-center">{obs.discostamento.toFixed(3)}</td>
                       <td className="px-2 py-2 text-center font-mono text-xs">
-                        {isObsGrano ? `${obs.azotoGiaDistribuito ?? 0} N` : "—"}
+                        {`${obs.azotoGiaDistribuito ?? 0} N`}
                       </td>
                       <td className={`px-2 py-2 text-center font-bold ${
                         obs.dose === 0 ? "text-green-700 bg-green-50" : "text-red-700 bg-red-50"
@@ -1493,7 +1494,7 @@ export default function App() {
         <p className="text-center text-xs text-green-700 pb-4">
           {isGranoDuro
             ? "Grano duro: l’indicazione N del punto è registrata per ogni media NDVI; BBCH, residuo e intervallo di consiglio la guidano, ma la verifica in campo resta necessaria."
-            : "Formula tabacco: quota N = fabbisogno N ottimale × deficit NDVI relativo · Limite max = azoto totale / 2"}
+            : "Formula tabacco: quota N = fabbisogno N ottimale × deficit NDVI relativo · Limite = azoto totale − azoto già distribuito"}
         </p>
 
         </>}

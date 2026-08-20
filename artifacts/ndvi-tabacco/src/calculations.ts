@@ -413,7 +413,8 @@ export function calcola(
   n4: number,
   n5: number,
   fabbisognoN: number,
-  etaPiantina: EtaPiantina = "standard"
+  etaPiantina: EtaPiantina = "standard",
+  azotoGiaDistribuito = 0,
 ) {
   const stats = statisticheNdvi([n1, n2, n3, n4, n5]);
   const { ottimale, giorniFenologici } = ndviOttimale(giorni, etaPiantina);
@@ -421,8 +422,8 @@ export function calcola(
   const discostamento = Math.max(0, ottimale - media);
   const deficitRelativo = ottimale > 0 ? Math.min(1, discostamento / ottimale) : 0;
   const quotaDaDeficitNdvi = Math.round(fabbisognoN * deficitRelativo * 10) / 10;
-  const limiteMax = azotoTot / 2;
-  const dose = Math.min(limiteMax, quotaDaDeficitNdvi);
+  const residuoPiano = Math.max(0, Math.round((azotoTot - azotoGiaDistribuito) * 10) / 10);
+  const dose = Math.min(residuoPiano, quotaDaDeficitNdvi);
   const rapportoAzoto = fabbisognoN > 0 ? azotoTot / fabbisognoN : 1;
   const statoAzoto = rapportoAzoto < 0.85
     ? "deficit"
@@ -443,6 +444,7 @@ export function calcola(
     discostamento,
     deficitRelativo,
     quotaDaDeficitNdvi,
+    residuoPiano,
     dose,
     giorniFenologici,
     fabbisognoN,

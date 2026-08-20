@@ -93,14 +93,15 @@ export function erroreOsservazioneTabacco(o: Record<string, unknown>): string | 
   const resa = numero(o.resa);
   const fabbisognoN = numero(o.fabbisognoN);
   const azotoTotale = numero(o.azotoTotale);
+  const azotoGiaDistribuito = numero(o.azotoGiaDistribuito);
   const dose = numero(o.dose);
   if (
     media === null || ottimale === null || discostamento === null || giorni === null
-    || resa === null || fabbisognoN === null || azotoTotale === null || dose === null
+    || resa === null || fabbisognoN === null || azotoTotale === null || azotoGiaDistribuito === null || dose === null
   ) {
     return "I parametri del piano azoto tabacco non sono completi.";
   }
-  if (giorni < 0 || resa < 0 || fabbisognoN < 0 || azotoTotale < 0 || dose < 0 || ottimale < 0 || ottimale > 1) {
+  if (giorni < 0 || resa < 0 || fabbisognoN < 0 || azotoTotale < 0 || azotoGiaDistribuito < 0 || dose < 0 || ottimale < 0 || ottimale > 1) {
     return "I valori del piano azoto tabacco non sono validi.";
   }
 
@@ -122,7 +123,8 @@ export function erroreOsservazioneTabacco(o: Record<string, unknown>): string | 
   }
   const deficitRelativo = ottimale > 0 ? Math.min(1, discostamentoAtteso / ottimale) : 0;
   const quotaDaDeficitNdvi = Math.round(fabbisognoN * deficitRelativo * 10) / 10;
-  const doseAttesa = Math.min(azotoTotale / 2, quotaDaDeficitNdvi);
+  const residuoPiano = Math.max(0, Math.round((azotoTotale - azotoGiaDistribuito) * 10) / 10);
+  const doseAttesa = Math.min(residuoPiano, quotaDaDeficitNdvi);
   if (Math.abs(dose - doseAttesa) > 0.01) {
     return "La dose tabacco non corrisponde alla quota ricalcolata da NDVI e fabbisogno N.";
   }

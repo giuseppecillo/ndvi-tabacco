@@ -7,4 +7,4 @@ description: Common nitrogen-indication rule for tobacco and durum wheat point o
 
 **Why:** The user requires that adequate or higher vegetation vigor never triggers an N input, and that a low-NDVI indication has a clear, proportional relationship to the observed deficit rather than a hidden coefficient or fixed minimum.
 
-**How to apply:** Tobacco uses its calculated optimal N requirement and caps the result at half of entered total N. Durum wheat uses the confirmed BBCH phase quota and caps it at the residual N plan. Keep client calculation, API validation, visible formula, and regression tests aligned.
+**How to apply:** Tobacco uses its calculated optimal N requirement and caps the result at total plan N minus already distributed N. Durum wheat uses the confirmed BBCH phase quota and caps it at the residual N plan. Keep client calculation, API validation, visible formula, and regression tests aligned.
