@@ -41,6 +41,20 @@ type VarietaDati = {
   kgSemiDefault: number;
 };
 
+export type ParametriAziendali = {
+  densitaPianteHa: number;
+  kgSemiHa: number;
+};
+
+export type CampagnaCalibrazione = {
+  nome: string;
+  semeKgHa: number;
+  attecchimento: number;
+  pianteHa: number;
+  resaRaccolta: number;
+  azotoDistribuito: number;
+};
+
 export const VARIETA_DB: Record<string, VarietaDati> = {
   "Burley (Non Cimato)": {
     label: "Burley (Non Cimato)",
@@ -116,6 +130,21 @@ export const VARIETA_DB: Record<string, VarietaDati> = {
   },
 };
 
+// Riferimenti aziendali usati dalla conversione kg seme/ha → piante/ha.
+// I valori sono modificabili nel pannello "Parametri aziendali" e vengono
+// mantenuti sul dispositivo, così la conferma di ogni varietà non resta
+// nascosta dentro la formula.
+export const PARAMETRI_AZIENDALI_DEFAULT: Record<string, ParametriAziendali> =
+  Object.fromEntries(
+    Object.values(VARIETA_DB).map((varieta) => [
+      varieta.label,
+      {
+        densitaPianteHa: varieta.densitaPianteDefault,
+        kgSemiHa: varieta.kgSemiDefault,
+      },
+    ])
+  );
+
 export type Observation = {
   id: string;
   data: string;
@@ -141,6 +170,76 @@ export type Observation = {
   lat: number | null;
   lng: number | null;
 };
+
+const PARAMETRI_AZIENDALI_STORAGE_KEY = "ndvi-tabacco-parametri-aziendali";
+const CAMPAGNE_AZIENDALI_STORAGE_KEY = "ndvi-tabacco-campagne-aziendali";
+
+function caricaParametriAziendali(): Record<string, ParametriAziendali> {
+  if (typeof window === "undefined") return PARAMETRI_AZIENDALI_DEFAULT;
+  try {
+    const salvati = JSON.parse(window.localStorage.getItem(PARAMETRI_AZIENDALI_STORAGE_KEY) ?? "null");
+    if (!salvati || typeof salvati !== "object") return PARAMETRI_AZIENDALI_DEFAULT;
+    return Object.fromEntries(
+      Object.entries(PARAMETRI_AZIENDALI_DEFAULT).map(([label, defaults]) => {
+        const valore = salvati[label] as Partial<ParametriAziendali> | undefined;
+        const densitaPianteHa = Number(valore?.densitaPianteHa);
+        const kgSemiHa = Number(valore?.kgSemiHa);
+        return [
+          label,
+          {
+            densitaPianteHa: Number.isFinite(densitaPianteHa) && densitaPianteHa > 0
+              ? densitaPianteHa
+              : defaults.densitaPianteHa,
+            kgSemiHa: Number.isFinite(kgSemiHa) && kgSemiHa > 0
+              ? kgSemiHa
+              : defaults.kgSemiHa,
+          },
+        ];
+      })
+    );
+  } catch {
+    return PARAMETRI_AZIENDALI_DEFAULT;
+  }
+}
+
+function creaCampagnaRiferimento(
+  _dati: VarietaDati,
+  _riferimento: ParametriAziendali
+): CampagnaCalibrazione {
+  return {
+    nome: "",
+    semeKgHa: 0,
+    attecchimento: 0,
+    pianteHa: 0,
+    resaRaccolta: 0,
+    azotoDistribuito: 0,
+  };
+}
+
+function caricaCampagneAziendali(): Record<string, CampagnaCalibrazione> {
+  if (typeof window === "undefined") return {};
+  try {
+    const salvate = JSON.parse(window.localStorage.getItem(CAMPAGNE_AZIENDALI_STORAGE_KEY) ?? "null");
+    if (!salvate || typeof salvate !== "object") return {};
+    const campagne: Record<string, CampagnaCalibrazione> = {};
+    Object.entries(salvate).forEach(([label, valore]) => {
+      if (!VARIETA_DB[label] || !valore || typeof valore !== "object") return;
+      const campagna = valore as Partial<CampagnaCalibrazione>;
+      const numero = (input: unknown) => Number.isFinite(Number(input)) ? Number(input) : 0;
+      campagne[label] = {
+        nome: typeof campagna.nome === "string" ? campagna.nome : "",
+        semeKgHa: numero(campagna.semeKgHa),
+        attecchimento: numero(campagna.attecchimento),
+        pianteHa: numero(campagna.pianteHa),
+        resaRaccolta: numero(campagna.resaRaccolta),
+        azotoDistribuito: numero(campagna.azotoDistribuito),
+      };
+    });
+    return campagne;
+  } catch {
+    return {};
+  }
+}
 
 // Curva operativa di riferimento per il tabacco dopo il trapianto.
 // I punti sono volutamente interpolati, non fasce rigide: l'NDVI cambia
@@ -378,7 +477,23 @@ export default function App() {
   const [etaPiantina, setEtaPiantina] = useState<EtaPiantina>("standard");
   const [osservazioni, setOsservazioni] = useState<Observation[]>([]);
   const [loadingOss, setLoadingOss] = useState(true);
-  const datiVarieta = VARIETA_DB[varieta];
+  const [parametriAziendali, setParametriAziendali] = useState<Record<string, ParametriAziendali>>(
+    caricaParametriAziendali
+  );
+  const [campagne, setCampagne] = useState<Record<string, CampagnaCalibrazione>>(
+    caricaCampagneAziendali
+  );
+  const datiBaseVarieta = VARIETA_DB[varieta];
+  const riferimentoAziendale = parametriAziendali[varieta] ?? {
+    densitaPianteHa: datiBaseVarieta.densitaPianteDefault,
+    kgSemiHa: datiBaseVarieta.kgSemiDefault,
+  };
+  const datiVarieta: VarietaDati = {
+    ...datiBaseVarieta,
+    densitaPianteDefault: riferimentoAziendale.densitaPianteHa,
+    kgSemiDefault: riferimentoAziendale.kgSemiHa,
+  };
+  const campagna = campagne[varieta] ?? creaCampagnaRiferimento(datiBaseVarieta, riferimentoAziendale);
 
   useEffect(() => {
     fetch("/api/osservazioni")
@@ -388,13 +503,35 @@ export default function App() {
       .finally(() => setLoadingOss(false));
   }, []);
 
-  // Auto-fill resa, azoto e densità quando cambia la varietà
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PARAMETRI_AZIENDALI_STORAGE_KEY, JSON.stringify(parametriAziendali));
+    } catch {
+      // La calibrazione resta disponibile nella sessione anche se lo storage è disabilitato.
+    }
+  }, [parametriAziendali]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CAMPAGNE_AZIENDALI_STORAGE_KEY, JSON.stringify(campagne));
+    } catch {
+      // Il confronto resta disponibile nella sessione anche se lo storage è disabilitato.
+    }
+  }, [campagne]);
+
+  // Auto-fill resa, azoto e densità quando cambia la varietà.
+  // I dati delle campagne restano separati per varietà e non vengono mai
+  // sovrascritti da una modifica ai parametri di riferimento.
   useEffect(() => {
     const dati = VARIETA_DB[varieta];
+    const riferimento = parametriAziendali[varieta] ?? {
+      densitaPianteHa: dati.densitaPianteDefault,
+      kgSemiHa: dati.kgSemiDefault,
+    };
     if (dati) {
       setResa(dati.resaDefault);
       setAzotoTot(dati.azotoDefault);
-      setDensitaValore(densitaUnita === "piante/ha" ? dati.densitaPianteDefault : dati.kgSemiDefault);
+      setDensitaValore(densitaUnita === "piante/ha" ? riferimento.densitaPianteHa : riferimento.kgSemiHa);
     }
   }, [varieta]);
 
@@ -412,6 +549,57 @@ export default function App() {
     ? fabbisognoN
     : Math.min(datiVarieta.azotoMax, Math.max(datiVarieta.azotoMin, fabbisognoN));
   const azotoAsportazioni = resa > datiVarieta.resaMax ? azotoConsigliato : null;
+  const campagnaDensita = useMemo(
+    () => calcolaDensita(campagna.pianteHa, "piante/ha", datiVarieta),
+    [campagna.pianteHa, datiVarieta]
+  );
+  const campagnaFabbisognoNBase = Math.round(campagna.resaRaccolta * datiVarieta.kgNPerTon);
+  const campagnaFabbisognoN = Math.round(campagnaFabbisognoNBase * campagnaDensita.fattoreAzoto);
+  const campagnaScostamentoN = campagna.azotoDistribuito - campagnaFabbisognoN;
+  const campagnaRapportoN = campagnaFabbisognoN > 0
+    ? campagna.azotoDistribuito / campagnaFabbisognoN
+    : 1;
+  const campagnaStatoN = campagnaRapportoN < 0.85
+    ? "deficit"
+    : campagnaRapportoN > 1.15
+    ? "surplus"
+    : "allineato";
+  const pianteStimateCampagna = (
+    (campagna.semeKgHa / datiVarieta.kgSemiDefault)
+    * datiVarieta.densitaPianteDefault
+    * (campagna.attecchimento / 100)
+  );
+  const scostamentoPianteCampagna = campagna.pianteHa - pianteStimateCampagna;
+  const pianteCoerentiCampagna = pianteStimateCampagna > 0
+    && Math.abs(scostamentoPianteCampagna / pianteStimateCampagna) <= 0.15;
+  const campagnaValida = Boolean(
+    campagna.nome.trim()
+    && Number.isFinite(campagna.semeKgHa) && campagna.semeKgHa > 0
+    && Number.isFinite(campagna.attecchimento) && campagna.attecchimento > 0 && campagna.attecchimento <= 100
+    && Number.isFinite(campagna.pianteHa) && campagna.pianteHa >= 1000
+    && Number.isFinite(campagna.resaRaccolta) && campagna.resaRaccolta > 0
+    && Number.isFinite(campagna.azotoDistribuito) && campagna.azotoDistribuito >= 0
+  );
+
+  const aggiornaParametroAziendale = useCallback((
+    campo: keyof ParametriAziendali,
+    valore: number
+  ) => {
+    if (!Number.isFinite(valore) || valore <= 0) return;
+    setParametriAziendali((correnti) => ({
+      ...correnti,
+      [varieta]: { ...correnti[varieta], [campo]: valore },
+    }));
+  }, [varieta]);
+  const aggiornaCampagna = useCallback((aggiornamento: Partial<CampagnaCalibrazione>) => {
+    setCampagne((correnti) => ({
+      ...correnti,
+      [varieta]: {
+        ...(correnti[varieta] ?? creaCampagnaRiferimento(datiBaseVarieta, riferimentoAziendale)),
+        ...aggiornamento,
+      },
+    }));
+  }, [varieta, datiBaseVarieta, riferimentoAziendale]);
 
   const cambiaDensitaUnita = useCallback((unita: DensitaUnita) => {
     if (unita === densitaUnita) return;
@@ -739,9 +927,81 @@ export default function App() {
                 <p className="text-xs text-red-600">{errors.densita}</p>
               ) : (
                 <p className="text-xs text-stone-400">
-                  Equivalente stimato: {Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha · riferimento varietale: {datiVarieta.densitaPianteDefault.toLocaleString("it-IT")} piante/ha · coefficiente densità azoto: ×{densita.fattoreAzoto.toFixed(2)}
+                  Equivalente aziendale: {Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha · riferimento: {datiVarieta.densitaPianteDefault.toLocaleString("it-IT")} piante/ha · conversione: {Math.round(datiVarieta.densitaPianteDefault / datiVarieta.kgSemiDefault).toLocaleString("it-IT")} piante/kg · coefficiente densità azoto: ×{densita.fattoreAzoto.toFixed(2)}
                 </p>
               )}
+            </div>
+            <div className="col-span-2 rounded-xl border border-green-200 bg-green-50/60 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-green-900">Parametri aziendali confermati</h3>
+                  <p className="text-xs text-green-800 mt-0.5">
+                    Sono la base della conversione e del correttivo di densità per la varietà selezionata.
+                    Le modifiche vengono mantenute su questo dispositivo.
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-green-700 border border-green-200">
+                  {varieta}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <NumberInput
+                  label="Densità di riferimento (piante/ha)"
+                  value={riferimentoAziendale.densitaPianteHa}
+                  onChange={(value) => aggiornaParametroAziendale("densitaPianteHa", value)}
+                  step={100}
+                  min={1000}
+                />
+                <NumberInput
+                  label="Seme di riferimento (kg/ha)"
+                  value={riferimentoAziendale.kgSemiHa}
+                  onChange={(value) => aggiornaParametroAziendale("kgSemiHa", value)}
+                  step={0.0001}
+                  min={0.0001}
+                />
+              </div>
+              <p className="text-xs text-green-800">
+                Conversione confermata: <strong>{Math.round(riferimentoAziendale.densitaPianteHa / riferimentoAziendale.kgSemiHa).toLocaleString("it-IT")} piante per kg di seme</strong>.
+                Questo rapporto sostituisce il valore generico quando usi kg seme/ha.
+              </p>
+            </div>
+            <div className="col-span-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <details>
+                <summary className="cursor-pointer text-sm font-bold text-stone-700">
+                  Vedi i riferimenti aziendali di tutte le varietà
+                </summary>
+                <div className="overflow-x-auto mt-3">
+                  <table className="w-full min-w-[560px] text-xs">
+                    <thead>
+                      <tr className="border-b border-stone-200 text-left text-stone-500">
+                        <th className="px-2 py-2">Varietà</th>
+                        <th className="px-2 py-2 text-right">Piante/ha</th>
+                        <th className="px-2 py-2 text-right">kg seme/ha</th>
+                        <th className="px-2 py-2 text-right">Piante/kg</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.values(VARIETA_DB).map((voce) => {
+                        const riferimento = parametriAziendali[voce.label] ?? {
+                          densitaPianteHa: voce.densitaPianteDefault,
+                          kgSemiHa: voce.kgSemiDefault,
+                        };
+                        return (
+                          <tr key={voce.label} className={`border-b border-stone-100 last:border-0 ${voce.label === varieta ? "bg-green-100/70 font-semibold" : ""}`}>
+                            <td className="px-2 py-2">{voce.label}</td>
+                            <td className="px-2 py-2 text-right font-mono">{Math.round(riferimento.densitaPianteHa).toLocaleString("it-IT")}</td>
+                            <td className="px-2 py-2 text-right font-mono">{riferimento.kgSemiHa.toFixed(4)}</td>
+                            <td className="px-2 py-2 text-right font-mono">{Math.round(riferimento.densitaPianteHa / riferimento.kgSemiHa).toLocaleString("it-IT")}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[11px] text-stone-500 mt-2">
+                  La riga evidenziata è la varietà in uso. Aggiorna i due valori sopra quando l’azienda conferma una nuova densità o dose di seme.
+                </p>
+              </details>
             </div>
             <NumberInput
               label="Resa Desiderata (t/ha)"
@@ -780,6 +1040,103 @@ export default function App() {
               >
                 Usa azoto consigliato: {azotoConsigliato} kg/ha
               </button>
+            </div>
+
+            <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+              <div>
+                <h3 className="text-sm font-bold text-amber-900">Confronto correttivo densità · campagna raccolta</h3>
+                <p className="text-xs text-amber-800 mt-0.5">
+                  Inserisci almeno una campagna chiusa con seme, attecchimento, piante rilevate, resa raccolta e azoto realmente distribuito.
+                  Il confronto separa il correttivo di densità dalle asportazioni legate alla resa.
+                </p>
+              </div>
+              <TextInput
+                label="Nome o anno campagna"
+                value={campagna.nome}
+                onChange={(value) => aggiornaCampagna({ nome: value })}
+                placeholder="es. Campagna 2025 · Appezzamento Nord"
+              />
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <NumberInput
+                  label="Seme usato (kg/ha)"
+                  value={campagna.semeKgHa}
+                  onChange={(value) => aggiornaCampagna({ semeKgHa: value })}
+                  step={0.0001}
+                  min={0.0001}
+                />
+                <NumberInput
+                  label="Attecchimento (%)"
+                  value={campagna.attecchimento}
+                  onChange={(value) => aggiornaCampagna({ attecchimento: value })}
+                  step={1}
+                  min={0}
+                  max={100}
+                />
+                <NumberInput
+                  label="Piante rilevate (piante/ha)"
+                  value={campagna.pianteHa}
+                  onChange={(value) => aggiornaCampagna({ pianteHa: value })}
+                  step={100}
+                  min={1000}
+                />
+                <NumberInput
+                  label="Resa raccolta (t/ha)"
+                  value={campagna.resaRaccolta}
+                  onChange={(value) => aggiornaCampagna({ resaRaccolta: value })}
+                  step={0.1}
+                  min={0.1}
+                />
+                <NumberInput
+                  label="Azoto distribuito (kg/ha)"
+                  value={campagna.azotoDistribuito}
+                  onChange={(value) => aggiornaCampagna({ azotoDistribuito: value })}
+                  step={1}
+                  min={0}
+                />
+              </div>
+              <div className="rounded-lg border border-amber-200 bg-white px-3 py-3 text-xs text-stone-700 space-y-1.5">
+                {!campagnaValida ? (
+                  <p className="font-semibold text-amber-800">
+                    Completa nome campagna, seme, attecchimento (1–100%), piante rilevate, resa raccolta e azoto distribuito per eseguire il confronto.
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-semibold text-stone-800">
+                      {campagna.nome.trim()} · verifica del correttivo
+                    </p>
+                    <p>
+                      Riferimento: {datiVarieta.densitaPianteDefault.toLocaleString("it-IT")} piante/ha.
+                      Campagna: <strong>{Math.round(campagna.pianteHa).toLocaleString("it-IT")} piante/ha</strong>
+                      {" "}({(campagnaDensita.rapportoDensita * 100).toFixed(0)}% del riferimento), quindi correttivo densità <strong>×{campagnaDensita.fattoreAzoto.toFixed(2)}</strong>.
+                    </p>
+                    <p>
+                      Asportazione da raccolto: {campagna.resaRaccolta.toFixed(1)} t/ha × {datiVarieta.kgNPerTon} kg N/t = {campagnaFabbisognoNBase} kg N/ha;
+                      corretta per densità = <strong>{campagnaFabbisognoN} kg N/ha</strong>.
+                      Azoto realmente distribuito: <strong>{campagna.azotoDistribuito} kg/ha</strong>.
+                    </p>
+                    <p className={`font-semibold ${
+                      campagnaStatoN === "allineato" ? "text-green-700"
+                      : campagnaStatoN === "deficit" ? "text-amber-700" : "text-red-700"
+                    }`}>
+                      {campagnaStatoN === "allineato"
+                        ? `Confronto coerente: azoto distribuito al ${Math.round(campagnaRapportoN * 100)}% del fabbisogno corretto.`
+                        : campagnaStatoN === "deficit"
+                        ? `Nella campagna risultano circa ${Math.abs(Math.round(campagnaScostamentoN))} kg N/ha in meno del fabbisogno corretto.`
+                        : `Nella campagna risultano circa ${Math.abs(Math.round(campagnaScostamentoN))} kg N/ha in più del fabbisogno corretto.`}
+                    </p>
+                    <p className={pianteCoerentiCampagna ? "text-stone-500" : "font-medium text-amber-800"}>
+                      Da seme e attecchimento risultano circa {Math.round(pianteStimateCampagna).toLocaleString("it-IT")} piante/ha;
+                      piante rilevate: {Math.round(campagna.pianteHa).toLocaleString("it-IT")}.
+                      {" "}{pianteCoerentiCampagna
+                        ? "I dati colturali sono coerenti (scostamento entro il 15%)."
+                        : "Verifica unità, attecchimento o conteggio: lo scostamento supera il 15%."}
+                    </p>
+                    <p className="text-stone-500">
+                      Le piante rilevate sono il dato usato per il correttivo, perché riflettono l’esito effettivo in campo.
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Data Trapianto — occupa tutta la larghezza */}
