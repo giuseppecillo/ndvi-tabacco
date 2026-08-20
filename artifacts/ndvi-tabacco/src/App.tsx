@@ -13,10 +13,13 @@ export const ETA_PIANTINA_LABELS: Record<EtaPiantina, { label: string; short: st
   extra:    { label: "Extra-avanzata", short: "Ext.", giorni: "> 45 gg vivaio"  },
 };
 
-const ETA_SHIFT: Record<EtaPiantina, number> = {
-  standard: 0.00,
-  avanzata: 0.05,
-  extra:    0.08,
+// Giorni fenologici equivalenti rispetto a una piantina standard (circa 30 gg).
+// L'anticipo viene applicato alla curva e non come incremento fisso di NDVI:
+// in questo modo l'effetto dell'età si attenua naturalmente durante il ciclo.
+const ETA_GIORNI_EQUIVALENTI: Record<EtaPiantina, number> = {
+  standard: 0,
+  avanzata: 7,
+  extra: 14,
 };
 
 type VarietaDati = {
@@ -123,27 +126,81 @@ export type Observation = {
   lng: number | null;
 };
 
-// NDVI di riferimento per tabacco (Nicotiana tabacum) per fascia di giorni dal trapianto.
-// Valori basati su curve di crescita del tabacco da letteratura agronomica:
-// rapida ascesa nella fase vegetativa, picco a piena copertura canopy (51–65 gg),
-// leggero calo nella fase di maturazione (> 65 gg).
-// Valori base = piantina standard (25–35 gg vivaio). Per piantine più sviluppate
-// viene applicato uno shift positivo (ETA_SHIFT) con cap a 0.85.
-const NDVI_FASCE: Array<{ maxGiorni: number; ottimale: number; label: string }> = [
-  { maxGiorni: 20,  ottimale: 0.30, label: "≤ 20 gg"  },
-  { maxGiorni: 35,  ottimale: 0.40, label: "21–35 gg"  },
-  { maxGiorni: 50,  ottimale: 0.62, label: "36–50 gg"  },
-  { maxGiorni: 65,  ottimale: 0.74, label: "51–65 gg"  },
-  { maxGiorni: 999, ottimale: 0.70, label: "> 65 gg"   },
+// Curva operativa di riferimento per il tabacco dopo il trapianto.
+// I punti sono volutamente interpolati, non fasce rigide: l'NDVI cambia
+// gradualmente e il picco di copertura avviene prima della maturazione.
+// Va calibrata con lo storico aziendale quando saranno disponibili più annate.
+const NDVI_CURVA: Array<{ giorni: number; ottimale: number }> = [
+  { giorni: 0,   ottimale: 0.28 },
+  { giorni: 14,  ottimale: 0.34 },
+  { giorni: 28,  ottimale: 0.48 },
+  { giorni: 42,  ottimale: 0.64 },
+  { giorni: 56,  ottimale: 0.74 },
+  { giorni: 70,  ottimale: 0.76 },
+  { giorni: 84,  ottimale: 0.72 },
+  { giorni: 105, ottimale: 0.66 },
+  { giorni: 130, ottimale: 0.60 },
 ];
+
+const NDVI_FASI: Array<{ giorni: number; label: string }> = [
+  { giorni: 0,  label: "Trapianto" },
+  { giorni: 20, label: "Ripresa (20 gg)" },
+  { giorni: 35, label: "Sviluppo (35 gg)" },
+  { giorni: 50, label: "Espansione (50 gg)" },
+  { giorni: 65, label: "Piena copertura (65 gg)" },
+  { giorni: 90, label: "Maturazione (90 gg)" },
+];
+
+type NdviStats = {
+  media: number;
+  varianza: number;
+  deviazioneStandard: number;
+  coefficienteVariazione: number;
+  valoriValidi: boolean;
+};
+
+function statisticheNdvi(values: number[]): NdviStats {
+  const media = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const varianza = values.reduce((sum, value) => sum + (value - media) ** 2, 0) / values.length;
+  const deviazioneStandard = Math.sqrt(varianza);
+  return {
+    media,
+    varianza,
+    deviazioneStandard,
+    coefficienteVariazione: media > 0 ? (deviazioneStandard / media) * 100 : 0,
+    valoriValidi: values.every((value) => value >= 0 && value <= 1),
+  };
+}
 
 function ndviOttimale(
   giorni: number,
   etaPiantina: EtaPiantina = "standard"
-): { ottimale: number; label: string } {
-  const fascia = NDVI_FASCE.find((f) => giorni <= f.maxGiorni) ?? NDVI_FASCE[NDVI_FASCE.length - 1];
-  const ottimale = Math.min(0.85, fascia.ottimale + ETA_SHIFT[etaPiantina]);
-  return { ottimale, label: fascia.label };
+): { ottimale: number; label: string; giorniFenologici: number } {
+  const giorniFenologici = Math.max(0, giorni + ETA_GIORNI_EQUIVALENTI[etaPiantina]);
+  const first = NDVI_CURVA[0];
+  const last = NDVI_CURVA[NDVI_CURVA.length - 1];
+
+  if (giorniFenologici <= first.giorni) {
+    return { ottimale: first.ottimale, label: NDVI_FASI[0].label, giorniFenologici };
+  }
+  if (giorniFenologici >= last.giorni) {
+    return { ottimale: last.ottimale, label: "Maturazione avanzata", giorniFenologici };
+  }
+
+  for (let i = 1; i < NDVI_CURVA.length; i++) {
+    const right = NDVI_CURVA[i];
+    if (giorniFenologici <= right.giorni) {
+      const left = NDVI_CURVA[i - 1];
+      const t = (giorniFenologici - left.giorni) / (right.giorni - left.giorni);
+      // Smoothstep evita salti bruschi ai punti di controllo.
+      const smoothT = t * t * (3 - 2 * t);
+      const ottimale = left.ottimale + (right.ottimale - left.ottimale) * smoothT;
+      const fase = [...NDVI_FASI].reverse().find((item) => giorniFenologici >= item.giorni) ?? NDVI_FASI[0];
+      return { ottimale, label: fase.label, giorniFenologici };
+    }
+  }
+
+  return { ottimale: last.ottimale, label: "Maturazione avanzata", giorniFenologici };
 }
 
 function calcola(
@@ -155,23 +212,53 @@ function calcola(
   n3: number,
   n4: number,
   n5: number,
+  fabbisognoN: number,
   etaPiantina: EtaPiantina = "standard"
 ) {
-  const media = (n1 + n2 + n3 + n4 + n5) / 5;
-  const { ottimale } = ndviOttimale(giorni, etaPiantina);
+  const stats = statisticheNdvi([n1, n2, n3, n4, n5]);
+  const { ottimale, giorniFenologici } = ndviOttimale(giorni, etaPiantina);
+  const media = stats.media;
   const discostamento = Math.max(0, ottimale - media);
   let dose = discostamento * 500 * (resa / 4.5);
   const limiteMax = azotoTot / 2;
   if (dose > limiteMax) dose = limiteMax;
   if (media >= ottimale) dose = 0;
-  return { media, ottimale, discostamento, dose };
+  const rapportoAzoto = fabbisognoN > 0 ? azotoTot / fabbisognoN : 1;
+  const statoAzoto = rapportoAzoto < 0.85
+    ? "deficit"
+    : rapportoAzoto > 1.15
+    ? "surplus"
+    : "allineato";
+  const statoVariabilita = !stats.valoriValidi
+    ? "non-valida"
+    : stats.coefficienteVariazione <= 8
+    ? "bassa"
+    : stats.coefficienteVariazione <= 15
+    ? "moderata"
+    : "alta";
+
+  return {
+    ...stats,
+    ottimale,
+    discostamento,
+    dose,
+    giorniFenologici,
+    fabbisognoN,
+    rapportoAzoto,
+    statoAzoto,
+    statoVariabilita,
+  };
 }
 
 function diffDays(from: string, to: string): number | null {
   if (!from || !to) return null;
-  const a = new Date(from).getTime();
-  const b = new Date(to).getTime();
-  if (isNaN(a) || isNaN(b)) return null;
+  const parseDateOnly = (value: string) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    return match ? Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : NaN;
+  };
+  const a = parseDateOnly(from);
+  const b = parseDateOnly(to);
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
   const d = Math.round((b - a) / 86_400_000);
   return d >= 0 ? d : null;
 }
@@ -200,15 +287,17 @@ function TextInput({
 }
 
 function DateInput({
-  label, value, onChange, hint,
+  label, value, onChange, hint, warning,
 }: {
-  label: string; value: string; onChange: (v: string) => void; hint?: string;
+  label: string; value: string; onChange: (v: string) => void; hint?: string; warning?: string;
 }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-sm font-semibold text-stone-700">{label}</label>
-      <input type="date" value={value} onChange={(e) => onChange(e.target.value)} className={inputCls} />
-      {hint && <p className="text-xs text-stone-400">{hint}</p>}
+      <input type="date" value={value} onChange={(e) => onChange(e.target.value)}
+        className={`${inputCls} ${warning ? "border-amber-400 text-amber-700 focus:ring-amber-400" : ""}`} />
+      {warning && <p className="text-xs text-amber-600 font-medium">⚠ {warning}</p>}
+      {!warning && hint && <p className="text-xs text-stone-400">{hint}</p>}
     </div>
   );
 }
@@ -256,6 +345,7 @@ export default function App() {
   const [etaPiantina, setEtaPiantina] = useState<EtaPiantina>("standard");
   const [osservazioni, setOsservazioni] = useState<Observation[]>([]);
   const [loadingOss, setLoadingOss] = useState(true);
+  const datiVarieta = VARIETA_DB[varieta];
 
   useEffect(() => {
     fetch("/api/osservazioni")
@@ -276,11 +366,11 @@ export default function App() {
 
   // Azoto calcolato da asportazioni quando resa supera il limite di disciplinare.
   // Formula: kg N/ha = resa (t/ha) × coefficiente asportazione (kg N/t)
-  const azotoAsportazioni = useMemo(() => {
-    const dati = VARIETA_DB[varieta];
-    if (!dati || resa <= dati.resaMax) return null;
-    return Math.round(resa * dati.kgNPerTon);
-  }, [resa, varieta]);
+  const fabbisognoN = useMemo(
+    () => datiVarieta ? Math.round(resa * datiVarieta.kgNPerTon) : 0,
+    [datiVarieta, resa]
+  );
+  const azotoAsportazioni = resa > datiVarieta.resaMax ? fabbisognoN : null;
 
   // Auto-aggiorna il campo azoto quando la resa supera il massimo di disciplinare
   useEffect(() => {
@@ -293,10 +383,14 @@ export default function App() {
 
   // Giorni auto-calcolati se c'è la data trapianto, altrimenti manuali
   const giorniAuto = useMemo(() => diffDays(dataTrapianto, data), [dataTrapianto, data]);
+  const giorniInversi = useMemo(() => diffDays(data, dataTrapianto), [dataTrapianto, data]);
+  const dataTrapiantoFutura = giorniInversi !== null && giorniInversi > 0;
   const giorni = giorniAuto ?? giorniManuale;
   const autoCalcolato = giorniAuto !== null;
 
-  const risultati = calcola(resa, azotoTot, giorni, n1, n2, n3, n4, n5, etaPiantina);
+  const risultati = calcola(
+    resa, azotoTot, giorni, n1, n2, n3, n4, n5, fabbisognoN, etaPiantina
+  );
 
   const salvaOsservazione = useCallback(() => {
     const newErrors: Record<string, string> = {};
@@ -306,6 +400,8 @@ export default function App() {
       newErrors.id = `ID "${trimmedId}" già utilizzato.`;
     if (!cliente.trim()) newErrors.cliente = "Campo obbligatorio.";
     if (!appezzamento.trim()) newErrors.appezzamento = "Campo obbligatorio.";
+    if (dataTrapiantoFutura) newErrors.dataTrapianto = "La data di trapianto è successiva al rilevamento.";
+    if (!risultati.valoriValidi) newErrors.ndvi = "Ogni lettura NDVI deve essere compresa tra 0 e 1.";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setErrors({});
@@ -346,7 +442,7 @@ export default function App() {
     }
 
     setObsId(isNaN(num) ? "" : String(num + 1));
-  }, [obsId, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati]);
+  }, [obsId, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, n1, n2, n3, n4, n5, risultati, dataTrapiantoFutura]);
 
   const eliminaOsservazione = useCallback((id: string) => {
     fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -452,11 +548,19 @@ export default function App() {
     : risultati.dose > 50 ? "text-red-700"
     : "text-amber-600";
 
-  const { label: ndviFasciaLabel } = ndviOttimale(giorni, etaPiantina);
-  const etaShiftLabel = ETA_SHIFT[etaPiantina] > 0
-    ? ` (+${(ETA_SHIFT[etaPiantina] * 100).toFixed(0)} pt piantina ${ETA_PIANTINA_LABELS[etaPiantina].label.toLowerCase()})`
+  const ndviInfo = ndviOttimale(giorni, etaPiantina);
+  const etaFenologiaLabel = ETA_GIORNI_EQUIVALENTI[etaPiantina] > 0
+    ? ` · +${ETA_GIORNI_EQUIVALENTI[etaPiantina]} gg fenologici per piantina ${ETA_PIANTINA_LABELS[etaPiantina].label.toLowerCase()}`
     : "";
-  const ndviOttimaleNote = `Fascia ${ndviFasciaLabel} → NDVI ottimale: ${risultati.ottimale.toFixed(3)}${etaShiftLabel}`;
+  const ndviOttimaleNote = `Curva continua · ${ndviInfo.label} · ${risultati.giorniFenologici} gg fenologici → NDVI ottimale ${risultati.ottimale.toFixed(3)}${etaFenologiaLabel}`;
+  const variabilitaClass =
+    risultati.statoVariabilita === "bassa" ? "bg-green-50 border-green-200 text-green-800"
+    : risultati.statoVariabilita === "moderata" ? "bg-amber-50 border-amber-200 text-amber-800"
+    : "bg-red-50 border-red-200 text-red-800";
+  const azotoClass =
+    risultati.statoAzoto === "allineato" ? "text-green-700"
+    : risultati.statoAzoto === "deficit" ? "text-amber-700"
+    : "text-red-700";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-100 to-green-50 py-8 px-4">
@@ -528,9 +632,9 @@ export default function App() {
                   </option>
                 ))}
               </select>
-              {VARIETA_DB[varieta] && (
+              {datiVarieta && (
                 <p className="text-xs text-stone-400">
-                  {VARIETA_DB[varieta].categoria} · azoto consigliato {VARIETA_DB[varieta].azotoMin}–{VARIETA_DB[varieta].azotoMax} kg/ha · resa max {VARIETA_DB[varieta].resaMax} t/ha
+                  {datiVarieta.categoria} · azoto consigliato {datiVarieta.azotoMin}–{datiVarieta.azotoMax} kg/ha · resa max {datiVarieta.resaMax} t/ha
                 </p>
               )}
             </div>
@@ -541,11 +645,11 @@ export default function App() {
               step={0.1}
               min={0.1}
               warning={
-                VARIETA_DB[varieta] && resa > VARIETA_DB[varieta].resaMax
-                  ? `Supera il limite massimo di ${VARIETA_DB[varieta].resaMax} t/ha per questa varietà`
+                datiVarieta && resa > datiVarieta.resaMax
+                  ? `Supera il limite massimo di ${datiVarieta.resaMax} t/ha per questa varietà`
                   : undefined
               }
-              hint={VARIETA_DB[varieta] ? `Range consigliato: ${VARIETA_DB[varieta].resaMin}–${VARIETA_DB[varieta].resaMax} t/ha` : undefined}
+              hint={datiVarieta ? `Range consigliato: ${datiVarieta.resaMin}–${datiVarieta.resaMax} t/ha` : undefined}
             />
             <NumberInput
               label="Kg Azoto Totale"
@@ -554,12 +658,12 @@ export default function App() {
               min={0}
               warning={
                 azotoAsportazioni !== null
-                  ? `Calcolato da asportazioni: ${resa.toFixed(1)} t/ha × ${VARIETA_DB[varieta]?.kgNPerTon} kg N/t = ${azotoAsportazioni} kg/ha`
+                  ? `Calcolato da asportazioni: ${resa.toFixed(1)} t/ha × ${datiVarieta.kgNPerTon} kg N/t = ${azotoAsportazioni} kg/ha`
                   : undefined
               }
               hint={
-                azotoAsportazioni === null && VARIETA_DB[varieta]
-                  ? `Range disciplinare: ${VARIETA_DB[varieta].azotoMin}–${VARIETA_DB[varieta].azotoMax} kg/ha`
+                azotoAsportazioni === null && datiVarieta
+                  ? `Asportazione stimata per resa: ${fabbisognoN} kg N/ha · range disciplinare ${datiVarieta.azotoMin}–${datiVarieta.azotoMax} kg/ha`
                   : undefined
               }
             />
@@ -569,8 +673,9 @@ export default function App() {
               <DateInput
                 label="Data Trapianto"
                 value={dataTrapianto}
-                onChange={setDataTrapianto}
+                onChange={(value) => { setDataTrapianto(value); setErrors((current) => ({ ...current, dataTrapianto: "" })); }}
                 hint={dataTrapianto ? undefined : "Opzionale — se inserita calcola i giorni in automatico"}
+                warning={errors.dataTrapianto || (dataTrapiantoFutura ? "Non può essere successiva alla data di rilevamento." : undefined)}
               />
             </div>
 
@@ -602,7 +707,7 @@ export default function App() {
                     </span>
                     {key !== "standard" && (
                       <span className={`text-xs font-mono font-bold ${etaPiantina === key ? "text-green-100" : "text-green-700"}`}>
-                        +{(ETA_SHIFT[key] * 100).toFixed(0)} NDVI
+                        +{ETA_GIORNI_EQUIVALENTI[key]} gg fenologici
                       </span>
                     )}
                   </label>
@@ -621,8 +726,8 @@ export default function App() {
                 readonly={autoCalcolato}
                 hint={
                   autoCalcolato
-                    ? `Calcolato automaticamente da data trapianto · NDVI ref: ${risultati.ottimale.toFixed(3)}`
-                    : `NDVI di riferimento: ${risultati.ottimale.toFixed(3)}`
+                    ? `Calcolato dalla data trapianto · equivalenti: ${risultati.giorniFenologici} gg · NDVI ref: ${risultati.ottimale.toFixed(3)}`
+                    : `Giorni fenologici equivalenti: ${risultati.giorniFenologici} · NDVI ref: ${risultati.ottimale.toFixed(3)}`
                 }
               />
             </div>
@@ -631,11 +736,11 @@ export default function App() {
           {/* — Letture NDVI — */}
           <h2 className="text-lg font-bold text-green-900 border-b border-stone-100 pb-2">Letture NDVI</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <NumberInput label="Misura 1" value={n1} onChange={setN1} step={0.01} />
-            <NumberInput label="Misura 2" value={n2} onChange={setN2} step={0.01} />
-            <NumberInput label="Misura 3" value={n3} onChange={setN3} step={0.01} />
-            <NumberInput label="Misura 4" value={n4} onChange={setN4} step={0.01} />
-            <NumberInput label="Misura 5" value={n5} onChange={setN5} step={0.01} />
+            <NumberInput label="Misura 1" value={n1} onChange={setN1} step={0.01} min={0} max={1} />
+            <NumberInput label="Misura 2" value={n2} onChange={setN2} step={0.01} min={0} max={1} />
+            <NumberInput label="Misura 3" value={n3} onChange={setN3} step={0.01} min={0} max={1} />
+            <NumberInput label="Misura 4" value={n4} onChange={setN4} step={0.01} min={0} max={1} />
+            <NumberInput label="Misura 5" value={n5} onChange={setN5} step={0.01} min={0} max={1} />
           </div>
 
           {/* — Risultati — */}
@@ -644,18 +749,15 @@ export default function App() {
             <div className="text-xs text-green-800 bg-green-100 rounded-lg px-3 py-2 space-y-1">
               <div className="font-semibold">📐 {ndviOttimaleNote}</div>
               <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-green-700 font-mono pt-0.5">
-                {NDVI_FASCE.map((f) => {
-                  const adj = Math.min(0.85, f.ottimale + ETA_SHIFT[etaPiantina]);
-                  const isActive = f.label === ndviFasciaLabel;
+                {NDVI_FASI.map((f) => {
+                  const riferimento = ndviOttimale(f.giorni, etaPiantina).ottimale;
+                  const isActive = f.label === ndviInfo.label;
                   return (
                     <span
                       key={f.label}
                       className={`whitespace-nowrap ${isActive ? "font-bold underline underline-offset-2" : "opacity-60"}`}
                     >
-                      {f.label}: {adj.toFixed(2)}
-                      {ETA_SHIFT[etaPiantina] > 0 && (
-                        <span className="opacity-60 text-[10px]"> ({f.ottimale.toFixed(2)})</span>
-                      )}
+                      {f.label}: {riferimento.toFixed(2)}
                     </span>
                   );
                 })}
@@ -665,6 +767,37 @@ export default function App() {
               <ResultRow label="Media NDVI" value={risultati.media.toFixed(3)} />
               <ResultRow label="NDVI Ottimale" value={risultati.ottimale.toFixed(3)} highlight />
               <ResultRow label="Discostamento" value={risultati.discostamento.toFixed(3)} />
+            </div>
+            <div className={`rounded-lg border px-3 py-2 text-xs space-y-1 ${variabilitaClass}`}>
+              {!risultati.valoriValidi ? (
+                <p className="font-semibold">Inserisci valori NDVI compresi tra 0 e 1 prima di usare il risultato.</p>
+              ) : (
+                <>
+                  <p className="font-semibold">
+                    Variabilità NDVI: {risultati.statoVariabilita === "bassa" ? "bassa — media rappresentativa"
+                      : risultati.statoVariabilita === "moderata" ? "moderata — utile una verifica in campo"
+                      : "alta — la media non descrive bene l’appezzamento"}
+                  </p>
+                  <p>Varianza {risultati.varianza.toFixed(4)} · deviazione standard {risultati.deviazioneStandard.toFixed(3)} · CV {risultati.coefficienteVariazione.toFixed(1)}%</p>
+                </>
+              )}
+            </div>
+            <div className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs space-y-1">
+              <p className="font-semibold text-stone-700">Coerenza resa e azoto</p>
+              <p>
+                Per {resa.toFixed(1)} t/ha, l’asportazione stimata è <strong>{risultati.fabbisognoN} kg N/ha</strong>
+                {" "}({datiVarieta.kgNPerTon} kg N/t). Azoto inserito: <strong>{azotoTot} kg/ha</strong>.
+              </p>
+              <p className={`font-medium ${azotoClass}`}>
+                {risultati.statoAzoto === "allineato"
+                  ? `Bilancio coerente (${Math.round(risultati.rapportoAzoto * 100)}% del fabbisogno stimato).`
+                  : risultati.statoAzoto === "deficit"
+                  ? `Possibile deficit: mancano circa ${Math.max(0, risultati.fabbisognoN - azotoTot)} kg N/ha rispetto alle asportazioni stimate.`
+                  : `Possibile eccesso: +${Math.max(0, azotoTot - risultati.fabbisognoN)} kg N/ha rispetto alle asportazioni stimate.`}
+              </p>
+              {risultati.statoVariabilita === "alta" && (
+                <p className="text-red-700 font-medium">Con CV superiore al 15%, ricampiona le zone disomogenee prima di distribuire una dose uniforme.</p>
+              )}
             </div>
             <div className="border-t border-green-200 pt-3 flex items-center justify-between">
               <span className="font-semibold text-stone-700">Da Distribuire:</span>
@@ -711,7 +844,7 @@ export default function App() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse min-w-[800px]">
+              <table className="w-full text-sm border-collapse min-w-[880px]">
                 <thead>
                   <tr className="bg-green-800 text-white">
                     <th className="px-2 py-2 text-center rounded-tl-lg">ID</th>
@@ -722,6 +855,7 @@ export default function App() {
                     <th className="px-2 py-2 text-center">Gg</th>
                     <th className="px-2 py-2 text-center">Età Piant.</th>
                     <th className="px-2 py-2 text-center">Media</th>
+                    <th className="px-2 py-2 text-center">CV NDVI</th>
                     <th className="px-2 py-2 text-center">Ottimale</th>
                     <th className="px-2 py-2 text-center">Diff.</th>
                     <th className="px-2 py-2 text-center">Dose (kg/ha)</th>
@@ -731,8 +865,10 @@ export default function App() {
                 </thead>
                 <tbody>
                   {loadingOss ? (
-                    <tr><td colSpan={13} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
-                  ) : osservazioni.map((obs, i) => (
+                    <tr><td colSpan={14} className="py-8 text-center text-stone-400">Caricamento…</td></tr>
+                  ) : osservazioni.map((obs, i) => {
+                    const stats = statisticheNdvi([obs.n1, obs.n2, obs.n3, obs.n4, obs.n5]);
+                    return (
                     <tr key={obs.id} className={i % 2 === 0 ? "bg-stone-50" : "bg-white"}>
                       <td className="px-2 py-2 text-center font-mono font-semibold text-green-800">{obs.id}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap">{obs.data}</td>
@@ -755,6 +891,15 @@ export default function App() {
                       </td>
                       <td className="px-2 py-2 text-center font-semibold bg-green-50 text-green-800">
                         {obs.media.toFixed(3)}
+                      </td>
+                      <td className={`px-2 py-2 text-center font-mono text-xs ${
+                        stats.coefficienteVariazione <= 8
+                          ? "text-green-700"
+                          : stats.coefficienteVariazione <= 15
+                          ? "text-amber-700"
+                          : "text-red-700"
+                      }`}>
+                        {stats.coefficienteVariazione.toFixed(1)}%
                       </td>
                       <td className="px-2 py-2 text-center text-stone-500">{obs.ottimale.toFixed(3)}</td>
                       <td className="px-2 py-2 text-center">{obs.discostamento.toFixed(3)}</td>
@@ -786,7 +931,8 @@ export default function App() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

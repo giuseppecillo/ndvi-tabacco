@@ -19,7 +19,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 // @ts-ignore – shpjs has no bundled types in all versions
 import shp from "shpjs";
-import { Observation, TipoIntervento } from "./App";
+import { Observation } from "./App";
 import {
   KmlPolygon, ControlPoint, PolyIdwResult,
   parseKml, parseKmz, parseShpPolygons,
@@ -280,7 +280,10 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
     reader.onload = async ev => {
       try {
         const buf = ev.target?.result as ArrayBuffer;
-        const raw = await shp(buf);
+        const parseShapefile = shp as (input: ArrayBuffer) => Promise<{
+          features: ShpRawFeature[];
+        } | { features: ShpRawFeature[] }[]>;
+        const raw = await parseShapefile(buf);
         const fc  = Array.isArray(raw) ? raw[0] : raw;
         const pts: ShpRawFeature[] = fc.features.filter(
           (f: ShpRawFeature) => f.geometry?.type === "Point"

@@ -165,7 +165,8 @@ export async function parseShpPolygons(buffer: ArrayBuffer): Promise<KmlPolygon[
     if (!geom) return;
 
     if (geom.type === "Polygon") {
-      addRing(geom.coordinates[0] as [number, number][]);
+      const coords = geom.coordinates as [number, number][][];
+      addRing(coords[0]);
     } else if (geom.type === "MultiPolygon") {
       (geom.coordinates as [number, number][][][]).forEach((poly, pi) => {
         addRing(poly[0], (geom.coordinates as unknown[]).length > 1 ? ` (${pi + 1})` : "");
@@ -557,7 +558,7 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
 export function exportObservationsCsv(
   osservazioni: {
     id: string; data: string; dataTrapianto: string;
-    tipoIntervento: string; giorni: number;
+    giorni: number;
     cliente: string; appezzamento: string; varieta: string;
     n1: number; n2: number; n3: number; n4: number; n5: number;
     media: number; ottimale: number; discostamento: number; dose: number;
@@ -565,14 +566,14 @@ export function exportObservationsCsv(
   }[],
 ): void {
   const header = [
-    "ID","Data","Trapianto","Tipo","Giorni",
+    "ID","Data","Trapianto","Giorni",
     "Cliente","Appezzamento","Varieta",
     "M1","M2","M3","M4","M5",
     "Media_NDVI","NDVI_Ottimale","Discostamento","Dose_kg_ha",
     "Lat_WGS84","Lng_WGS84",
   ];
   const rows = osservazioni.map(o => [
-    o.id, o.data, o.dataTrapianto, o.tipoIntervento, o.giorni,
+    o.id, o.data, o.dataTrapianto, o.giorni,
     `"${o.cliente}"`, `"${o.appezzamento}"`, `"${o.varieta}"`,
     o.n1, o.n2, o.n3, o.n4, o.n5,
     o.media.toFixed(4), o.ottimale.toFixed(4), o.discostamento.toFixed(4), o.dose.toFixed(2),
