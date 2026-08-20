@@ -809,15 +809,13 @@ export default function App() {
                 {(isGranoDuro ? Object.values(GRANO_DURO_DB) : Object.values(VARIETA_DB)).map((v) => (
                   <option key={v.label} value={v.label}>
                     {isGranoDuro
-                      ? `${v.label} · ${(v as GranoVarietaDati).densitaSemiMqMin}${(v as GranoVarietaDati).densitaSemiMqMin === (v as GranoVarietaDati).densitaSemiMqMax ? "" : `–${(v as GranoVarietaDati).densitaSemiMqMax}`} semi/m²`
+                      ? v.label
                       : `${v.label} — ${(v as VarietaDati).categoria} · resa ${(v as VarietaDati).resaMin}–${(v as VarietaDati).resaMax} t/ha`}
                   </option>
                 ))}
               </select>
               {isGranoDuro ? (
-                <p className="text-xs text-stone-400">
-                  Densità varietale di riferimento: {datiGrano.densitaSemiMqMin}{datiGrano.densitaSemiMqMin === datiGrano.densitaSemiMqMax ? "" : `–${datiGrano.densitaSemiMqMax}`} semi/m².
-                </p>
+                <p className="text-xs text-stone-400">Seleziona la varietà e inserisci la quantità di seme da valutare.</p>
               ) : (
                 <p className="text-xs text-stone-400">
                   {datiVarieta.categoria} · azoto consigliato {datiVarieta.azotoMin}–{datiVarieta.azotoMax} kg/ha · resa max {datiVarieta.resaMax} t/ha
@@ -856,8 +854,7 @@ export default function App() {
                     Input: {densitaUnita === "kg/ha"
                       ? `${densitaValore.toFixed(1)} kg seme/ha`
                       : `${Math.round(densitaGrano.semiMqEquivalenti).toLocaleString("it-IT")} semi/m²`}
-                    {" "}· densità varietale di riferimento: {datiGrano.densitaSemiMqMin}–{datiGrano.densitaSemiMqMax} semi/m².
-                    {" "}Equivalente stimato: {Math.round(densitaGrano.semiHaEquivalenti).toLocaleString("it-IT")} semi/ha ({densitaGrano.semiMqEquivalenti.toFixed(0)} semi/m²) · coefficiente densità N: ×{densitaGrano.fattoreAzoto.toFixed(2)}
+                    {" "}· equivalente stimato: {Math.round(densitaGrano.semiHaEquivalenti).toLocaleString("it-IT")} semi/ha ({densitaGrano.semiMqEquivalenti.toFixed(0)} semi/m²) · coefficiente densità N: ×{densitaGrano.fattoreAzoto.toFixed(2)}
                     {densitaGrano.fuoriRange
                       ? densitaUnita === "kg/ha"
                         ? " · Quantità da verificare con varietà e tecnico aziendale."
@@ -959,7 +956,7 @@ export default function App() {
                 <p className="font-bold">Correttivo densità dichiarato</p>
                 <p>
                   Il fabbisogno base segue un riferimento tecnico di 3 kg N per quintale atteso. La densità modifica questo valore solo in modo limitato:
-                  coefficiente da ×0,90 a ×1,10, calcolato rispetto a {datiGrano.densitaSemiMqDefault} semi/m².
+                  coefficiente da ×0,90 a ×1,10, calcolato rispetto al riferimento tecnico interno della varietà.
                 </p>
                 <p>
                   Il PMG di riferimento ({datiGrano.pesoMilleSemiG.toFixed(1)} g) serve solo per convertire kg/ha e semi/m²:
