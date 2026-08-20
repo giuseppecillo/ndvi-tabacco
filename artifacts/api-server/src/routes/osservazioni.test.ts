@@ -75,6 +75,26 @@ test("caps the tobacco indication at the residual nitrogen plan", () => {
   assert.match(erroreOsservazioneTabacco(piano) ?? "", /dose tabacco/);
 });
 
+test("uses the revised tobacco peak and flowering reference in API validation", () => {
+  const piano = pianoTabaccoValido();
+  piano.giorni = 75;
+  piano.n1 = piano.n2 = piano.n3 = piano.n4 = piano.n5 = 0.8;
+  piano.media = 0.8;
+  piano.ottimale = 0.8;
+  piano.discostamento = 0;
+  piano.dose = 0;
+  assert.equal(erroreOsservazioneTabacco(piano), null);
+
+  piano.giorni = 95;
+  piano.n1 = piano.n2 = piano.n3 = piano.n4 = piano.n5 = 0.75;
+  piano.media = 0.75;
+  piano.ottimale = 0.75;
+  assert.equal(erroreOsservazioneTabacco(piano), null);
+
+  piano.ottimale = 0.8;
+  assert.match(erroreOsservazioneTabacco(piano) ?? "", /calendario fenologico/);
+});
+
 test("requires zero N when the observed NDVI is at or above its reference", () => {
   const piano = pianoGranoValido();
   piano.n1 = 0.6;

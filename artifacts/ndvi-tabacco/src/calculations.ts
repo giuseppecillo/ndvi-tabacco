@@ -336,20 +336,28 @@ const NDVI_CURVA: Array<{ giorni: number; ottimale: number }> = [
   { giorni: 14,  ottimale: 0.34 },
   { giorni: 28,  ottimale: 0.48 },
   { giorni: 42,  ottimale: 0.64 },
-  { giorni: 56,  ottimale: 0.74 },
-  { giorni: 70,  ottimale: 0.76 },
-  { giorni: 84,  ottimale: 0.72 },
-  { giorni: 105, ottimale: 0.66 },
+  // Riferimento operativo: crescita fino a 0,70 a 55 DAT, massima
+  // copertura a 0,78–0,80 a 65 DAT e plateau 0,80 da 75 DAT.
+  // La discesa inizia con la fioritura: confrontare sempre la fase osservata.
+  { giorni: 55,  ottimale: 0.70 },
+  { giorni: 65,  ottimale: 0.79 },
+  { giorni: 75,  ottimale: 0.80 },
+  { giorni: 85,  ottimale: 0.80 },
+  { giorni: 95,  ottimale: 0.75 },
+  { giorni: 110, ottimale: 0.68 },
   { giorni: 130, ottimale: 0.60 },
 ];
 
 export const NDVI_FASI: Array<{ giorni: number; label: string }> = [
   { giorni: 0,  label: "Trapianto" },
   { giorni: 20, label: "Ripresa (20 gg)" },
-  { giorni: 35, label: "Sviluppo (35 gg)" },
-  { giorni: 50, label: "Espansione (50 gg)" },
+  { giorni: 35, label: "Sviluppo vegetativo (35 gg)" },
+  { giorni: 55, label: "Espansione chioma (55 gg)" },
   { giorni: 65, label: "Piena copertura (65 gg)" },
-  { giorni: 90, label: "Maturazione (90 gg)" },
+  { giorni: 75, label: "Massimo vigore (75–85 gg)" },
+  { giorni: 95, label: "Fioritura / regressione (95 gg)" },
+  { giorni: 110, label: "Fioritura avanzata (110 gg)" },
+  { giorni: 130, label: "Maturazione avanzata (130 gg)" },
 ];
 
 export type NdviStats = {

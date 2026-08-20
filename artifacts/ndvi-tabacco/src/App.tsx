@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { exportObservationsCsv } from "./utils/geoUtils";
+const bibliografiaNdviTabaccoUrl = `${import.meta.env.BASE_URL}bibliografia-ndvi-tabacco.md`;
 import {
   calcola,
   calcolaDensita,
@@ -1231,6 +1232,32 @@ export default function App() {
                 </>
               )}
             </div>
+            <details className="rounded-lg border border-green-200 bg-white px-3 py-2 text-xs text-stone-700">
+              <summary className="cursor-pointer font-semibold text-green-900">
+                Metodo e limiti del riferimento NDVI tabacco
+              </summary>
+              <div className="mt-2 space-y-2 leading-relaxed">
+                <p>
+                  Il riferimento è una curva fenologica operativa: 0,70 a 55 DAT,
+                  0,79 a 65 DAT e 0,80 tra 75 e 85 DAT; dopo l’inizio della fioritura
+                  scende progressivamente. Non è una soglia universale di salute o di azoto.
+                </p>
+                <p>
+                  A copertura elevata l’NDVI può saturare. Varietà, densità, suolo esposto,
+                  acqua, patogeni, illuminazione e sensore possono modificare la lettura:
+                  conferma sempre la fase in campo e interpreta il risultato insieme alle
+                  cinque misure, non come diagnosi automatica.
+                </p>
+                <a
+                  href={bibliografiaNdviTabaccoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block font-semibold text-green-800 underline underline-offset-2"
+                >
+                  Consulta metodo e bibliografia scientifica (oltre 50 articoli)
+                </a>
+              </div>
+            </details>
             <div className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs space-y-1">
               <p className="font-semibold text-stone-700">Coerenza resa e azoto</p>
               <p>

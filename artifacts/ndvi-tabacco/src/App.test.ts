@@ -346,4 +346,14 @@ describe("tobacco calculations", () => {
     assertApproximately(ndviOttimale(0, "avanzata").ottimale, 0.31, "advanced nursery curve adjustment");
     assert.equal(ndviOttimale(0, "extra").ottimale, 0.34);
   });
+
+  it("uses the revised tobacco canopy peak and flowering regression", () => {
+    assert.equal(ndviOttimale(55).ottimale, 0.70);
+    assert.equal(ndviOttimale(65).ottimale, 0.79);
+    assert.equal(ndviOttimale(75).ottimale, 0.80);
+    assert.equal(ndviOttimale(85).ottimale, 0.80);
+    assert.equal(ndviOttimale(95).ottimale, 0.75);
+    assert.equal(ndviOttimale(110).ottimale, 0.68);
+    assert.equal(ndviOttimale(130).ottimale, 0.60);
+  });
 });

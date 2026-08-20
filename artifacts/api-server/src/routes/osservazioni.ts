@@ -29,10 +29,12 @@ const CURVA_NDVI_TABACCO = [
   { giorni: 14, ottimale: 0.34 },
   { giorni: 28, ottimale: 0.48 },
   { giorni: 42, ottimale: 0.64 },
-  { giorni: 56, ottimale: 0.74 },
-  { giorni: 70, ottimale: 0.76 },
-  { giorni: 84, ottimale: 0.72 },
-  { giorni: 105, ottimale: 0.66 },
+  { giorni: 55, ottimale: 0.70 },
+  { giorni: 65, ottimale: 0.79 },
+  { giorni: 75, ottimale: 0.80 },
+  { giorni: 85, ottimale: 0.80 },
+  { giorni: 95, ottimale: 0.75 },
+  { giorni: 110, ottimale: 0.68 },
   { giorni: 130, ottimale: 0.60 },
 ];
 
