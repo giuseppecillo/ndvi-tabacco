@@ -19,8 +19,8 @@ export type GranoVarietaDati = {
   pesoMilleSemiG: number;
 };
 
-// Dati dalla tabella varietale del disciplinare De Matteis 2023–2024.
-// Il disciplinare riporta separatamente densità (semi/m²) e dose (kg/ha).
+// Dati dalla tabella varietale di riferimento De Matteis 2023–2024.
+// La tabella di riferimento riporta separatamente densità (semi/m²) e dose (kg/ha).
 // Non dichiara il PMG: quello indicato è un riferimento di conversione
 // ricavato dai valori centrali delle due colonne, non un dato certificato.
 function varietaGrano(
@@ -83,7 +83,7 @@ export type FinestraDasLocale = {
 };
 
 // Modello iniziale solo per stimare la fase nei contesti di semina autunnale.
-// Non è una tabella del disciplinare e deve essere confermato dall'azienda.
+// È un consiglio locale iniziale e deve essere confermato dall'azienda.
 export const FINESTRE_DAS_LOCALI_TEMPLATE: FinestraDasLocale[] = [
   { fase: "Semina / emergenza", dasMin: 0, dasMax: 20 },
   // 21–50 DAS è sviluppo fogliare (BBCH 10–20), non ancora una quota
@@ -109,10 +109,10 @@ export type ProfiloFenologicoGrano = {
 // I DAS sono una stima per semina autunnale, non sostituiscono il BBCH osservato.
 export const PROFILO_FENOLOGICO_GRANO: ProfiloFenologicoGrano[] = [
   { bbch: "00–09", label: "Semina / emergenza", dasMin: 0, dasMax: 20, ndviMin: 0.20, ndviMax: 0.34, quotaAzotoPrevista: true },
-  { bbch: "10–20", label: "Sviluppo fogliare", dasMin: 21, dasMax: 50, ndviMin: 0.34, ndviMax: 0.55, quotaAzotoPrevista: false },
-  { bbch: "20–29", label: "Accestimento", dasMin: 51, dasMax: 135, ndviMin: 0.55, ndviMax: 0.76, quotaAzotoPrevista: true },
-  { bbch: "30–32", label: "Inizio levata", dasMin: 136, dasMax: 165, ndviMin: 0.76, ndviMax: 0.82, quotaAzotoPrevista: true },
-  { bbch: "37–39", label: "Foglia a bandiera", dasMin: 166, dasMax: 190, ndviMin: 0.82, ndviMax: 0.83, quotaAzotoPrevista: true },
+  { bbch: "10–20", label: "Sviluppo fogliare", dasMin: 21, dasMax: 50, ndviMin: 0.34, ndviMax: 0.40, quotaAzotoPrevista: false },
+  { bbch: "20–29", label: "Accestimento", dasMin: 51, dasMax: 135, ndviMin: 0.40, ndviMax: 0.55, quotaAzotoPrevista: true },
+  { bbch: "30–32", label: "Inizio levata", dasMin: 136, dasMax: 165, ndviMin: 0.65, ndviMax: 0.72, quotaAzotoPrevista: true },
+  { bbch: "37–39", label: "Foglia a bandiera", dasMin: 166, dasMax: 190, ndviMin: 0.73, ndviMax: 0.85, quotaAzotoPrevista: true },
   { bbch: "51–59", label: "Spigatura", dasMin: 191, dasMax: 205, ndviMin: 0.80, ndviMax: 0.83, quotaAzotoPrevista: false },
   { bbch: "61–69", label: "Fioritura", dasMin: 206, dasMax: 220, ndviMin: 0.72, ndviMax: 0.80, quotaAzotoPrevista: false },
   { bbch: "71–89", label: "Riempimento / maturazione cerosa", dasMin: 221, dasMax: 250, ndviMin: 0.42, ndviMax: 0.72, quotaAzotoPrevista: false },
@@ -192,13 +192,13 @@ export function stimaFaseGranoDaDas(giorni: number, finestre: FinestraDasLocale[
 }
 
 // Compatibilità con le chiamate precedenti: usa soltanto il modello locale
-// esplicito, non una finestra DAS dichiarata dal disciplinare.
+// esplicito, non una finestra DAS dichiarata da una fonte generale.
 export function faseGranoDaDas(giorni: number, finestre = FINESTRE_DAS_LOCALI_TEMPLATE): FaseGrano | null {
   return stimaFaseGranoDaDas(giorni, finestre);
 }
 
 export function calcolaFabbisognoNGrano(resaQHa: number, fattoreDensita: number): { base: number; corretto: number } {
-  // Tab. 2 del disciplinare: 40 q = 120, 50 q = 150, 60 q = 180 kg N/ha.
+  // Consiglio di riferimento: 40 q = 120, 50 q = 150, 60 q = 180 kg N/ha.
   const base = Math.max(0, Math.round(resaQHa * 3));
   return { base, corretto: Math.round(base * fattoreDensita) };
 }
@@ -216,11 +216,12 @@ export function calcolaQuotaNGrano(
 const NDVI_GRANO_CURVA: Array<{ das: number; ottimale: number }> = [
   { das: 0, ottimale: 0.20 },
   { das: 20, ottimale: 0.34 },
-  { das: 50, ottimale: 0.55 },
-  { das: 100, ottimale: 0.70 },
-  { das: 135, ottimale: 0.76 },
-  { das: 165, ottimale: 0.82 },
-  { das: 190, ottimale: 0.83 },
+  { das: 50, ottimale: 0.40 },
+  { das: 135, ottimale: 0.55 },
+  { das: 136, ottimale: 0.65 },
+  { das: 165, ottimale: 0.72 },
+  { das: 166, ottimale: 0.73 },
+  { das: 190, ottimale: 0.85 },
   { das: 205, ottimale: 0.80 },
   { das: 220, ottimale: 0.72 },
   { das: 250, ottimale: 0.42 },

@@ -14,3 +14,9 @@ description: Agronomic guardrails for the grano duro seed-density conversion and
 **Why:** A conflated early-season DAS range can present an N-phase indication before the crop has reached the corresponding phenological stage.
 
 **How to apply:** When adjusting the local calendar, preserve continuous non-overlapping phase coverage and surface a warning when DAS-derived timing conflicts with the confirmed BBCH phase.
+
+**NDVI reference calibration:** Use the user-confirmed practical ranges for the N phases: accestimento 0.40–0.55, inizio levata 0.65–0.72, and foglia a bandiera 0.73–0.85.
+
+**Why:** The earlier curve overstated early-season vigor, including NDVI values above 0.55 during accestimento.
+
+**How to apply:** Keep the client curve, API validation curve, displayed calendar, and regression tests synchronized; these are reference values for technical advice, not automatic thresholds.

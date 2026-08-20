@@ -58,7 +58,7 @@ function assertApproximately(actual: number, expected: number, message: string):
 }
 
 describe("grano duro seed-rate conversions", () => {
-  it("keeps disciplinary seed density and seed dose as separate ranges", () => {
+  it("keeps seed density and seed dose reference ranges separate", () => {
     for (const fixture of GRANO_CONVERSION_FIXTURES) {
       const dati = GRANO_DURO_DB[fixture.variety];
       assert.ok(dati, `missing ${fixture.variety} from the variety database`);
@@ -144,7 +144,7 @@ describe("grano duro BBCH and local DAS estimate", () => {
 });
 
 describe("grano duro nitrogen planning", () => {
-  it("maps the disciplinary yield boundaries to 120, 150, and 180 kg N/ha", () => {
+  it("maps the yield reference boundaries to 120, 150, and 180 kg N/ha", () => {
     assert.deepEqual(calcolaFabbisognoNGrano(40, 1), { base: 120, corretto: 120 });
     assert.deepEqual(calcolaFabbisognoNGrano(50, 1), { base: 150, corretto: 150 });
     assert.deepEqual(calcolaFabbisognoNGrano(60, 1), { base: 180, corretto: 180 });
@@ -175,7 +175,11 @@ describe("grano duro nitrogen planning", () => {
 
   it("uses a grain-specific NDVI reference across the autumn-to-wax-maturity calendar", () => {
     assert.equal(ndviOttimaleGrano(0), 0.2);
-    assert.equal(ndviOttimaleGrano(165), 0.82);
+    assert.equal(ndviOttimaleGrano(135), 0.55);
+    assert.equal(ndviOttimaleGrano(136), 0.65);
+    assert.equal(ndviOttimaleGrano(165), 0.72);
+    assert.equal(ndviOttimaleGrano(166), 0.73);
+    assert.equal(ndviOttimaleGrano(190), 0.85);
     assert.equal(ndviOttimaleGrano(250), 0.42);
     for (const fase of PROFILO_FENOLOGICO_GRANO) {
       const riferimentoInizio = ndviOttimaleGrano(fase.dasMin);
@@ -183,6 +187,21 @@ describe("grano duro nitrogen planning", () => {
       assert.ok(riferimentoInizio >= fase.ndviMin - 0.02 && riferimentoInizio <= fase.ndviMax + 0.02);
       assert.ok(riferimentoFine >= fase.ndviMin - 0.02 && riferimentoFine <= fase.ndviMax + 0.02);
     }
+  });
+
+  it("keeps the requested NDVI reference ranges for the three nitrogen phases", () => {
+    assert.deepEqual(profiloFenologicoGranoDaBbch("20–29") && {
+      min: profiloFenologicoGranoDaBbch("20–29")?.ndviMin,
+      max: profiloFenologicoGranoDaBbch("20–29")?.ndviMax,
+    }, { min: 0.4, max: 0.55 });
+    assert.deepEqual(profiloFenologicoGranoDaBbch("30–32") && {
+      min: profiloFenologicoGranoDaBbch("30–32")?.ndviMin,
+      max: profiloFenologicoGranoDaBbch("30–32")?.ndviMax,
+    }, { min: 0.65, max: 0.72 });
+    assert.deepEqual(profiloFenologicoGranoDaBbch("37–39") && {
+      min: profiloFenologicoGranoDaBbch("37–39")?.ndviMin,
+      max: profiloFenologicoGranoDaBbch("37–39")?.ndviMax,
+    }, { min: 0.73, max: 0.85 });
   });
 
   it("modulates a confirmed phase quota by NDVI without exceeding the phase range or residual plan", () => {
@@ -194,7 +213,7 @@ describe("grano duro nitrogen planning", () => {
       azotoGiaDistribuito: 60,
       fase,
       das: 100,
-      lettureNdvi: [0.7, 0.7, 0.7, 0.7, 0.7],
+      lettureNdvi: [0.49, 0.49, 0.49, 0.49, 0.49],
     });
     assert.equal(adequate.quotaBase, 45);
     assert.equal(adequate.quotaProposta, 45);
@@ -206,7 +225,7 @@ describe("grano duro nitrogen planning", () => {
       azotoGiaDistribuito: 60,
       fase,
       das: 100,
-      lettureNdvi: [0.4, 0.4, 0.4, 0.4, 0.4],
+      lettureNdvi: [0.2, 0.2, 0.2, 0.2, 0.2],
     });
     assert.equal(deficit.fattoreNdvi, 1.15);
     assert.equal(deficit.quotaProposta, fase.azotoMax);
@@ -217,7 +236,7 @@ describe("grano duro nitrogen planning", () => {
       azotoGiaDistribuito: 140,
       fase,
       das: 100,
-      lettureNdvi: [0.4, 0.4, 0.4, 0.4, 0.4],
+      lettureNdvi: [0.2, 0.2, 0.2, 0.2, 0.2],
     });
     assert.equal(residualExhausted.residuoPiano, 10);
     assert.equal(residualExhausted.quotaProposta, 10);
@@ -227,7 +246,7 @@ describe("grano duro nitrogen planning", () => {
       azotoGiaDistribuito: 140.4,
       fase,
       das: 100,
-      lettureNdvi: [0.4, 0.4, 0.4, 0.4, 0.4],
+      lettureNdvi: [0.2, 0.2, 0.2, 0.2, 0.2],
     });
     assert.equal(decimalResidual.residuoPiano, 10);
     assert.equal(decimalResidual.quotaProposta, 10);

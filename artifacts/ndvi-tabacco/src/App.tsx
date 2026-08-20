@@ -464,7 +464,7 @@ export default function App() {
     setDensitaValore(Number(valoreEquivalente.toFixed(unita === "piante/ha" || unita === "semi/ha" || unita === "semi/m²" ? 0 : 1)));
   }, [datiGrano, densita, densitaGrano, densitaUnita, datiVarieta, isGranoDuro]);
 
-  // Auto-aggiorna il campo azoto quando la resa supera il massimo di disciplinare
+  // Auto-aggiorna il campo azoto quando la resa supera il massimo consigliato.
   useEffect(() => {
     if (azotoAsportazioni !== null) {
       setAzotoTot(azotoAsportazioni);
@@ -633,10 +633,10 @@ export default function App() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(22, 101, 52); // green-800
-      doc.text("Taurus Agriculture Solution", 42, 18);
+      doc.text("NitroCrop NDVI", 42, 18);
       doc.setFontSize(11);
       doc.setTextColor(40, 40, 40);
-      doc.text("Registro NDVI Tabacco", 42, 26);
+      doc.text("Registro osservazioni NDVI", 42, 26);
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
       doc.text(`Esportato il: ${new Date().toLocaleDateString("it-IT")}  —  ${osservazioni.length} osservazion${osservazioni.length === 1 ? "e" : "i"}`, 42, 33);
@@ -695,12 +695,12 @@ export default function App() {
         doc.setFontSize(7);
         doc.setTextColor(150);
         doc.text(
-          `Pagina ${i} di ${pageCount}  —  Calcolatore NDVI Tabacco · Taurus Agriculture Solution`,
+          `Pagina ${i} di ${pageCount}  —  NitroCrop NDVI · Taurus Agriculture Solution`,
           148.5, 205, { align: "center" }
         );
       }
 
-      doc.save(`NDVI_Tabacco_${new Date().toISOString().slice(0, 10)}.pdf`);
+      doc.save(`NitroCrop_NDVI_${new Date().toISOString().slice(0, 10)}.pdf`);
     };
 
     if (img.complete) { drawDoc(); }
@@ -733,8 +733,8 @@ export default function App() {
         {/* Header */}
         <div className="text-center flex flex-col items-center gap-2">
           <img src={taurusLogo} alt="Taurus Agriculture Solution" className="h-28 w-auto drop-shadow-md" />
-          <h1 className="text-3xl font-bold text-green-900">{isGranoDuro ? "Pianificatore azoto grano duro" : "Calcolatore NDVI Tabacco"}</h1>
-          <p className="text-green-700 mt-0.5 text-sm">Strumento di supporto alla fertilizzazione azotata</p>
+          <h1 className="text-3xl font-bold text-green-900">NitroCrop NDVI</h1>
+          <p className="text-green-700 mt-0.5 text-sm">{isGranoDuro ? "Pianificatore azoto per grano duro" : "Supporto alla fertilizzazione azotata del tabacco"}</p>
         </div>
 
         {/* Tab navigation */}
@@ -749,7 +749,7 @@ export default function App() {
                   : "bg-white text-green-800 hover:bg-green-50"
               }`}
             >
-              {tab === "calcolatore" ? isGranoDuro ? "🌾 Pianificatore azoto" : "🌿 Calcolatore NDVI" : "🗺 Elaborazioni e Mappe"}
+              {tab === "calcolatore" ? isGranoDuro ? "🌾 Pianificatore azoto" : "🌿 NitroCrop NDVI" : "🗺 Elaborazioni e Mappe"}
             </button>
           ))}
         </div>
@@ -861,7 +861,7 @@ export default function App() {
                     {densitaGrano.fuoriRange
                       ? densitaUnita === "kg/ha"
                         ? " · Quantità da verificare con varietà e tecnico aziendale."
-                        : " · Fuori dal range di densità del disciplinare: verifica semi e varietà."
+                        : " · Fuori dal range di densità consigliato: verifica semi e varietà."
                       : ""}
                   </p>
                 ) : (
@@ -909,10 +909,10 @@ export default function App() {
                 !isGranoDuro && resa > datiVarieta.resaMax
                   ? `Supera il limite massimo di ${datiVarieta.resaMax} t/ha per questa varietà`
                   : isGranoDuro && (resa < 40 || resa > 60)
-                  ? "La tabella disciplinare riporta riferimenti tra 40 e 60 q/ha; il calcolo resta lineare a 3 kg N/q."
+                  ? "Il riferimento di consiglio è compreso tra 40 e 60 q/ha; il calcolo resta lineare a 3 kg N/q."
                   : undefined
               }
-              hint={isGranoDuro ? "Tabella disciplinare: 40 q/ha = 120, 50 = 150, 60 = 180 kg N/ha." : `Range consigliato: ${datiVarieta.resaMin}–${datiVarieta.resaMax} t/ha`}
+              hint={isGranoDuro ? "Riferimento di consiglio: 40 q/ha = 120, 50 = 150, 60 = 180 kg N/ha." : `Range consigliato: ${datiVarieta.resaMin}–${datiVarieta.resaMax} t/ha`}
             />
             <div className="flex flex-col gap-2">
               <NumberInput
@@ -958,12 +958,12 @@ export default function App() {
               <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950 space-y-2">
                 <p className="font-bold">Correttivo densità dichiarato</p>
                 <p>
-                  Il fabbisogno base segue la tabella del disciplinare (3 kg N per quintale atteso). La densità modifica questo valore solo in modo limitato:
+                  Il fabbisogno base segue un riferimento tecnico di 3 kg N per quintale atteso. La densità modifica questo valore solo in modo limitato:
                   coefficiente da ×0,90 a ×1,10, calcolato rispetto a {datiGrano.densitaSemiMqDefault} semi/m².
                 </p>
                 <p>
                   Il PMG di riferimento ({datiGrano.pesoMilleSemiG.toFixed(1)} g) serve solo per convertire kg/ha e semi/m²:
-                  il disciplinare non dichiara un PMG, quindi la dose inserita viene verificata direttamente nel proprio intervallo kg/ha.
+                  la tabella di riferimento non dichiara un PMG, quindi la dose inserita viene verificata direttamente nel proprio intervallo kg/ha.
                 </p>
                 <p className="font-medium">
                   Restano necessarie le valutazioni tecniche su analisi del suolo, coltura precedente, piogge e azoto residuo: l’app non applica correzioni automatiche per questi fattori.
@@ -1087,7 +1087,7 @@ export default function App() {
                   Configura le finestre DAS locali per proporre il BBCH
                 </summary>
                 <p className="mt-2 text-xs text-stone-600">
-                  Sono una preimpostazione modificabile salvata su questo dispositivo; non sono soglie ufficiali del disciplinare e non sostituiscono il rilievo BBCH.
+                  Sono una preimpostazione modificabile salvata su questo dispositivo; sono riferimenti di consiglio e non sostituiscono il rilievo BBCH.
                 </p>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {finestreDasGrano.map((finestra) => (
@@ -1259,7 +1259,7 @@ export default function App() {
             <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-4">
               <div>
                 <h2 className="text-base font-bold text-green-900">Piano azoto del punto · grano duro</h2>
-                <p className="text-xs text-green-800 mt-1">Resa e densità stimano il piano; BBCH confermato e media NDVI stimano l’indicazione N del punto. Il disciplinare resta una guida da validare in campo.</p>
+                <p className="text-xs text-green-800 mt-1">Resa e densità stimano il piano; BBCH confermato e media NDVI stimano l’indicazione N del punto. Il risultato è un consiglio da validare in campo.</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                 <ResultRow label="Fabbisogno base" value={`${risultatiGrano.fabbisognoBase} kg N/ha`} />
@@ -1276,7 +1276,7 @@ export default function App() {
                 {faseGrano ? <>
                   <p className="font-semibold text-green-900">Indicazione N del punto dalla media NDVI: {risultatiGrano.quotaProposta} kg N/ha</p>
                   <p>
-                    Intervallo guida del disciplinare per {faseGrano.bbch} · {faseGrano.label}: {faseGrano.azotoMin}–{faseGrano.azotoMax} kg N/ha.
+                    Intervallo di consiglio per {faseGrano.bbch} · {faseGrano.label}: {faseGrano.azotoMin}–{faseGrano.azotoMax} kg N/ha.
                     Media NDVI {risultatiGrano.media.toFixed(3)} rispetto a {risultatiGrano.ndviOttimale.toFixed(3)} → fattore {risultatiGrano.fattoreNdvi.toFixed(2)} sulla quota base di {risultatiGrano.quotaBase} kg N/ha; indicazione limitata all’intervallo guida e ai {risultatiGrano.residuoPiano} kg N/ha residui.
                   </p>
                 </> : (
@@ -1481,7 +1481,7 @@ export default function App() {
 
         <p className="text-center text-xs text-green-700 pb-4">
           {isGranoDuro
-            ? "Grano duro: l’indicazione N del punto è registrata per ogni media NDVI; BBCH, residuo e intervallo disciplinare la guidano, ma la verifica in campo resta necessaria."
+            ? "Grano duro: l’indicazione N del punto è registrata per ogni media NDVI; BBCH, residuo e intervallo di consiglio la guidano, ma la verifica in campo resta necessaria."
             : "Formula: Dose = (NDVI_ottimale − NDVI_media) × 500 × (resa / 4.5) · Limite max = azoto totale / 2"}
         </p>
 
