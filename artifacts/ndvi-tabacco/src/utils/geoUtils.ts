@@ -34,6 +34,7 @@ export interface ControlPoint {
   lat: number;
   dose: number; // kg/ha
   azotoTotale?: number; // planned nitrogen, kg/ha
+  azotoGiaDistribuito?: number; // nitrogen already applied, kg/ha
 }
 
 export interface IdwGridPoint {
@@ -43,6 +44,7 @@ export interface IdwGridPoint {
   utmY: number;
   dose: number; // interpolated dose, kg/ha
   azotoTotale?: number; // interpolated planned nitrogen, kg/ha
+  azotoGiaDistribuito?: number; // interpolated nitrogen already applied, kg/ha
 }
 
 export interface NitrogenSummary {
@@ -50,6 +52,7 @@ export interface NitrogenSummary {
   plannedPerHa: number;
   indicatedPerHa: number;
   savedPerHa: number;
+  savedPercent: number;
   plannedTotalKg: number;
   indicatedTotalKg: number;
   savedTotalKg: number;
@@ -325,6 +328,13 @@ export function computeIdwGrid(
   const planControls = utmControls
     .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale))
     .map(c => ({ utmX: c.utmX, utmY: c.utmY, dose: c.azotoTotale! }));
+  const distributedControls = utmControls
+    .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale))
+    .map(c => ({
+      utmX: c.utmX,
+      utmY: c.utmY,
+      dose: Math.max(0, c.azotoGiaDistribuito ?? 0),
+    }));
 
   // Generate grid nodes (cell centres) and filter by polygon
   const grid: IdwGridPoint[] = [];
@@ -334,7 +344,10 @@ export function computeIdwGrid(
       if (!pip(lng, lat, polygon.ring)) continue;
       const dose = idwAt(utmControls, x, y, power);
       const azotoTotale = planControls.length ? idwAt(planControls, x, y, power) : undefined;
-      grid.push({ lng, lat, utmX: x, utmY: y, dose, azotoTotale });
+      const azotoGiaDistribuito = distributedControls.length
+        ? idwAt(distributedControls, x, y, power)
+        : undefined;
+      grid.push({ lng, lat, utmX: x, utmY: y, dose, azotoTotale, azotoGiaDistribuito });
     }
   }
 
@@ -349,13 +362,21 @@ export function computeIdwGrid(
   const plannedPerHa = plannedValues.length
     ? plannedValues.reduce((sum, value) => sum + value, 0) / plannedValues.length
     : 0;
-  const indicatedPerHa = Math.min(mean, plannedPerHa);
+  const distributedValues = grid
+    .map(g => g.azotoGiaDistribuito)
+    .filter((value): value is number => value != null);
+  const distributedPerHa = distributedValues.length
+    ? distributedValues.reduce((sum, value) => sum + value, 0) / distributedValues.length
+    : 0;
+  const indicatedPerHa = Math.min(distributedPerHa + mean, plannedPerHa);
   const savedPerHa = Math.max(0, plannedPerHa - indicatedPerHa);
+  const savedPercent = plannedPerHa > 0 ? (savedPerHa / plannedPerHa) * 100 : 0;
   const nitrogenSummary = plannedValues.length && areaHa > 0 ? {
     areaHa,
     plannedPerHa,
     indicatedPerHa,
     savedPerHa,
+    savedPercent,
     plannedTotalKg: plannedPerHa * areaHa,
     indicatedTotalKg: indicatedPerHa * areaHa,
     savedTotalKg: savedPerHa * areaHa,

@@ -7,4 +7,4 @@
 - [Grano duro nitrogen planning](grano-duro-nitrogen-planning.md) — Convert seed rates with PMG and constrain scaled phase advice to each disciplinary range.
 - [Grain dose API integrity](grain-dose-api-integrity.md) — Recalculate the grain point dose on the API; never trust client-side BBCH, NDVI, or dose values.
 - [NDVI point-N indication](ndvi-point-n-indication.md) — Above-reference NDVI means no point N; below-reference NDVI maps proportionally to the crop’s optimal N quota.
-- [IDW nitrogen savings](idw-nitrogen-savings.md) — Compare interpolated IDW indication with total planned N, not residual N, across the full polygon area.
+- [IDW nitrogen savings](idw-nitrogen-savings.md) — Savings compare total planned N with already-applied N plus the IDW dose across the full polygon area.

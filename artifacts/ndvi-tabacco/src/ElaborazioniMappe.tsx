@@ -213,6 +213,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
       lat:          o.lat!,
       dose:         o.dose,
       azotoTotale:  o.azotoTotale ?? undefined,
+      azotoGiaDistribuito: o.azotoGiaDistribuito ?? 0,
     })),
   [gpsObs]);
 
@@ -665,7 +666,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
                   Risparmio di azoto sull’intero poligono
                 </h4>
                 <p className="mt-1 text-xs text-emerald-800">
-                  Confronto tra i kg di azoto totale del piano e la dose indicata dalla mappa IDW.
+                  Confronto tra i kg di azoto totale del piano e l’azoto già distribuito più la dose indicata dalla mappa IDW.
                   Superficie calcolata: <strong>{currentResult.nitrogenSummary.areaHa.toFixed(2)} ha</strong>.
                 </p>
               </div>
@@ -676,6 +677,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
                       <th scope="col" className="px-4 py-3">Scenario</th>
                       <th scope="col" className="px-4 py-3 text-right">kg N/ha</th>
                       <th scope="col" className="px-4 py-3 text-right">kg N sul poligono</th>
+                      <th scope="col" className="px-4 py-3 text-right">Risparmio %</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-200">
@@ -683,23 +685,26 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
                       <th scope="row" className="px-4 py-3 font-semibold text-stone-800">Azoto previsto dal piano</th>
                       <td className="px-4 py-3 text-right tabular-nums">{currentResult.nitrogenSummary.plannedPerHa.toFixed(1)}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{currentResult.nitrogenSummary.plannedTotalKg.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-right text-stone-400">—</td>
                     </tr>
                     <tr>
-                      <th scope="row" className="px-4 py-3 font-semibold text-stone-800">Azoto indicato dalla IDW</th>
+                      <th scope="row" className="px-4 py-3 font-semibold text-stone-800">Azoto distribuito + indicato dalla IDW</th>
                       <td className="px-4 py-3 text-right tabular-nums">{currentResult.nitrogenSummary.indicatedPerHa.toFixed(1)}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{currentResult.nitrogenSummary.indicatedTotalKg.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-right text-stone-400">—</td>
                     </tr>
                     <tr className="bg-green-50 text-green-950">
                       <th scope="row" className="px-4 py-3 font-bold">Risparmio stimato</th>
                       <td className="px-4 py-3 text-right font-bold tabular-nums">{currentResult.nitrogenSummary.savedPerHa.toFixed(1)}</td>
                       <td className="px-4 py-3 text-right font-bold tabular-nums">{currentResult.nitrogenSummary.savedTotalKg.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-right font-bold tabular-nums">{currentResult.nitrogenSummary.savedPercent.toFixed(1)}%</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <p className="border-t border-emerald-100 bg-white px-4 py-2 text-xs text-stone-500">
                 I valori per ettaro sono medie interpolate dai punti GPS del registro NDVI.
-                I totali sono calcolati sulla superficie completa del poligono.
+                L’azoto già distribuito è incluso nel confronto; i totali sono calcolati sulla superficie completa del poligono.
               </p>
             </section>
           )}
