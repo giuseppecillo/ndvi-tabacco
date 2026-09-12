@@ -1,0 +1,146 @@
+[
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000001",
+    "position": 1,
+    "filepath": "src/pages/slides/Cover.tsx",
+    "title": "NitroCrop NDVI",
+    "description": "NitroCrop NDVI",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000002",
+    "position": 2,
+    "filepath": "src/pages/slides/Decisione.tsx",
+    "title": "Dalla misura alla decisione",
+    "description": "Dalla misura alla decisione",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000003",
+    "position": 3,
+    "filepath": "src/pages/slides/Flusso.tsx",
+    "title": "Il flusso operativo",
+    "description": "Il flusso operativo",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000004",
+    "position": 4,
+    "filepath": "src/pages/slides/Parametri.tsx",
+    "title": "Anagrafica e parametri comuni",
+    "description": "Anagrafica e parametri comuni",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000005",
+    "position": 5,
+    "filepath": "src/pages/slides/Rilievo.tsx",
+    "title": "Rilievo NDVI in campo",
+    "description": "Rilievo NDVI in campo",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000006",
+    "position": 6,
+    "filepath": "src/pages/slides/TabaccoInput.tsx",
+    "title": "Esempio operativo: tabacco",
+    "description": "Esempio operativo: tabacco",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000007",
+    "position": 7,
+    "filepath": "src/pages/slides/CurvaTabacco.tsx",
+    "title": "Riferimento NDVI del tabacco",
+    "description": "Riferimento NDVI del tabacco",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000008",
+    "position": 8,
+    "filepath": "src/pages/slides/TabaccoRisultati.tsx",
+    "title": "Risultati per il tabacco",
+    "description": "Risultati per il tabacco",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000009",
+    "position": 9,
+    "filepath": "src/pages/slides/GranoInput.tsx",
+    "title": "Esempio operativo: grano duro",
+    "description": "Esempio operativo: grano duro",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000010",
+    "position": 10,
+    "filepath": "src/pages/slides/GranoPiano.tsx",
+    "title": "Fase fenologica e piano N del grano",
+    "description": "Fase fenologica e piano N del grano",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000011",
+    "position": 11,
+    "filepath": "src/pages/slides/GranoRisultati.tsx",
+    "title": "Risultati per il grano duro",
+    "description": "Risultati per il grano duro",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000012",
+    "position": 12,
+    "filepath": "src/pages/slides/Registro.tsx",
+    "title": "Registro delle osservazioni",
+    "description": "Registro delle osservazioni",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000013",
+    "position": 13,
+    "filepath": "src/pages/slides/PercheIdw.tsx",
+    "title": "Perché interpolare i punti",
+    "description": "Perché interpolare i punti",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000014",
+    "position": 14,
+    "filepath": "src/pages/slides/MetodoIdw.tsx",
+    "title": "Come viene costruita la mappa IDW",
+    "description": "Come viene costruita la mappa IDW",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000015",
+    "position": 15,
+    "filepath": "src/pages/slides/Mappa.tsx",
+    "title": "Lettura della mappa",
+    "description": "Lettura della mappa",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000016",
+    "position": 16,
+    "filepath": "src/pages/slides/Risparmio.tsx",
+    "title": "Risparmio di azoto sul poligono",
+    "description": "Risparmio di azoto sul poligono",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000017",
+    "position": 17,
+    "filepath": "src/pages/slides/Export.tsx",
+    "title": "Output ed esportazioni",
+    "description": "Output ed esportazioni",
+    "speakerNotes": ""
+  },
+  {
+    "id": "8f5d7a20-34c1-4bd7-9a12-000000000018",
+    "position": 18,
+    "filepath": "src/pages/slides/Responsabile.tsx",
+    "title": "Uso responsabile e valore operativo",
+    "description": "Uso responsabile e valore operativo",
+    "speakerNotes": ""
+  }
+]

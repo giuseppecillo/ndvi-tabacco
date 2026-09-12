@@ -1,0 +1,28 @@
+kind = "slides"
+previewPath = "/nitrocrop-ndvi-presentazione/"
+title = "NitroCrop NDVI — Report e Presentazione"
+description = "Presentazione professionale in italiano sull’uso di NitroCrop NDVI per tabacco e grano duro, rilievi in campo, mappe IDW, risultati ed efficienza dell’azoto."
+version = "1.0.0"
+id = "artifacts/nitrocrop-ndvi-presentazione"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/nitrocrop-ndvi-presentazione/" ]
+localPort = 25504
+
+[services.development]
+run = "pnpm --filter @workspace/nitrocrop-ndvi-presentazione run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nitrocrop-ndvi-presentazione", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nitrocrop-ndvi-presentazione/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25504"
+BASE_PATH = "/nitrocrop-ndvi-presentazione/"

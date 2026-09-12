@@ -1,0 +1,30 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "b9IdxNB54f9V1N_7luqDL"
+uri = "file://.local/outputs/NitroCrop-NDVI-Presentazione.pptx"
+type = "slides"
+title = "NitroCrop NDVI — Presentazione PowerPoint"
+description = "Presentazione completa in italiano, 18 slide, con esempi per tabacco, grano duro, mappe IDW e risparmio di azoto."
+logical_id = "eb48056e-ef33-404b-8302-1efde4046e59"
+content_hash = "sha256:d3a68ae210ea92088d2e921de8c17c0055a4de33b664664b942d0caad35bfecc"
+size = 4914458
+mtime_ms = 1789204448081
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/eb48056e-ef33-404b-8302-1efde4046e59/bacc2f51-136e-4099-b1f1-4c4c7897aba0"
+storage_version_token = "1789204448526319"
+content_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+
+[[outputs]]
+id = "ZE4LMF0n1E-XAW1SljVCC"
+uri = "file://reports/NitroCrop-NDVI-Report.pdf"
+type = "pdf"
+title = "NitroCrop NDVI — Report applicativo (PDF)"
+description = "Report illustrato in italiano su utilizzo, rilievi in campo, risultati, interpolazione IDW, esportazioni e risparmio di azoto."
+logical_id = "ff808b79-5c22-4960-8bb9-3f1ebf8e5ad2"
+content_hash = "sha256:7f86f7cb432f25ac1e0ca682be1422981691ed27af52fb7d7f3fbe1e84078eee"
+size = 2915251
+mtime_ms = 1789204345589
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/ff808b79-5c22-4960-8bb9-3f1ebf8e5ad2/bfbba367-56b7-4ca5-a6c7-5c4c986019cc"
+storage_version_token = "1789204449161465"
+content_type = "application/pdf"
