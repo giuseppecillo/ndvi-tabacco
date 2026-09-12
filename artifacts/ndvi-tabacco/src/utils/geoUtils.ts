@@ -439,7 +439,13 @@ function shx(n: number): ArrayBuffer {
   return buf;
 }
 
-type DbfRow = { polygon: string; lat: number; lng: number; dose: number };
+type DbfRow = {
+  polygon: string;
+  lat: number;
+  lng: number;
+  dose: number;
+  summary?: NitrogenSummary;
+};
 
 function dbf(rows: DbfRow[]): ArrayBuffer {
   const fields = [
@@ -447,6 +453,13 @@ function dbf(rows: DbfRow[]): ArrayBuffer {
     { name: "LAT",      type: "N", len: 14, dec: 8 },
     { name: "LNG",      type: "N", len: 14, dec: 8 },
     { name: "DOSE_IDW", type: "N", len: 12, dec: 4 },
+    { name: "AREA_HA",   type: "N", len: 12, dec: 2 },
+    { name: "N_PLAN_HA", type: "N", len: 12, dec: 1 },
+    { name: "N_IDW_HA",  type: "N", len: 12, dec: 1 },
+    { name: "N_SAVE_HA", type: "N", len: 12, dec: 1 },
+    { name: "N_PLAN_KG", type: "N", len: 14, dec: 1 },
+    { name: "N_IDW_KG",  type: "N", len: 14, dec: 1 },
+    { name: "N_SAVE_KG", type: "N", len: 14, dec: 1 },
   ];
   const headerLen = 32 + fields.length * 32 + 1;
   const recLen    = 1 + fields.reduce((s, f) => s + f.len, 0);
@@ -486,8 +499,47 @@ function dbf(rows: DbfRow[]): ArrayBuffer {
     ws(p, row.lat.toFixed(8).padStart(14), 14); p += 14;
     ws(p, row.lng.toFixed(8).padStart(14), 14); p += 14;
     ws(p, row.dose.toFixed(4).padStart(12), 12); p += 12;
+    const summaryValues = row.summary
+      ? [
+          [row.summary.areaHa, 12, 2],
+          [row.summary.plannedPerHa, 12, 1],
+          [row.summary.indicatedPerHa, 12, 1],
+          [row.summary.savedPerHa, 12, 1],
+          [row.summary.plannedTotalKg, 14, 1],
+          [row.summary.indicatedTotalKg, 14, 1],
+          [row.summary.savedTotalKg, 14, 1],
+        ] as const
+      : [
+          [null, 12, 0], [null, 12, 0], [null, 12, 0], [null, 12, 0],
+          [null, 14, 0], [null, 14, 0], [null, 14, 0],
+        ] as const;
+    for (const [value, len, decimals] of summaryValues) {
+      ws(p, value == null ? "" : value.toFixed(decimals).padStart(len), len);
+      p += len;
+    }
   }
   return buf;
+}
+
+function nitrogenSummaryCsv(summary: NitrogenSummary): string {
+  const decimal = (value: number, digits: number) => value.toFixed(digits).replace(".", ",");
+  return [
+    "Scenario;Superficie (ha);kg N/ha;kg N totali",
+    `Azoto previsto dal piano;${decimal(summary.areaHa, 2)};${decimal(summary.plannedPerHa, 1)};${decimal(summary.plannedTotalKg, 1)}`,
+    `Azoto indicato dalla IDW;${decimal(summary.areaHa, 2)};${decimal(summary.indicatedPerHa, 1)};${decimal(summary.indicatedTotalKg, 1)}`,
+    `Risparmio stimato;${decimal(summary.areaHa, 2)};${decimal(summary.savedPerHa, 1)};${decimal(summary.savedTotalKg, 1)}`,
+  ].join("\r\n");
+}
+
+function nitrogenSummaryDescription(summary?: NitrogenSummary): string {
+  if (!summary) return "Mappa IDW - dose di azoto (kg N/ha)";
+  return [
+    "Mappa IDW - dose di azoto (kg N/ha)",
+    `Superficie: ${summary.areaHa.toFixed(2)} ha`,
+    `Piano N: ${summary.plannedPerHa.toFixed(1)} kg N/ha; ${summary.plannedTotalKg.toFixed(1)} kg N totali`,
+    `Indicazione IDW: ${summary.indicatedPerHa.toFixed(1)} kg N/ha; ${summary.indicatedTotalKg.toFixed(1)} kg N totali`,
+    `Risparmio stimato: ${summary.savedPerHa.toFixed(1)} kg N/ha; ${summary.savedTotalKg.toFixed(1)} kg N totali`,
+  ].join("\n");
 }
 
 const PRJ_WGS84 =
@@ -501,6 +553,7 @@ export async function downloadShapefile(result: PolyIdwResult): Promise<void> {
   const rows = result.grid.map(g => ({
     polygon: result.polygon.name,
     lat: g.lat, lng: g.lng, dose: g.dose,
+    summary: result.nitrogenSummary,
   }));
 
   const zip = new JSZip();
@@ -508,6 +561,9 @@ export async function downloadShapefile(result: PolyIdwResult): Promise<void> {
   zip.file(`${base}.shx`, shx(pts.length));
   zip.file(`${base}.dbf`, dbf(rows));
   zip.file(`${base}.prj`, PRJ_WGS84);
+  if (result.nitrogenSummary) {
+    zip.file(`${base}_riepilogo_azoto.csv`, `\uFEFF${nitrogenSummaryCsv(result.nitrogenSummary)}`);
+  }
 
   const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
   trigger(URL.createObjectURL(blob), `${base}_idw.zip`);
@@ -550,6 +606,9 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
   // ── Binary layout ──────────────────────────────────────────────────────────
   const nodataStr   = `${NODATA}\0`;
   const nodataBytes = new TextEncoder().encode(nodataStr);
+  const descriptionBytes = new TextEncoder().encode(
+    `${nitrogenSummaryDescription(result.nitrogenSummary)}\0`
+  );
   const pixelScale  = new Float64Array([csLon, csLat, 0]);     // 24 B
   const tiepoint    = new Float64Array([0, 0, 0, west, north, 0]); // 48 B
   // GeoKey directory: version header + 3 keys × 4 shorts
@@ -560,7 +619,7 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
     2048, 0, 1, 4326,    // GeographicTypeGeoKey = WGS 84
   ]);                                                             // 32 B
 
-  const NUM_IFD = 15;
+  const NUM_IFD = 16;
   const ifdOff  = 8;
   const ifdLen  = 2 + NUM_IFD * 12 + 4;
   let   extraOff = ifdOff + ifdLen;
@@ -569,6 +628,7 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
   const tpOff  = extraOff; extraOff += 48;
   const gkOff  = extraOff; extraOff += 32;
   const ndOff  = extraOff; extraOff += nodataBytes.length;
+  const descOff = extraOff; extraOff += descriptionBytes.length;
   const imgOff = (extraOff + 3) & ~3; // 4-byte aligned
 
   const total  = imgOff + data.byteLength;
@@ -598,6 +658,7 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
   e(258,   3, 1, 32);                      // BitsPerSample = 32 (SHORT)
   e(259,   3, 1, 1);                       // Compression  = None
   e(262,   3, 1, 1);                       // PhotometricInterp = MinIsBlack
+  e(270,   2, descriptionBytes.length, descOff); // ImageDescription
   e(273,   4, 1, imgOff);                  // StripOffsets
   e(277,   3, 1, 1);                       // SamplesPerPixel = 1
   e(278,   4, 1, rows);                    // RowsPerStrip = all rows (single strip)
@@ -615,6 +676,7 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
   u8.set(new Uint8Array(tiepoint.buffer),   tpOff);
   u8.set(new Uint8Array(geoKey.buffer),     gkOff);
   u8.set(nodataBytes,                       ndOff);
+  u8.set(descriptionBytes,                  descOff);
   u8.set(new Uint8Array(data.buffer),       imgOff);
 
   const base = polygon.name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32);

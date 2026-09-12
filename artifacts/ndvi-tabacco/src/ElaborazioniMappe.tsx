@@ -725,8 +725,8 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
             </button>
           </div>
           <p className="text-xs text-stone-400">
-            Shapefile: layer Point con attributo <code>DOSE_IDW</code> (kg/ha) · WGS84 (EPSG:4326)<br/>
-            GeoTIFF: Float32 mono-banda · NODATA = −9999 · leggibile con QGIS, ArcGIS, GDAL
+            Shapefile: layer Point con attributi dose e riepilogo azoto, più CSV riepilogativo · WGS84 (EPSG:4326)<br/>
+            GeoTIFF: Float32 mono-banda con riepilogo nei metadati · NODATA = −9999 · leggibile con QGIS, ArcGIS, GDAL
           </p>
         </div>
       )}
