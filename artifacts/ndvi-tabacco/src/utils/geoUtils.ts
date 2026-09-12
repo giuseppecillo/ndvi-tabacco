@@ -33,6 +33,7 @@ export interface ControlPoint {
   lng: number; // WGS84
   lat: number;
   dose: number; // kg/ha
+  azotoTotale?: number; // planned nitrogen, kg/ha
 }
 
 export interface IdwGridPoint {
@@ -41,6 +42,17 @@ export interface IdwGridPoint {
   utmX: number; // UTM metres
   utmY: number;
   dose: number; // interpolated dose, kg/ha
+  azotoTotale?: number; // interpolated planned nitrogen, kg/ha
+}
+
+export interface NitrogenSummary {
+  areaHa: number;
+  plannedPerHa: number;
+  indicatedPerHa: number;
+  savedPerHa: number;
+  plannedTotalKg: number;
+  indicatedTotalKg: number;
+  savedTotalKg: number;
 }
 
 export interface PolyIdwResult {
@@ -52,6 +64,7 @@ export interface PolyIdwResult {
   utmSouth: boolean;
   cellSizeDeg: { lon: number; lat: number }; // approximate 10 m in degrees
   stats: { min: number; max: number; mean: number; count: number };
+  nitrogenSummary?: NitrogenSummary;
 }
 
 // ── KML parser ───────────────────────────────────────────────────────────────
@@ -243,6 +256,17 @@ function idwAt(
   return wSum > 0 ? wzSum / wSum : 0;
 }
 
+function polygonAreaM2(ring: [number, number][]): number {
+  if (ring.length < 3) return 0;
+  let twiceArea = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % ring.length];
+    twiceArea += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(twiceArea) / 2;
+}
+
 // ── Main IDW grid computation ─────────────────────────────────────────────────
 
 /**
@@ -297,6 +321,10 @@ export function computeIdwGrid(
   const utmE    = Math.max(...utmXs);
   const utmS    = Math.min(...utmYs);
   const utmN    = Math.max(...utmYs);
+  const areaHa  = polygonAreaM2(utmRing) / 10_000;
+  const planControls = utmControls
+    .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale))
+    .map(c => ({ utmX: c.utmX, utmY: c.utmY, dose: c.azotoTotale! }));
 
   // Generate grid nodes (cell centres) and filter by polygon
   const grid: IdwGridPoint[] = [];
@@ -305,7 +333,8 @@ export function computeIdwGrid(
       const [lng, lat] = toWGS84(proj, x, y);
       if (!pip(lng, lat, polygon.ring)) continue;
       const dose = idwAt(utmControls, x, y, power);
-      grid.push({ lng, lat, utmX: x, utmY: y, dose });
+      const azotoTotale = planControls.length ? idwAt(planControls, x, y, power) : undefined;
+      grid.push({ lng, lat, utmX: x, utmY: y, dose, azotoTotale });
     }
   }
 
@@ -314,6 +343,23 @@ export function computeIdwGrid(
   const min  = doses.length ? Math.min(...doses) : 0;
   const max  = doses.length ? Math.max(...doses) : 0;
   const mean = doses.length ? doses.reduce((a, b) => a + b, 0) / doses.length : 0;
+  const plannedValues = grid
+    .map(g => g.azotoTotale)
+    .filter((value): value is number => value != null);
+  const plannedPerHa = plannedValues.length
+    ? plannedValues.reduce((sum, value) => sum + value, 0) / plannedValues.length
+    : 0;
+  const indicatedPerHa = Math.min(mean, plannedPerHa);
+  const savedPerHa = Math.max(0, plannedPerHa - indicatedPerHa);
+  const nitrogenSummary = plannedValues.length && areaHa > 0 ? {
+    areaHa,
+    plannedPerHa,
+    indicatedPerHa,
+    savedPerHa,
+    plannedTotalKg: plannedPerHa * areaHa,
+    indicatedTotalKg: indicatedPerHa * areaHa,
+    savedTotalKg: savedPerHa * areaHa,
+  } : undefined;
 
   // Approximate cell size in degrees for GeoTIFF pixel scale
   const latRes = cellSize / 111_319.9;                                      // deg lat per cell
@@ -324,6 +370,7 @@ export function computeIdwGrid(
     utmZone: zone, utmSouth: isSouth,
     cellSizeDeg: { lon: lonRes, lat: latRes },
     stats: { min, max, mean, count: grid.length },
+    nitrogenSummary,
   };
 }
 

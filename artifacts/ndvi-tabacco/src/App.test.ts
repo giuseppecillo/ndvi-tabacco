@@ -23,8 +23,56 @@ import {
   stimaFaseGranoDaDas,
 } from "./calculations";
 import { serieDistribuzioneOsservazioni } from "./observationDistribution";
+import { computeIdwGrid } from "./utils/geoUtils";
 
 const EPSILON = 1e-9;
+
+describe("riepilogo azoto della mappa IDW", () => {
+  it("confronta piano e dose IDW sull'intera superficie del poligono", () => {
+    const polygon = {
+      name: "Campo prova",
+      ring: [
+        [12.0000, 42.0000],
+        [12.0012, 42.0000],
+        [12.0012, 42.0009],
+        [12.0000, 42.0009],
+      ] as [number, number][],
+    };
+    const controls = [
+      { obsId: 1, cliente: "A", appezzamento: "Campo", lng: 12.0003, lat: 42.0003, dose: 60, azotoTotale: 100 },
+      { obsId: 2, cliente: "A", appezzamento: "Campo", lng: 12.0009, lat: 42.0006, dose: 80, azotoTotale: 100 },
+    ];
+
+    const result = computeIdwGrid(polygon, controls, 10, 2);
+    const summary = result.nitrogenSummary;
+
+    assert.ok(summary);
+    assert.ok(summary.areaHa > 0.8 && summary.areaHa < 1.2);
+    assert.equal(summary.plannedPerHa, 100);
+    assert.ok(summary.indicatedPerHa > 60 && summary.indicatedPerHa < 80);
+    assert.ok(summary.savedPerHa > 20 && summary.savedPerHa < 40);
+    assert.ok(Math.abs(summary.plannedTotalKg - summary.plannedPerHa * summary.areaHa) < EPSILON);
+    assert.ok(Math.abs(summary.savedTotalKg - summary.savedPerHa * summary.areaHa) < EPSILON);
+  });
+
+  it("non riporta risparmio negativo se la dose IDW supera il piano", () => {
+    const result = computeIdwGrid({
+      name: "Campo prova",
+      ring: [
+        [12.0000, 42.0000],
+        [12.0012, 42.0000],
+        [12.0012, 42.0009],
+        [12.0000, 42.0009],
+      ],
+    }, [
+      { obsId: 1, cliente: "A", appezzamento: "Campo", lng: 12.0006, lat: 42.0004, dose: 120, azotoTotale: 100 },
+    ]);
+
+    assert.equal(result.nitrogenSummary?.indicatedPerHa, 100);
+    assert.equal(result.nitrogenSummary?.savedPerHa, 0);
+    assert.equal(result.nitrogenSummary?.savedTotalKg, 0);
+  });
+});
 const BURLEY_REFERENCE = {
   label: "Burley (Non Cimato)",
   categoria: "Light Air-Cured",
