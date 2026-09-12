@@ -469,9 +469,9 @@ function dbf(rows: DbfRow[]): ArrayBuffer {
   const enc = new TextEncoder();
 
   const ws = (off: number, s: string, len: number, pad = 0x20) => {
-    const b = enc.encode(s.slice(0, len));
-    u8.set(b, off);
-    u8.fill(pad, off + b.length, off + len);
+    const target = u8.subarray(off, off + len);
+    target.fill(pad);
+    enc.encodeInto(s, target);
   };
 
   v.setUint8(0, 0x03);

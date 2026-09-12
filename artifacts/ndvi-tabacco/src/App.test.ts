@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import JSZip from "jszip";
 import {
   FASI_GRANO,
   FINESTRE_DAS_LOCALI_TEMPLATE,
@@ -23,9 +24,139 @@ import {
   stimaFaseGranoDaDas,
 } from "./calculations";
 import { serieDistribuzioneOsservazioni } from "./observationDistribution";
-import { computeIdwGrid } from "./utils/geoUtils";
+import {
+  computeIdwGrid,
+  downloadGeoTiff,
+  downloadShapefile,
+  type PolyIdwResult,
+} from "./utils/geoUtils";
 
 const EPSILON = 1e-9;
+
+function idwExportFixture(): PolyIdwResult {
+  return computeIdwGrid({
+    name: "Campo export prova",
+    ring: [
+      [12.0000, 42.0000],
+      [12.0012, 42.0000],
+      [12.0012, 42.0009],
+      [12.0000, 42.0009],
+    ],
+  }, [
+    {
+      obsId: "export-1",
+      cliente: "A",
+      appezzamento: "Campo",
+      lng: 12.0003,
+      lat: 42.0003,
+      dose: 20,
+      azotoTotale: 100,
+      azotoGiaDistribuito: 50,
+    },
+    {
+      obsId: "export-2",
+      cliente: "A",
+      appezzamento: "Campo",
+      lng: 12.0009,
+      lat: 42.0006,
+      dose: 30,
+      azotoTotale: 100,
+      azotoGiaDistribuito: 50,
+    },
+  ], 10, 2);
+}
+
+async function captureDownload(run: () => void | Promise<void>): Promise<{ blob: Blob; filename: string }> {
+  let blob: Blob | undefined;
+  let filename = "";
+  const originalDocument = globalThis.document;
+  const originalCreateObjectURL = URL.createObjectURL;
+  const originalRevokeObjectURL = URL.revokeObjectURL;
+
+  URL.createObjectURL = ((value: Blob) => {
+    blob = value;
+    return "blob:test-export";
+  }) as typeof URL.createObjectURL;
+  URL.revokeObjectURL = (() => undefined) as typeof URL.revokeObjectURL;
+  globalThis.document = {
+    createElement: () => ({
+      href: "",
+      style: {},
+      get download() { return filename; },
+      set download(value: string) { filename = value; },
+      click: () => undefined,
+    }),
+    body: {
+      appendChild: () => undefined,
+      removeChild: () => undefined,
+    },
+  } as unknown as Document;
+
+  try {
+    await run();
+  } finally {
+    globalThis.document = originalDocument;
+    URL.createObjectURL = originalCreateObjectURL;
+    URL.revokeObjectURL = originalRevokeObjectURL;
+  }
+
+  assert.ok(blob, "the export must create a downloadable Blob");
+  return { blob, filename };
+}
+
+function readDbf(buffer: ArrayBuffer): Array<Record<string, string>> {
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  const decoder = new TextDecoder();
+  const recordCount = view.getUint32(4, true);
+  const headerLength = view.getUint16(8, true);
+  const recordLength = view.getUint16(10, true);
+  const fields: Array<{ name: string; length: number }> = [];
+
+  for (let offset = 32; bytes[offset] !== 0x0d; offset += 32) {
+    const rawName = decoder.decode(bytes.subarray(offset, offset + 11));
+    fields.push({
+      name: rawName.replace(/\0.*$/, ""),
+      length: bytes[offset + 16],
+    });
+  }
+
+  assert.equal(
+    buffer.byteLength,
+    headerLength + recordCount * recordLength,
+    "DBF header and record lengths must cover the complete file",
+  );
+
+  return Array.from({ length: recordCount }, (_, index) => {
+    let offset = headerLength + index * recordLength;
+    assert.equal(bytes[offset++], 0x20, "DBF record must be active");
+    return Object.fromEntries(fields.map((field) => {
+      const value = decoder.decode(bytes.subarray(offset, offset + field.length)).trim();
+      offset += field.length;
+      return [field.name, value];
+    }));
+  });
+}
+
+function readTiffAsciiTag(buffer: ArrayBuffer, wantedTag: number): string {
+  const view = new DataView(buffer);
+  assert.equal(view.getUint16(0, false), 0x4949, "GeoTIFF must be little-endian");
+  assert.equal(view.getUint16(2, true), 42, "GeoTIFF must have the TIFF magic number");
+  const ifdOffset = view.getUint32(4, true);
+  const entryCount = view.getUint16(ifdOffset, true);
+
+  for (let index = 0; index < entryCount; index++) {
+    const offset = ifdOffset + 2 + index * 12;
+    if (view.getUint16(offset, true) !== wantedTag) continue;
+    assert.equal(view.getUint16(offset + 2, true), 2, `TIFF tag ${wantedTag} must be ASCII`);
+    const count = view.getUint32(offset + 4, true);
+    const valueOffset = view.getUint32(offset + 8, true);
+    assert.ok(valueOffset + count <= buffer.byteLength, `TIFF tag ${wantedTag} must stay inside the file`);
+    return new TextDecoder().decode(new Uint8Array(buffer, valueOffset, count)).replace(/\0$/, "");
+  }
+
+  assert.fail(`TIFF tag ${wantedTag} not found`);
+}
 
 describe("riepilogo azoto della mappa IDW", () => {
   it("confronta piano e dose IDW sull'intera superficie del poligono", () => {
@@ -73,6 +204,90 @@ describe("riepilogo azoto della mappa IDW", () => {
     assert.equal(result.nitrogenSummary?.savedPerHa, 0);
     assert.equal(result.nitrogenSummary?.savedTotalKg, 0);
     assert.equal(result.nitrogenSummary?.savedPercent, 0);
+  });
+});
+
+describe("export agronomici IDW", () => {
+  it("produce uno Shapefile completo con DBF e CSV coerenti con il riepilogo", async () => {
+    const result = idwExportFixture();
+    const summary = result.nitrogenSummary;
+    assert.ok(summary);
+
+    const { blob, filename } = await captureDownload(() => downloadShapefile(result));
+    assert.equal(filename, "Campo_export_prova_idw.zip");
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    const base = "Campo_export_prova";
+    const expectedNames = [
+      `${base}.shp`,
+      `${base}.shx`,
+      `${base}.dbf`,
+      `${base}.prj`,
+      `${base}_riepilogo_azoto.csv`,
+    ];
+    assert.deepEqual(Object.keys(zip.files).sort(), expectedNames.sort());
+
+    const shpBuffer = await zip.file(`${base}.shp`)!.async("arraybuffer");
+    const shxBuffer = await zip.file(`${base}.shx`)!.async("arraybuffer");
+    assert.equal(new DataView(shpBuffer).getInt32(24, false) * 2, shpBuffer.byteLength);
+    assert.equal(new DataView(shxBuffer).getInt32(24, false) * 2, shxBuffer.byteLength);
+
+    const records = readDbf(await zip.file(`${base}.dbf`)!.async("arraybuffer"));
+    assert.equal(records.length, result.grid.length);
+    assert.ok(records.length > 0);
+    for (const record of records) {
+      assert.equal(record.AREA_HA, summary.areaHa.toFixed(2));
+      assert.equal(record.N_PLAN_HA, summary.plannedPerHa.toFixed(1));
+      assert.equal(record.N_IDW_HA, summary.indicatedPerHa.toFixed(1));
+      assert.equal(record.N_SAVE_HA, summary.savedPerHa.toFixed(1));
+      assert.equal(record.N_PLAN_KG, summary.plannedTotalKg.toFixed(1));
+      assert.equal(record.N_IDW_KG, summary.indicatedTotalKg.toFixed(1));
+      assert.equal(record.N_SAVE_KG, summary.savedTotalKg.toFixed(1));
+    }
+
+    const csv = (await zip.file(`${base}_riepilogo_azoto.csv`)!.async("string")).replace(/^\uFEFF/, "");
+    assert.deepEqual(csv.split("\r\n"), [
+      "Scenario;Superficie (ha);kg N/ha;kg N totali",
+      `Azoto previsto dal piano;${summary.areaHa.toFixed(2).replace(".", ",")};${summary.plannedPerHa.toFixed(1).replace(".", ",")};${summary.plannedTotalKg.toFixed(1).replace(".", ",")}`,
+      `Azoto indicato dalla IDW;${summary.areaHa.toFixed(2).replace(".", ",")};${summary.indicatedPerHa.toFixed(1).replace(".", ",")};${summary.indicatedTotalKg.toFixed(1).replace(".", ",")}`,
+      `Risparmio stimato;${summary.areaHa.toFixed(2).replace(".", ",")};${summary.savedPerHa.toFixed(1).replace(".", ",")};${summary.savedTotalKg.toFixed(1).replace(".", ",")}`,
+    ]);
+  });
+
+  it("non corrompe i record DBF con nomi di poligono UTF-8 lunghi", async () => {
+    const result = idwExportFixture();
+    result.polygon.name = `Campo ${"è".repeat(64)}`;
+    const summary = result.nitrogenSummary;
+    assert.ok(summary);
+
+    const { blob } = await captureDownload(() => downloadShapefile(result));
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    const dbfEntry = Object.values(zip.files).find((entry) => entry.name.endsWith(".dbf"));
+    assert.ok(dbfEntry);
+    const records = readDbf(await dbfEntry.async("arraybuffer"));
+
+    assert.ok(records[0].POLYGON.startsWith("Campo è"));
+    assert.ok(new TextEncoder().encode(records[0].POLYGON).byteLength <= 64);
+    assert.equal(records[0].N_PLAN_HA, summary.plannedPerHa.toFixed(1));
+    assert.equal(records[0].N_IDW_HA, summary.indicatedPerHa.toFixed(1));
+    assert.equal(records[0].N_SAVE_KG, summary.savedTotalKg.toFixed(1));
+  });
+
+  it("scrive nel GeoTIFF una ImageDescription completa e valida", async () => {
+    const result = idwExportFixture();
+    const summary = result.nitrogenSummary;
+    assert.ok(summary);
+
+    const { blob, filename } = await captureDownload(() => downloadGeoTiff(result));
+    assert.equal(filename, "Campo_export_prova_idw.tif");
+    const description = readTiffAsciiTag(await blob.arrayBuffer(), 270);
+
+    assert.deepEqual(description.split("\n"), [
+      "Mappa IDW - dose di azoto (kg N/ha)",
+      `Superficie: ${summary.areaHa.toFixed(2)} ha`,
+      `Piano N: ${summary.plannedPerHa.toFixed(1)} kg N/ha; ${summary.plannedTotalKg.toFixed(1)} kg N totali`,
+      `Indicazione IDW: ${summary.indicatedPerHa.toFixed(1)} kg N/ha; ${summary.indicatedTotalKg.toFixed(1)} kg N totali`,
+      `Risparmio stimato: ${summary.savedPerHa.toFixed(1)} kg N/ha; ${summary.savedTotalKg.toFixed(1)} kg N totali`,
+    ]);
   });
 });
 const BURLEY_REFERENCE = {
