@@ -740,7 +740,7 @@ export default function App() {
         <div className="text-center flex flex-col items-center gap-2">
           <img src={taurusLogo} alt="Taurus Agriculture Solution" className="h-28 w-auto drop-shadow-md" />
           <h1 className="text-3xl font-bold text-green-900">NitroCrop NDVI</h1>
-          <p className="text-green-700 mt-0.5 text-sm">{isGranoDuro ? "Pianificatore azoto per grano duro" : "Supporto alla fertilizzazione azotata del tabacco"}</p>
+          <p className="text-green-700 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
         </div>
 
         {/* Tab navigation */}
