@@ -28,3 +28,15 @@ mtime_ms = 1789204345589
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/ff808b79-5c22-4960-8bb9-3f1ebf8e5ad2/bfbba367-56b7-4ca5-a6c7-5c4c986019cc"
 storage_version_token = "1789204449161465"
 content_type = "application/pdf"
+
+[[outputs]]
+id = "lyPmqWFbcvP83bdPmXss4"
+uri = "file://.local/outputs/NitroCrop-NDVI---Report-e-Presentazione.pdf"
+type = "pdf"
+title = "NitroCrop NDVI — Report e Presentazione.pdf"
+
+[[outputs]]
+id = "5KordYv_SoiveHbm4CbIi"
+uri = "file://.local/outputs/NitroCrop-NDVI---Report-e-Presentazione.pptx"
+type = "slides"
+title = "NitroCrop NDVI — Report e Presentazione.pptx"
