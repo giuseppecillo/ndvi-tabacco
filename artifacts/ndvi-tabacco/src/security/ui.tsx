@@ -1,5 +1,5 @@
-import { type ReactNode } from "react";
-import { Link } from "wouter";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, useLocation } from "wouter";
 import { useClerk } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMyAccountQueryKey, useGetMyAccount, type Account } from "@workspace/api-client-react";
@@ -67,7 +67,7 @@ export function Btn({
   }[variant];
   return (
     <button type={type} onClick={onClick} disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed ${v} ${className}`}>
+      className={`inline-flex items-center justify-center gap-2 min-h-[44px] rounded-full px-5 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed ${v} ${className}`}>
       {children}
     </button>
   );
@@ -122,23 +122,58 @@ export function useSignOutAll() {
 
 export function TopBar({ account }: { account?: Account | null }) {
   const out = useSignOutAll();
-  const link = "rounded-full px-3 py-1.5 text-sm text-[var(--nc-leaf)] hover:bg-[var(--nc-paper-2)]";
+  const [open, setOpen] = useState(false);
+  const [location] = useLocation();
+  useEffect(() => { setOpen(false); }, [location]);
+  const link = "inline-flex min-h-[44px] items-center rounded-full px-3 py-2 text-sm text-[var(--nc-leaf)] hover:bg-[var(--nc-paper-2)] lg:min-h-0 lg:py-1.5";
+  const ready = account && account.status === "active" && account.privacyAcknowledged;
   return (
     <header className="border-b border-[var(--nc-line)] bg-[var(--nc-paper)]/90 backdrop-blur sticky top-0 z-30">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <Brand />
-        <nav className="flex flex-wrap items-center gap-1">
-          {account && account.status === "active" && account.privacyAcknowledged && <Link href="/user-portal" className={link}>Rilievo e Mappe</Link>}
-          {account && account.status === "active" && account.privacyAcknowledged && <Link href="/instructions" className={link}>Istruzioni</Link>}
-          {account && <Link href="/account" className={link}>Il mio account</Link>}
-          {account?.role === "admin" && account.status === "active" && <Link href="/admin" className={link}>Amministrazione</Link>}
-          <Link href="/privacy" className={link}>Privacy</Link>
-          <TechnicalSupport compact />
-          <LanguageSelector />
-          <button onClick={() => void out()} className="ml-1 rounded-full border border-[var(--nc-line)] px-3 py-1.5 text-sm font-semibold text-[var(--nc-leaf)] hover:bg-[var(--nc-paper-2)]">Esci</button>
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <div className="min-w-0"><Brand /></div>
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+          aria-controls="nc-topnav"
+          aria-label={open ? t("Chiudi il menu") : t("Apri il menu")}
+          data-testid="button-menu"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-[var(--nc-line)] px-4 text-sm font-semibold text-[var(--nc-leaf)] lg:hidden"
+        >
+          <span aria-hidden="true" className="flex w-4 flex-col gap-[3px]">
+            <span className={`h-[2px] bg-current transition ${open ? "translate-y-[5px] rotate-45" : ""}`} />
+            <span className={`h-[2px] bg-current transition ${open ? "opacity-0" : ""}`} />
+            <span className={`h-[2px] bg-current transition ${open ? "-translate-y-[5px] -rotate-45" : ""}`} />
+          </span>
+          Menu
+        </button>
+        <nav className="hidden flex-wrap items-center justify-end gap-1 lg:flex">
+          <NavItems account={account} ready={!!ready} link={link} out={out} />
         </nav>
       </div>
+      {open && (
+        <nav id="nc-topnav" className="border-t border-[var(--nc-line)] bg-[var(--nc-paper)] px-4 pb-4 pt-2 lg:hidden">
+          <div className="mx-auto grid max-w-6xl gap-1 sm:grid-cols-2">
+            <NavItems account={account} ready={!!ready} link={`${link} w-full`} out={out} />
+          </div>
+        </nav>
+      )}
     </header>
+  );
+}
+
+function NavItems({ account, ready, link, out }: { account?: Account | null; ready: boolean; link: string; out: () => Promise<void> }) {
+  return (
+    <>
+      {ready && <Link href="/user-portal" className={link}>Rilievo e Mappe</Link>}
+      {ready && <Link href="/instructions" className={link}>Istruzioni</Link>}
+      {account && <Link href="/account" className={link}>Il mio account</Link>}
+      {account?.role === "admin" && account.status === "active" && <Link href="/admin" className={link}>Amministrazione</Link>}
+      <Link href="/privacy" className={link}>Privacy</Link>
+      <div className="py-1"><TechnicalSupport compact /></div>
+      <div className="py-1"><LanguageSelector /></div>
+      <button onClick={() => void out()} className="ml-1 min-h-[44px] rounded-full border border-[var(--nc-line)] px-4 py-2 text-sm font-semibold text-[var(--nc-leaf)] hover:bg-[var(--nc-paper-2)] lg:min-h-0 lg:py-1.5">Esci</button>
+    </>
   );
 }
 

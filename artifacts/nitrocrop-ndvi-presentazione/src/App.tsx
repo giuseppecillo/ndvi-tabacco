@@ -271,7 +271,10 @@ function SlideViewer() {
   }, []);
 
   const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-  const firstPosition = slides.length > 0 ? slides[0].position : 1;
+  const requestedStart = Number(new URLSearchParams(window.location.search).get("startSlide"));
+  const firstPosition = slides.some(slide => slide.position === requestedStart)
+    ? requestedStart
+    : slides.length > 0 ? slides[0].position : 1;
 
   return (
     <div
@@ -280,7 +283,7 @@ function SlideViewer() {
     >
       <iframe
         ref={iframeRef}
-        src={`${base}/slide${firstPosition}?replitMotion=1`}
+        src={`${base}/slide${firstPosition}?replitMotion=1&lang=${new URLSearchParams(window.location.search).get("lang") ?? document.documentElement.lang}`}
         style={{ width: dims.width, height: dims.height, border: 'none' }}
         onLoad={() => iframeRef.current?.focus()}
         title="Slide viewer"
