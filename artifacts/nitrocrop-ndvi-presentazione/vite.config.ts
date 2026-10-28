@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
 import { sdmVitePlugin } from './src/.sdm/sdmVitePlugin';
+import { instructionsManifest } from './scripts/instructions-manifest';
 
 const rawPort = process.env.PORT;
 
@@ -32,6 +33,7 @@ if (!basePath) {
 export default defineConfig({
   base: basePath,
   plugins: [
+    instructionsManifest(),
     react(),
     runtimeErrorOverlay(),
     tailwindcss(),

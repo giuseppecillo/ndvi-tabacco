@@ -10,6 +10,7 @@ import { AccountGate } from "./Gate";
 import { SubscriptionSummary } from "./SubscriptionSummary";
 import { AccountPage } from "./AccountPage";
 import { AdminPage } from "./AdminPage";
+import { InstructionsPage } from "./InstructionsPage";
 import { Activation, PrivacyPage, PublicFooter } from "./PublicPages";
 import { Brand, Skeleton, SUPPORT_CONTACT, TechnicalSupport, TopBar } from "./ui";
 import { LanguageSelector } from "../i18n/LanguageSelector";
@@ -260,6 +261,9 @@ function ClerkProviderWithRoutes() {
           <Route path="/sign-in/*?"><SignInPage /></Route>
           <Route path="/sign-up/*?" component={SignUpPage} />
           <Route path="/user-portal" component={Portal} />
+          <Route path="/instructions">
+            <AccountGate>{a => <InstructionsPage key={a.id} account={a} />}</AccountGate>
+          </Route>
           <Route path="/account">
             <AccountGate requireAck={false} requireSubscription={false}>{a => <AccountPage key={a.id} account={a} />}</AccountGate>
           </Route>
