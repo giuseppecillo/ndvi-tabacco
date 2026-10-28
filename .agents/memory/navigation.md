@@ -5,8 +5,12 @@ description: Requisiti richiesti dall’utente per la navigazione e la schermata
 
 Usare il pulsante NitroCrop NDVI per aprire a sinistra l’elenco verticale dei moduli, senza un pulsante “Menu” separato. Il pulsante riporta anche al modulo iniziale Rilievo e dati. La fascia superiore e l’area dei moduli devono essere giallo-arancio vivaci, con navigazione adatta a smartphone e tablet.
 
-La lista deve essere a scomparsa sulla sinistra, senza aggiungere spazio verticale sopra il modulo. Su smartphone e tablet si sovrappone temporaneamente alla pagina senza restringerla; su desktop può affiancare i contenuti senza coprire i titoli. I nomi dei moduli devono essere verdi, con fotografie illustrative di colture rigogliose a destra e a sinistra.
+Usare il logo ufficiale Taurus, senza il simbolo verde inventato per NitroCrop NDVI, né nell’accesso né nei moduli o negli Excel.
 
-**Why:** richiesta esplicita dell’utente sul comportamento e sull’aspetto della navigazione; l’utente ha segnalato che affiancare il menu ai moduli sullo smartphone schiaccia e rende illeggibili i contenuti.
+**Why:** l’utente ha chiesto esplicitamente di eliminare il logo dell’applicazione inventato; non è un marchio approvato.
+
+La lista deve essere a scomparsa sulla sinistra, senza aggiungere spazio verticale sopra il modulo. Su smartphone e tablet si sovrappone temporaneamente alla pagina senza restringerla; sullo smartphone la fascia gialla non deve oltrepassare la fine della scritta NitroCrop NDVI nel pulsante in alto, riducendo il testo dei moduli se necessario. Su desktop può affiancare i contenuti senza coprire i titoli. I nomi dei moduli devono essere verdi, con fotografie illustrative di colture rigogliose a destra e a sinistra.
+
+**Why:** richiesta esplicita dell’utente sul comportamento e sull’aspetto della navigazione; l’utente ha segnalato che affiancare il menu ai moduli sullo smartphone schiaccia e rende illeggibili i contenuti, mentre una fascia gialla troppo larga copre troppo la pagina.
 
 **How to apply:** mantenere questa interazione negli aggiornamenti dell’interfaccia, senza reintrodurre barre orizzontali duplicate o alterare i controlli di accesso.

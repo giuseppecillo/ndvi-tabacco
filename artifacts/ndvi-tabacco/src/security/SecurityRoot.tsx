@@ -12,7 +12,7 @@ import { AccountPage } from "./AccountPage";
 import { AdminPage } from "./AdminPage";
 import { InstructionsPage } from "./InstructionsPage";
 import { Activation, PrivacyPage, PublicFooter } from "./PublicPages";
-import { Brand, Skeleton, SUPPORT_CONTACT, TopBar } from "./ui";
+import { Brand, Skeleton, SUPPORT_CONTACT, TechnicalSupport, TopBar } from "./ui";
 import { LanguageSelector } from "../i18n/LanguageSelector";
 import { t, useLanguage } from "../i18n/runtime";
 
@@ -40,11 +40,6 @@ const queryClient = new QueryClient();
 const txt = { color: "#18231c" };
 const muted = { color: "#5d6a5f" };
 const clerkAppearance = {
-  options: {
-    logoPlacement: "inside" as const,
-    logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
-  },
   variables: {
     colorPrimary: "#1f3d2b",
     colorForeground: "#18231c",
@@ -72,8 +67,8 @@ const clerkAppearance = {
     identityPreviewEditButton: { color: "#1f3d2b" },
     formFieldSuccessText: { color: "#1f3d2b" },
     alertText: txt,
-    logoBox: { height: "48px" },
-    logoImage: { height: "48px" },
+    logoBox: { display: "none" },
+    logoImage: { display: "none" },
     socialButtonsBlockButton: { border: "1px solid #d8cfba" },
     formButtonPrimary: { background: "#1f3d2b", color: "#f4efe3", borderRadius: "999px", fontWeight: 600 },
     formFieldInput: { background: "#f4efe3", color: "#18231c", border: "1px solid #d8cfba" },
@@ -115,14 +110,13 @@ function SignInPage({ embedded = false }: { embedded?: boolean }) {
           : <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />}
         <div className="mt-5 space-y-3 text-center text-sm text-[var(--nc-muted)]">
           <p><Link href="/privacy" className="underline">Leggi l’informativa privacy e cookie</Link></p>
-          <p>Password dimenticata? Usa il collegamento nel modulo per ricevere un codice via email.</p>
           <p>Assistenza per recupero e cambio password:<br />
             <a className="break-all underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>
           </p>
+          <TechnicalSupport centered />
         </div>
         <Activation />
       </main>
-      <PublicFooter />
     </div>
   );
 }

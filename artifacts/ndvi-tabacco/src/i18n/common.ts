@@ -16,7 +16,6 @@ export const common: readonly Translation[] = [
   ["Accetta il tuo invito", "Accept your invitation", "Acepta tu invitación"],
   ["Scegli la password per il tuo account", "Choose a password for your account", "Elige una contraseña para tu cuenta"],
   ["Password dimenticata?", "Forgot password?", "¿Has olvidado la contraseña?"],
-  ["Password dimenticata? Usa il collegamento nel modulo per ricevere un codice via email.", "Forgot your password? Use the link in the form to receive a code by email.", "¿Has olvidado la contraseña? Usa el enlace del formulario para recibir un código por correo."],
   ["Assistenza per recupero e cambio password:", "Help with password recovery and changes:", "Ayuda para recuperar y cambiar la contraseña:"],
   [". Non inviare mai la tua password via email.", ". Never send your password by email.", ". Nunca envíes tu contraseña por correo."],
   ["Solo su invito", "By invitation only", "Solo por invitación"],

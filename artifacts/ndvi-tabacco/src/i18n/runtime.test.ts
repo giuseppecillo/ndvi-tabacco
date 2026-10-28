@@ -7,12 +7,17 @@ import { privacy } from "./privacy";
 
 afterEach(() => setLanguage("it"));
 
-test("Sign-in keeps technical support in the shared footer without repeating it below the form", () => {
+test("Sign-in keeps a single technical support contact directly after password help", () => {
   const root = readFileSync(new URL("../security/SecurityRoot.tsx", import.meta.url), "utf8");
   const signIn = root.slice(root.indexOf("function SignInPage("), root.indexOf('const INVITE_KEY'));
-  assert.ok(!signIn.includes("<TechnicalSupport"));
-  assert.equal((signIn.match(/<PublicFooter/g) ?? []).length, 1);
+  assert.equal((signIn.match(/<TechnicalSupport/g) ?? []).length, 1);
+  assert.ok(signIn.indexOf("<TechnicalSupport centered") > signIn.indexOf("Assistenza per recupero e cambio password"));
+  assert.ok(!signIn.includes("Password dimenticata? Usa il collegamento"));
+  assert.equal((signIn.match(/<PublicFooter/g) ?? []).length, 0);
   assert.equal((signIn.match(/mailto:\$\{SUPPORT_CONTACT\}/g) ?? []).length, 1);
+  assert.ok(!root.includes("logo.svg"));
+  assert.ok(root.includes('logoBox: { display: "none" }'));
+  assert.ok(root.includes('logoImage: { display: "none" }'));
   const pages = readFileSync(new URL("../security/PublicPages.tsx", import.meta.url), "utf8");
   const footer = pages.slice(pages.indexOf("export function PublicFooter"), pages.indexOf("export function Activation"));
   assert.equal((footer.match(/<TechnicalSupport/g) ?? []).length, 1);
@@ -26,6 +31,8 @@ test("The mobile menu overlays the page without shrinking modules or their headi
   assert.ok(desktop.includes("margin-inline-start: var(--nc-rail-w)"));
   assert.equal((css.match(/margin-inline-start: var\(--nc-rail-w\)/g) ?? []).length, 1);
   assert.ok(css.includes("@media (max-width: 1023px)"));
+  assert.ok(css.includes("--nc-rail-w: min(15.5rem, calc(100vw - 4rem))"));
+  assert.ok(css.includes(".nc-dropdown .nc-dd-item { font-size: clamp(.8rem, 3.4vw, .875rem); }"));
   assert.ok(css.includes(".nc-nav-backdrop { display: block; position: fixed;"));
   assert.ok(css.includes(".nc-topbar { position: sticky; top: 0; z-index: 30;"));
   assert.ok(!/data-nav-open[^}]+nc-modhead-(row|photo|title)/.test(css));

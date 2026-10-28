@@ -68,9 +68,13 @@ html, body { overflow-x: clip; max-width: 100%; }
 .nc-topbar-inner { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: .75rem; height: 100%; min-width: 0; }
 .nc-topbar-inner > .nc-brand-btn { min-width: 0; }
 @media (max-width: 1023px) { .nc-sec { --nc-rail-w: min(20rem, calc(100vw - 3rem)); } }
+@media (max-width: 639px) {
+  .nc-sec { --nc-rail-w: min(15.5rem, calc(100vw - 4rem)); }
+}
 .nc-dropdown { position: fixed; top: var(--nc-header-h); left: 0; bottom: 0; width: var(--nc-rail-w); max-height: calc(100dvh - var(--nc-header-h)); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: .5rem .4rem; background: #ffe7a8; border-right: 1px solid #c97a12; box-shadow: 6px 0 18px -14px rgba(90,45,0,.55); z-index: 29; animation: nc-rail .18s ease-out both; }
 @keyframes nc-rail { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
 .nc-dropdown .nc-dd-item { min-height: 44px; padding: .5rem .6rem; font-size: clamp(.8rem, 2.6vw, .95rem); line-height: 1.25; white-space: normal; word-break: normal; overflow-wrap: anywhere; hyphens: auto; }
+@media (max-width: 639px) { .nc-dropdown .nc-dd-item { font-size: clamp(.8rem, 3.4vw, .875rem); } }
 .nc-dropdown select { max-width: 100%; }
 .nc-nav-backdrop { display: none; }
 @media (min-width: 1024px) {

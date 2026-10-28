@@ -13,9 +13,9 @@ export const PRIVACY_CONTACT = "privacy@taurusagsolution.com";
 export const SUPPORT_CONTACT = "password@taurusagsolution.com";
 export const TECHNICAL_SUPPORT_CONTACT = "support@taurusagsolution.com";
 
-export function TechnicalSupport({ compact = false }: { compact?: boolean }) {
+export function TechnicalSupport({ compact = false, centered = false }: { compact?: boolean; centered?: boolean }) {
   return (
-    <div className="flex flex-col items-start gap-2 text-sm">
+    <div className={`flex flex-col gap-2 text-sm ${centered ? "items-center text-center" : "items-start"}`}>
       <a
         href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`}
         className="inline-flex items-center justify-center rounded-full bg-[var(--nc-leaf)] px-4 py-2 text-center font-semibold text-[var(--nc-paper)] hover:bg-[var(--nc-leaf-2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nc-leaf)]"
