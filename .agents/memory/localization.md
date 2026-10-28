@@ -14,3 +14,9 @@ La traduzione riguarda la visualizzazione: identificatori agronomici, valori del
 **Why:** alcuni nomi italiani di coltura, varietà e fase sono anche identificatori del modello esistente. Tradurli nei dati provocherebbe regressioni di calcolo e salvataggio.
 
 **How to apply:** usare il catalogo condiviso per il testo visualizzato e le localizzazioni native del gestore di autenticazione. Non usare mutazioni del DOM o traduzioni esterne dei dati dell’utente.
+
+Il supporto tecnico deve aprire la posta dell’utente verso support@taurusagsolution.com, con invio confermato dall’utente, senza aggiungere automaticamente dati personali, rilievi o GPS. L’indirizzo resta visibile e copiabile.
+
+**Why:** l’utente ha approvato esplicitamente un pulsante per scrivere dalla propria posta, non un modulo interno o un invio automatico.
+
+**How to apply:** mantenere questo comportamento quando si modificano i contatti; non introdurre raccolta di dati diagnostici o allegati automatici senza nuova autorizzazione.

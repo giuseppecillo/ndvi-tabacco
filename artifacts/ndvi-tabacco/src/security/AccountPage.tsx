@@ -5,7 +5,7 @@ import {
   exportMyData, getListMyPrivacyRequestsQueryKey, useCreatePrivacyRequest, useListMyPrivacyRequests,
   type Account, type CreatePrivacyRequestBodyType,
 } from "@workspace/api-client-react";
-import { Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, TECHNICAL_SUPPORT_CONTACT, Skeleton, TopBar, errText, fmtDate } from "./ui";
+import { Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, TechnicalSupport, Skeleton, TopBar, errText, fmtDate } from "./ui";
 import { SubscriptionSummary } from "./SubscriptionSummary";
 
 export const REQ_LABEL: Record<string, string> = {
@@ -62,9 +62,7 @@ export function AccountPage({ account }: { account: Account }) {
                 <a className="break-all underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>.
                 Non inviare mai la tua password via email.
               </p>
-              <p className="mt-3 text-sm text-[var(--nc-muted)]">Supporto tecnico:{" "}
-                <a className="break-all underline" href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`}>{TECHNICAL_SUPPORT_CONTACT}</a>
-              </p>
+              <div className="mt-3"><TechnicalSupport /></div>
             </Card>
             <Card className="nc-rise nc-d1">
               <h2 className="nc-display text-xl font-semibold">Scarica i tuoi dati</h2>
