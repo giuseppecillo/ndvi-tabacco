@@ -58,8 +58,8 @@ Si tratta di gestione manuale degli accessi: nessun pagamento o rinnovo automati
 
 ## Prima della pubblicazione
 
-**Stato: bozza, non pronta per la pubblicazione come informativa definitiva.**
-Versione del testo pubblico e della presa visione API: `2026-10-28.4`.
+**Stato: informativa aggiornata con le informazioni confermate dal titolare.**
+Versione del testo pubblico e della presa visione API: `2026-10-28.5`.
 Le modifiche sostanziali richiedono una nuova presa visione, non consenso marketing.
 
 Informazioni confermate dal titolare:
@@ -74,23 +74,31 @@ Informazioni confermate dal titolare:
   legittimo interesse per sicurezza e prevenzione abusi (art. 6.1.f),
   obbligo legale per le richieste di esercizio dei diritti (art. 6.1.c).
 
-Verifiche ancora necessarie prima di eliminare l’avviso di bozza:
-- L’app usa Clerk, Replit ed Esri come servizi tecnici esterni. Il titolare
-  ha chiarito che per «fornitore» intende Taurus, fornitore della soluzione:
-  questo non conferma i ruoli privacy dei servizi tecnici né gli accordi applicabili.
-  Verificare contratti, accordi ex art. 28 ove richiesti e subfornitori.
-- Non è verificata la precedente dichiarazione di assenza di trasferimenti
-  extra UE: accertare localizzazione, assistenza, subfornitori e garanzie per
-  gli eventuali trasferimenti fuori dallo SEE.
-- Il titolare ha descritto backup incrementali continui e crittografati in
-  transito e a riposo, ma non ha fornito riscontro del servizio interessato,
-  durata, eliminazione delle copie o gestione dei ripristini. Non presentare
-  tali caratteristiche come tecnicamente verificate.
-- Definire e applicare la cancellazione/anonimizzazione alla scadenza unica
-  quinquennale, anche per dati dei fornitori e backup; gestire i ripristini in
-  modo da non reintrodurre dati già cancellati. Nessuna cancellazione automatica
-  quinquennale è attualmente introdotta dall’aggiornamento dell’informativa.
-- Completare la verifica dei cookie e dei meccanismi tecnici dei servizi esterni.
+Ulteriori conferme ricevute dal titolare:
+- Taurus Agriculture Solution SRL gestisce il servizio oltre ad averlo sviluppato.
+- I contratti con Aruba, Replit, Supabase e Netlify sono correttamente gestiti
+  e controfirmati e comprendono gli accordi privacy richiesti dal GDPR.
+  L’app esplicita anche Clerk per l’autenticazione ed Esri per le mappe; l’elenco
+  dei contratti dichiarati non prova che ogni fornitore riceva tutti i dati.
+- Paese di hosting: Regno Unito. Per i trasferimenti coperti si applica la
+  decisione UE di adeguatezza ai sensi dell’art. 45 GDPR, rinnovata il
+  19 dicembre 2025. Non si dichiara trattamento esclusivo UE/Regno Unito;
+  per ulteriori trasferimenti sono necessarie le garanzie del capo V.
+- Backup incrementali continui, cifrati in transito e a riposo; eliminazione
+  entro **24 ore dalla cancellazione dei dati**, non dalla creazione della copia.
+  Sono informazioni confermate dal titolare, non risultati di un audit tecnico.
+
+Riferimento ufficiale verificato per il Regno Unito:
+https://commission.europa.eu/document/download/b36eedab-43b8-46eb-ac30-a8d1e6e69f51_en?filename=Renewal%20UK%20adequacy%20GDPR.pdf
+
+Responsabilità operative da mantenere:
+- Il titolare deve eseguire la cancellazione/anonimizzazione alla scadenza unica
+  quinquennale. Questo aggiornamento non introduce cancellazioni automatiche.
+- Conservare gli accordi applicabili, verificare i subfornitori e gestire copie
+  e ripristini senza reintrodurre dati cancellati. Il testo non modifica i
+  sistemi di backup o le loro impostazioni.
+- Riesaminare l’informativa se cambiano localizzazione, servizi, cookie,
+  garanzie o tempi di conservazione.
 
 Il testo pubblico e gli avvisi sono disponibili in italiano, inglese e spagnolo.
 L’aggiornamento non cambia autorizzazioni, isolamento dei rilievi, localizzazione

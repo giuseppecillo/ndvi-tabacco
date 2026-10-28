@@ -165,8 +165,8 @@ export function TopBar({ account }: { account?: Account | null }) {
   };
   const close = () => setOpen(false);
   return (
-    <header className="nc-topbar sticky top-0 z-30">
-      <div ref={wrapRef} className="relative mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-2 sm:px-4">
+    <header className="nc-topbar sticky top-0 z-30" data-nav-open={open ? "true" : "false"}>
+      <div ref={wrapRef} className="nc-topbar-inner mx-auto max-w-6xl px-3 py-2 sm:px-4">
         <button
           ref={btnRef}
           type="button"

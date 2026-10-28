@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Account } from "@workspace/api-client-react";
 import { Btn, ErrorNote, Eyebrow, Skeleton, TopBar } from "./ui";
+import { ModuleHeading } from "./ModuleHeading";
 import { t, useLanguage } from "../i18n/runtime";
 
 // Sibling artifact: use its registered preview path, not the web app's base.
@@ -67,8 +68,7 @@ export function InstructionsPage({ account }: { account: Account }) {
     <div className="min-h-[100dvh]">
       <TopBar account={account} />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
-        <Eyebrow>Istruzioni</Eyebrow>
-        <h1 className="nc-display mt-2 text-3xl font-semibold sm:text-4xl text-[var(--nc-leaf)]">Nitro Crop NDVI</h1>
+        <ModuleHeading title="Nitro Crop NDVI"><Eyebrow>Istruzioni</Eyebrow></ModuleHeading>
         <p className="mt-3 text-sm text-[var(--nc-muted)]">La presentazione segue la lingua scelta nell’app, comprese le figure. Usa i pulsanti per scorrere le diapositive.</p>
         {slides.isPending && <div className="mt-6"><Skeleton rows={4} /></div>}
         {slides.isError && (

@@ -39,11 +39,11 @@ Per l’informativa l’utente ha confermato conservazione di 5 anni per ogni ca
 
 **How to apply:** non sostituire la decorrenza con la data del singolo rilievo. Distinguere la politica dichiarata dall’effettiva applicazione operativa; non introdurre cancellazioni massive senza verificarne tutte le conseguenze.
 
-Taurus Agriculture Solution SRL ha sviluppato il software NitroCrop NDVI, è il fornitore della soluzione e il titolare del trattamento. L’utente ha ribadito che Taurus ha sviluppato il software e ha chiarito che con «fornitore» intende Taurus, non i servizi tecnici esterni. La precedente dichiarazione di accordi con responsabili e assenza di trasferimenti extra UE non è stata documentata. Ha descritto backup incrementali continui e crittografati, senza confermare servizio, scadenza o modalità di eliminazione.
+Taurus Agriculture Solution SRL ha sviluppato e gestisce NitroCrop NDVI, è il fornitore della soluzione e il titolare del trattamento. Il titolare ha confermato contratti gestiti e controfirmati con Aruba, Replit, Supabase e Netlify, comprensivi degli accordi privacy richiesti dal GDPR; hosting nel Regno Unito; backup incrementali continui cifrati in transito e a riposo, eliminati entro 24 ore dalla cancellazione dei dati.
 
-**Why:** l’utente ha ribadito il ruolo di Taurus nello sviluppo; il chiarimento non dimostra le condizioni contrattuali e operative dei servizi tecnici.
+**Why:** il titolare ha fornito questi chiarimenti espliciti, distinguendo la gestione del servizio dalle condizioni dei servizi tecnici.
 
-**How to apply:** mantenere l’avviso di bozza finché contratti, ruoli, trasferimenti e backup non sono verificati. Non dichiarare assenza di fornitori, trattamento esclusivamente UE o proprietà tecniche dei backup come fatti accertati.
+**How to apply:** riportare queste informazioni come conferme del titolare, non come risultati di audit indipendenti. Non dichiarare trattamento esclusivo UE o assenza di trasferimenti. Non confondere il termine di 24 ore dalla cancellazione con una conservazione di 24 ore dalla creazione della copia.
 
 L’utente specifica che l’applicazione è sviluppata interamente in Italia.
 

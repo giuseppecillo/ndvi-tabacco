@@ -45,13 +45,13 @@ test("Dynamic subscriptions and guidance preserve their exact numbers", () => {
   assert.equal(translateDisplay(125.4), 125.4);
 });
 
-test("Current draft privacy terms are available in English and Spanish", () => {
+test("Owner-confirmed privacy terms are available in English and Spanish", () => {
   const publicPage = readFileSync(new URL("../security/PublicPages.tsx", import.meta.url), "utf8");
   const currentCopy = privacy.filter(([source]) => publicPage.includes(source));
   for (const language of ["en", "es"] as const) {
     setLanguage(language);
     for (const text of [
-      "Bozza — verifiche da completare", "Informazioni sul trattamento dei dati", "Viale Giustiniano n. 8, Milano", "5 anni",
+      "Informazioni confermate dal titolare", "Informazioni sul trattamento dei dati", "Viale Giustiniano n. 8, Milano", "5 anni",
       "Dati di account (nome e indirizzo email):",
       "Dati di cliente, azienda, appezzamento e coltura:",
       "Rilievi di campo, coordinate GPS, valori NDVI, date e parametri agronomici:",
@@ -73,7 +73,11 @@ test("The public privacy version matches the API acknowledgment version", () => 
   const version = server.match(/PRIVACY_VERSION = "([^"]+)"/)?.[1];
   assert.ok(version);
   assert.ok(page.includes(`>${version}</span>`));
-  assert.ok(page.includes("Bozza — verifiche da completare"));
+  assert.ok(!page.includes("Bozza — verifiche da completare"));
+  assert.ok(page.includes("Regno Unito"));
+  assert.ok(page.includes("entro 24 ore dalla cancellazione"));
+  assert.ok(page.includes("Non costituisce una certificazione"));
+  assert.ok(page.includes("La presa visione di questa informativa non è un consenso marketing."));
   assert.ok(!page.includes("Il titolare dichiara che i rapporti con i responsabili"));
   assert.ok(!page.includes("non sono previsti trasferimenti"));
 });

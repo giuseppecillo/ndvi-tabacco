@@ -7,6 +7,7 @@ import {
   type Account, type PrivacyRequest, type UpdateManagedPrivacyRequestBodyStatus,
 } from "@workspace/api-client-react";
 import { Btn, Card, ErrorNote, Eyebrow, OkNote, Skeleton, TopBar, fmtDate } from "./ui";
+import { ModuleHeading } from "./ModuleHeading";
 import { REQ_LABEL, STATUS_LABEL } from "./AccountPage";
 import { SubscriptionSummary } from "./SubscriptionSummary";
 
@@ -191,8 +192,7 @@ export function AdminPage({ account }: { account: Account }) {
       <TopBar account={account} />
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-10">
         <div className="nc-rise">
-          <Eyebrow>Amministrazione</Eyebrow>
-          <h1 className="nc-display mt-2 text-4xl font-semibold text-[var(--nc-leaf)]">Chi può vedere i campi</h1>
+          <ModuleHeading title="Amministrazione"><Eyebrow>Chi può vedere i campi</Eyebrow></ModuleHeading>
           <p className="mt-2 max-w-2xl text-[var(--nc-muted)]">Gestisci gli accessi. Come amministratore vedi nello strumento solo i tuoi rilievi, non quelli degli altri utenti.</p>
         </div>
         <InviteForm />
