@@ -33,7 +33,7 @@ Un modulo Clerk incorporato nella home pubblica non deve usare `/` come prefisso
 
 **How to apply:** isolare i passaggi del modulo incorporato dal router delle pagine pubbliche; preservare invece il routing per percorso nelle pagine dedicate `/sign-in` e `/sign-up`. Verificare la navigazione reale alla privacy oltre al semplice caricamento del modulo.
 
-Per l’informativa l’utente ha dichiarato sede legale a Milano, conservazione di 5 anni per ciascuna categoria e accordi con i responsabili ai sensi dell’art. 28 GDPR. Ha poi chiarito che il Regno Unito è la localizzazione futura prevista per server e trattamento dei dati, non la sede legale, e ha approvato la rimozione dell’affermazione di assenza di trasferimenti extra UE.
+Per l’informativa l’utente ha dichiarato sede legale a Milano, conservazione di 5 anni per ciascuna categoria e accordi con i responsabili ai sensi dell’art. 28 GDPR. Ha poi precisato che «il Regno Unito è dove sarà il server»: è la sede futura prevista del server dell’applicazione, non la sede legale né una dichiarazione sul luogo di tutti i trattamenti dei fornitori. Ha approvato la rimozione dell’affermazione di assenza di trasferimenti extra UE.
 
 **Why:** sono informazioni fornite dal titolare, non esiti di una verifica tecnica o contrattuale dei fornitori.
 

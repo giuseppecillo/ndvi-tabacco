@@ -62,7 +62,7 @@ L’informativa riporta le informazioni dichiarate dal titolare: sede legale a
 Milano, conservazione di 5 anni per ogni categoria (account, dati cliente,
 rilievi/GPS/NDVI e parametri agronomici, log di sicurezza, richieste privacy),
 accordi con i responsabili ai sensi dell’art. 28 GDPR. Il titolare ha chiarito
-che la localizzazione futura prevista per server e trattamento è il Regno Unito,
+che la sede futura prevista per il server dell’applicazione è il Regno Unito,
 non la sede legale, che resta a Milano. L’informativa non afferma più l’assenza
 di trasferimenti extra UE e distingue il progetto futuro dalla configurazione
 effettiva dei fornitori attualmente usati. Le stesse informazioni sono

@@ -55,7 +55,7 @@ test("Updated privacy terms are available in English and Spanish", () => {
       "Richieste privacy e relative risposte:",
       "Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR.",
       "Localizzazione prevista e trasferimenti extra UE",
-      "La localizzazione prevista dal titolare per i server e per il trattamento dei dati è il Regno Unito. Si tratta di una configurazione futura: questa indicazione non attesta che tutti i servizi attualmente utilizzati siano già configurati in tale Paese. La sede legale del titolare resta a Milano, Italia.",
+      "La sede prevista dal titolare per il server dell’applicazione è il Regno Unito. Si tratta di una configurazione futura: questa indicazione non attesta che tutti i servizi attualmente utilizzati siano già configurati in tale Paese né che tutti i trattamenti avvengano lì. La sede legale del titolare resta a Milano, Italia.",
       "Il Regno Unito è un Paese esterno all’Unione europea. I trasferimenti verso tale Paese possono basarsi sulla decisione di adeguatezza della Commissione europea ai sensi dell’art. 45 GDPR, nei limiti del suo ambito di applicazione e finché rimane in vigore.",
       "La scelta di server nel Regno Unito non esclude ulteriori trattamenti in altri Paesi da parte dei fornitori o dei loro subfornitori. Prima della migrazione o dell’attivazione di nuovi servizi, il titolare verifica e documenta localizzazione effettiva, accessi di assistenza, backup e garanzie per ciascun servizio. Per eventuali trasferimenti non coperti da una decisione di adeguatezza devono essere individuate le garanzie applicabili previste dal Capo V GDPR, incluse, ove appropriate, le clausole contrattuali standard.",
       "Decisioni di adeguatezza della Commissione europea",
@@ -68,6 +68,8 @@ test("Privacy distinguishes planned UK processing from the Milan office and reta
   const page = readFileSync(new URL("../security/PublicPages.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(page, /non sono previsti trasferimenti/);
   assert.match(page, /configurazione futura/);
+  assert.match(page, /server dell’applicazione è il Regno Unito/);
+  assert.match(page, /né che tutti i trattamenti avvengano lì/);
   assert.match(page, /sede legale del titolare resta a Milano, Italia/);
   assert.match(page, /art\. 45 GDPR/);
   assert.equal(page.match(/<strong>5 anni<\/strong>/g)?.length, 5);
