@@ -44,3 +44,9 @@ L’utente specifica che l’applicazione è sviluppata interamente in Italia.
 **Why:** chiarimento esplicito dell’utente sul contesto del prodotto.
 
 **How to apply:** distinguere il luogo di sviluppo dalla localizzazione del trattamento. Il primo non dimostra da solo dove hosting, autenticazione e cartografia trattano i dati.
+
+L’utente chiarisce che attualmente ha tutto su Replit e GitHub; prevede poi un dominio Aruba e l’uso di Supabase e Netlify.
+
+**Why:** chiarimento successivo all’espressione ambigua «tutto su Aruba».
+
+**How to apply:** trattare Supabase e Netlify come intenzioni future, non servizi già attivi. Il dominio Aruba non implica una migrazione dell’hosting né autorizza a rimuovere i fornitori effettivamente usati dall’informativa. Non avviare una migrazione sulla base di questo chiarimento.
