@@ -10,7 +10,7 @@ import { AccountGate } from "./Gate";
 import { SubscriptionSummary } from "./SubscriptionSummary";
 import { AccountPage } from "./AccountPage";
 import { AdminPage } from "./AdminPage";
-import { Landing, PrivacyPage, PublicFooter } from "./PublicPages";
+import { Activation, PrivacyPage, PublicFooter } from "./PublicPages";
 import { Brand, Skeleton, SUPPORT_CONTACT, TopBar } from "./ui";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -108,18 +108,31 @@ function AuthShell({ children, aside }: { children: React.ReactNode; aside: Reac
   );
 }
 
-function SignInPage() {
+function SignInPage({ embedded = false }: { embedded?: boolean }) {
   return (
-    <AuthShell aside={
-      <>
-        <p className="nc-mono text-xs uppercase tracking-[0.18em] text-[var(--nc-wheat)]">Accesso riservato</p>
-        <h1 className="nc-display mt-3 text-4xl font-semibold text-[var(--nc-leaf)]">Bentornato in campo.</h1>
-        <p className="mt-4 text-[var(--nc-muted)]">Solo gli account approvati dall'amministratore possono aprire lo strumento. Se hai dimenticato la password usa "Password dimenticata" nel modulo: riceverai un codice via email.</p>
-        <p className="mt-4 text-sm text-[var(--nc-muted)]">Assistenza accesso: <a className="underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a></p>
-      </>
-    }>
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />
-    </AuthShell>
+    <div className="min-h-[100dvh] nc-contours">
+      <header className="mx-auto flex max-w-6xl justify-center px-4 py-5"><Brand /></header>
+      <main className="mx-auto w-full max-w-[480px] px-4 pb-6">
+        <h1 className="mb-5 text-center text-sm text-[var(--nc-muted)]">
+          Supporto alla fertilizzazione azotata di grano e tabacco.
+          <span className="mt-1 block">Accesso riservato agli utenti autorizzati dall’amministratore.</span>
+        </h1>
+        {embedded
+          // Root is a public page, not a Clerk route prefix. Hash routing
+          // preserves recovery steps without claiming /privacy etc.
+          ? <SignIn routing="hash" signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />
+          : <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />}
+        <div className="mt-5 space-y-3 text-center text-sm text-[var(--nc-muted)]">
+          <p><Link href="/privacy" className="underline">Leggi l’informativa privacy e cookie</Link></p>
+          <p>Password dimenticata? Usa il collegamento nel modulo per ricevere un codice via email.</p>
+          <p>Assistenza per recupero e cambio password:<br />
+            <a className="break-all underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>
+          </p>
+        </div>
+        <Activation />
+      </main>
+      <PublicFooter />
+    </div>
   );
 }
 
@@ -191,7 +204,7 @@ function HomeRedirect() {
   const { isLoaded, isSignedIn } = useAuth();
   if (!isLoaded) return <div className="mx-auto max-w-3xl px-4 py-20"><Skeleton rows={4} /></div>;
   if (isSignedIn) return <Redirect to="/user-portal" />;
-  return <Landing />;
+  return <SignInPage embedded />;
 }
 
 function Portal() {
@@ -235,7 +248,7 @@ function ClerkProviderWithRoutes() {
         <ClerkQueryClientCacheInvalidator />
         <Switch>
           <Route path="/" component={HomeRedirect} />
-          <Route path="/sign-in/*?" component={SignInPage} />
+          <Route path="/sign-in/*?"><SignInPage /></Route>
           <Route path="/sign-up/*?" component={SignUpPage} />
           <Route path="/user-portal" component={Portal} />
           <Route path="/account">

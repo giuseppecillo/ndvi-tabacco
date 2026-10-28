@@ -20,3 +20,15 @@ La durata dell’abbonamento è gestita solo dall’amministratore; l’utente d
 **Why:** richiesta esplicita dell’utente di controllare la durata nella gestione amministrativa e mostrarla nell’app.
 
 **How to apply:** non consentire rinnovi autonomi attraverso campi client. La scadenza sospende l’utilizzo operativo senza cancellare i rilievi o impedire l’esportazione personale e le richieste privacy. Il conteggio è gestione manuale degli accessi, non un’integrazione di pagamento.
+
+La pagina iniziale deve dare subito accesso al modulo di autenticazione, non presentare una pagina promozionale prima dell’accesso. Privacy, recupero e cambio password devono restare disponibili.
+
+**Why:** l’utente ha chiesto esplicitamente di sostituire la pagina iniziale informativa con l’accesso diretto.
+
+**How to apply:** mantenere solo il contesto essenziale sul prodotto e sugli accessi riservati; non reintrodurre un passaggio promozionale obbligatorio. Il contatto di assistenza password non implica che sia anche il mittente delle email automatiche.
+
+Un modulo Clerk incorporato nella home pubblica non deve usare `/` come prefisso di autenticazione con routing per percorso.
+
+**Why:** quel prefisso può interpretare anche `/privacy` come passaggio di accesso e rimandare al login, rendendo l’informativa inaccessibile.
+
+**How to apply:** isolare i passaggi del modulo incorporato dal router delle pagine pubbliche; preservare invece il routing per percorso nelle pagine dedicate `/sign-in` e `/sign-up`. Verificare la navigazione reale alla privacy oltre al semplice caricamento del modulo.

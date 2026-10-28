@@ -5,7 +5,7 @@ import {
   exportMyData, getListMyPrivacyRequestsQueryKey, useCreatePrivacyRequest, useListMyPrivacyRequests,
   type Account, type CreatePrivacyRequestBodyType,
 } from "@workspace/api-client-react";
-import { Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, Skeleton, TopBar, errText, fmtDate } from "./ui";
+import { Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, Skeleton, TopBar, errText, fmtDate } from "./ui";
 import { SubscriptionSummary } from "./SubscriptionSummary";
 
 export const REQ_LABEL: Record<string, string> = {
@@ -57,6 +57,11 @@ export function AccountPage({ account }: { account: Account }) {
                 <div><dt className="text-[var(--nc-muted)]">Creato il</dt><dd>{fmtDate(account.createdAt)}</dd></div>
               </dl>
               <Btn variant="ghost" className="mt-5" onClick={() => openUserProfile()}>Cambia password e sicurezza</Btn>
+              <p className="mt-3 text-sm text-[var(--nc-muted)]">
+                Assistenza per recupero e cambio password:{" "}
+                <a className="break-all underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>.
+                Non inviare mai la tua password via email.
+              </p>
             </Card>
             <Card className="nc-rise nc-d1">
               <h2 className="nc-display text-xl font-semibold">Scarica i tuoi dati</h2>

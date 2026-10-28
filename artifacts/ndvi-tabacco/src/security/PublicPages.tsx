@@ -20,7 +20,7 @@ export function PublicFooter() {
     <footer className="mt-20 border-t border-[var(--nc-line)]">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-[var(--nc-muted)] sm:flex-row sm:justify-between">
         <span>Taurus Agriculture Solution SRL</span>
-        <span className="flex gap-4">
+        <span className="flex flex-wrap gap-x-4 gap-y-2">
           <Link href="/privacy" className="underline">Informativa privacy e cookie</Link>
           <a href={`mailto:${PRIVACY_CONTACT}`} className="underline">{PRIVACY_CONTACT}</a>
         </span>
@@ -29,7 +29,7 @@ export function PublicFooter() {
   );
 }
 
-function Activation() {
+export function Activation() {
   const setup = useGetAccessSetup();
   const send = useSendAdministratorActivation();
   if (setup.isPending || setup.isError || !setup.data?.activationAvailable) return null;
