@@ -1,4 +1,5 @@
 import type { Account } from "@workspace/api-client-react";
+import { getLocale } from "../i18n/runtime";
 
 export function SubscriptionSummary({ account, compact = false }: { account: Account; compact?: boolean }) {
   const expiry = account.subscriptionExpiresAt;
@@ -10,7 +11,7 @@ export function SubscriptionSummary({ account, compact = false }: { account: Acc
         {!account.subscriptionExempt && <span>Durata: {account.subscriptionDurationDays ?? "—"} giorni</span>}
       </div>
       {!account.subscriptionExempt && <p className="mt-1">
-        {expiry ? `Scadenza: ${new Intl.DateTimeFormat("it-IT", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Rome" }).format(new Date(expiry))} (ora italiana).` : "Scadenza non configurata."}
+        {expiry ? `Scadenza: ${new Intl.DateTimeFormat(getLocale(), { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Rome" }).format(new Date(expiry))} (ora italiana).` : "Scadenza non configurata."}
         {expired && " Contatta l’amministratore per rinnovare. I tuoi rilievi non vengono cancellati."}
       </p>}
     </section>

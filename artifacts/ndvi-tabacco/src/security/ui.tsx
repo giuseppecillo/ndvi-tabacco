@@ -3,19 +3,22 @@ import { Link } from "wouter";
 import { useClerk } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMyAccountQueryKey, useGetMyAccount, type Account } from "@workspace/api-client-react";
+import { LanguageSelector } from "../i18n/LanguageSelector";
+import { getLocale, t } from "../i18n/runtime";
 
 export const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 export const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 export const PRIVACY_CONTACT = "privacy@taurusagsolution.com";
 export const SUPPORT_CONTACT = "password@taurusagsolution.com";
+export const TECHNICAL_SUPPORT_CONTACT = "support@taurusagsolution.com";
 
 export function errText(e: unknown): string {
   const d = (e as { data?: unknown } | null)?.data;
   if (d && typeof d === "object" && typeof (d as { error?: unknown }).error === "string") {
-    return (d as { error: string }).error;
+    return t((d as { error: string }).error);
   }
-  if (e instanceof Error && e.message) return e.message;
-  return "Errore imprevisto. Riprova.";
+  if (e instanceof Error && e.message) return t(e.message);
+  return t("Errore imprevisto. Riprova.");
 }
 export function errStatus(e: unknown): number | undefined {
   const s = (e as { status?: unknown } | null)?.status;
@@ -113,6 +116,8 @@ export function TopBar({ account }: { account?: Account | null }) {
           {account && <Link href="/account" className={link}>Il mio account</Link>}
           {account?.role === "admin" && account.status === "active" && <Link href="/admin" className={link}>Amministrazione</Link>}
           <Link href="/privacy" className={link}>Privacy</Link>
+          <a href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`} className={link}>Supporto tecnico</a>
+          <LanguageSelector />
           <button onClick={() => void out()} className="ml-1 rounded-full border border-[var(--nc-line)] px-3 py-1.5 text-sm font-semibold text-[var(--nc-leaf)] hover:bg-[var(--nc-paper-2)]">Esci</button>
         </nav>
       </div>
@@ -122,5 +127,5 @@ export function TopBar({ account }: { account?: Account | null }) {
 
 export function fmtDate(s: string) {
   const d = new Date(s);
-  return isNaN(d.getTime()) ? s : d.toLocaleString("it-IT", { dateStyle: "medium", timeStyle: "short" });
+  return isNaN(d.getTime()) ? s : d.toLocaleString(getLocale(), { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Rome" });
 }

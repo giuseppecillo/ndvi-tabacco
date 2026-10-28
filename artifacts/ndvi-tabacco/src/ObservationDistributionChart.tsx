@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { t } from "./i18n/runtime";
 import {
   CartesianGrid,
   Legend,
@@ -81,7 +82,7 @@ export function ObservationDistributionChart({
           Ogni punto è un’osservazione salvata. A destra dello zero l’NDVI medio è sotto il riferimento; l’altezza mostra i kg N/ha indicati dal punto.
         </p>
       </div>
-      <ChartContainer config={chartConfig} className="h-[330px] w-full aspect-auto" aria-describedby="distribuzione-ndvi-description">
+      <ChartContainer config={{ ...chartConfig, tabacco: { ...chartConfig.tabacco, label: t("Tabacco") }, grano: { ...chartConfig.grano, label: t("Grano duro") } }} className="h-[330px] w-full aspect-auto" aria-describedby="distribuzione-ndvi-description">
         <ScatterChart margin={{ top: 12, right: 18, bottom: 18, left: 8 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, SignUp, useAuth, useClerk } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
-import { itIT } from "@clerk/localizations";
+import { itIT, enUS, esES } from "@clerk/localizations";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Link, Redirect, Route, Switch, useLocation, Router as WouterRouter } from "wouter";
 import App from "../App";
@@ -11,7 +11,9 @@ import { SubscriptionSummary } from "./SubscriptionSummary";
 import { AccountPage } from "./AccountPage";
 import { AdminPage } from "./AdminPage";
 import { Activation, PrivacyPage, PublicFooter } from "./PublicPages";
-import { Brand, Skeleton, SUPPORT_CONTACT, TopBar } from "./ui";
+import { Brand, Skeleton, SUPPORT_CONTACT, TECHNICAL_SUPPORT_CONTACT, TopBar } from "./ui";
+import { LanguageSelector } from "../i18n/LanguageSelector";
+import { t, useLanguage } from "../i18n/runtime";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -83,22 +85,10 @@ const clerkAppearance = {
   },
 };
 
-const localization = {
-  ...itIT,
-  signIn: {
-    ...itIT.signIn,
-    start: { ...itIT.signIn?.start, title: "Accedi a NitroCrop NDVI", subtitle: "Accesso riservato agli account approvati" },
-  },
-  signUp: {
-    ...itIT.signUp,
-    start: { ...itIT.signUp?.start, title: "Accetta il tuo invito", subtitle: "Scegli la password per il tuo account" },
-  },
-};
-
 function AuthShell({ children, aside }: { children: React.ReactNode; aside: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] nc-contours">
-      <header className="mx-auto max-w-6xl px-4 py-5"><Brand /></header>
+      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5"><Brand /><LanguageSelector /></header>
       <main className="mx-auto grid w-full max-w-6xl grid-cols-1 items-start gap-10 px-4 py-6 md:grid-cols-[minmax(0,1fr)_auto]">
         <div className="nc-rise min-w-0 max-w-md pt-4">{aside}</div>
         <div className="nc-rise nc-d1 min-w-0">{children}</div>
@@ -111,7 +101,7 @@ function AuthShell({ children, aside }: { children: React.ReactNode; aside: Reac
 function SignInPage({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="min-h-[100dvh] nc-contours">
-      <header className="mx-auto flex max-w-6xl justify-center px-4 py-5"><Brand /></header>
+      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5"><Brand /><LanguageSelector /></header>
       <main className="mx-auto w-full max-w-[480px] px-4 pb-6">
         <h1 className="mb-5 text-center text-sm text-[var(--nc-muted)]">
           Supporto alla fertilizzazione azotata di grano e tabacco.
@@ -127,6 +117,9 @@ function SignInPage({ embedded = false }: { embedded?: boolean }) {
           <p>Password dimenticata? Usa il collegamento nel modulo per ricevere un codice via email.</p>
           <p>Assistenza per recupero e cambio password:<br />
             <a className="break-all underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>
+          </p>
+          <p>Supporto tecnico:<br />
+            <a className="break-all underline" href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`}>{TECHNICAL_SUPPORT_CONTACT}</a>
           </p>
         </div>
         <Activation />
@@ -232,6 +225,24 @@ function NotFound() {
 
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
+  const language = useLanguage();
+  const baseLocalization = { it: itIT, en: enUS, es: esES }[language];
+  const localization = {
+    ...baseLocalization,
+    signIn: {
+      ...baseLocalization.signIn,
+      start: { ...baseLocalization.signIn?.start, title: t("Accedi a NitroCrop NDVI"), subtitle: t("Accesso riservato agli account approvati") },
+    },
+    signUp: {
+      ...baseLocalization.signUp,
+      start: { ...baseLocalization.signUp?.start, title: t("Accetta il tuo invito"), subtitle: t("Scegli la password per il tuo account") },
+    },
+  };
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.title = `NitroCrop NDVI — ${t("Supporto alla fertilizzazione azotata")}`;
+  }, [language]);
 
   return (
     <ClerkProvider

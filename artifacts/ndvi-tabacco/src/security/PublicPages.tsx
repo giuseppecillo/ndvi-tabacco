@@ -1,13 +1,15 @@
 import type { ReactNode } from "react";
 import { Link } from "wouter";
 import { useGetAccessSetup, useSendAdministratorActivation } from "@workspace/api-client-react";
-import { Brand, Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, taurusLogo } from "./ui";
+import { Brand, Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, TECHNICAL_SUPPORT_CONTACT, taurusLogo } from "./ui";
+import { LanguageSelector } from "../i18n/LanguageSelector";
 
 function PublicHeader() {
   return (
-    <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
+    <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-5">
       <Brand />
       <nav className="flex items-center gap-2">
+        <LanguageSelector />
         <Link href="/privacy" className="hidden sm:inline rounded-full px-3 py-1.5 text-sm text-[var(--nc-leaf)] hover:bg-[var(--nc-paper-2)]">Privacy</Link>
         <Link href="/sign-in" className="rounded-full bg-[var(--nc-leaf)] px-4 py-2 text-sm font-semibold text-[var(--nc-paper)] hover:bg-[var(--nc-leaf-2)]">Accedi</Link>
       </nav>
@@ -23,6 +25,7 @@ export function PublicFooter() {
         <span className="flex flex-wrap gap-x-4 gap-y-2">
           <Link href="/privacy" className="underline">Informativa privacy e cookie</Link>
           <a href={`mailto:${PRIVACY_CONTACT}`} className="underline">{PRIVACY_CONTACT}</a>
+          <a href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`} className="break-all underline">Supporto tecnico: {TECHNICAL_SUPPORT_CONTACT}</a>
         </span>
       </div>
     </footer>

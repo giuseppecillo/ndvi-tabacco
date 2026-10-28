@@ -1,0 +1,61 @@
+import { afterEach, test } from "node:test";
+import assert from "node:assert/strict";
+import { getLanguage, getLocale, setLanguage, t, translateDisplay } from "./runtime";
+import { localizeUi } from "../../localize-ui";
+
+afterEach(() => setLanguage("it"));
+
+test("Italian remains the default and unsupported copy remains unchanged", () => {
+  assert.equal(getLanguage(), "it");
+  assert.equal(t("Tabacco"), "Tabacco");
+  setLanguage("en");
+  assert.equal(t("Farm Rossi 42"), "Farm Rossi 42");
+  assert.equal(t("support@taurusagsolution.com"), "support@taurusagsolution.com");
+});
+
+test("English and Spanish cover access, app, map savings and administration", () => {
+  for (const language of ["en", "es"] as const) {
+    setLanguage(language);
+    for (const source of [
+      "Accedi a NitroCrop NDVI", "Password dimenticata?", "Supporto tecnico:",
+      "Tabacco", "Grano duro", "Registro Osservazioni", "Parametri Colturali",
+      "Risparmio di azoto sull’intero poligono", "Autorizza un nuovo utente",
+      "Durata abbonamento (giorni)", "Informativa privacy e cookie",
+    ]) assert.notEqual(t(source), source, `${language}: ${source}`);
+    assert.equal(getLocale(), language === "en" ? "en-GB" : "es-ES");
+  }
+});
+
+test("Dynamic subscriptions and guidance preserve their exact numbers", () => {
+  setLanguage("en");
+  assert.equal(t("12 giorni rimanenti"), "12 days remaining");
+  assert.equal(t("1 giorno rimanente"), "1 day remaining");
+  assert.equal(t("Range consigliato: 4.2–5.6 t/ha"), "Recommended range: 4.2–5.6 t/ha");
+  assert.equal(t("20–29 · Accestimento"), "20–29 · Tillering");
+  assert.equal(t('ID "Media" già utilizzato.'), 'ID "Media" is already in use.');
+  setLanguage("es");
+  assert.equal(t("12 giorni rimanenti"), "12 días restantes");
+  assert.equal(t("Abbonamento scaduto · 0 giorni rimanenti"), "Suscripción vencida · 0 días restantes");
+  assert.equal(t("Scadenza: 28 oct 2026, 14:00 (ora italiana)."), "Vencimiento: 28 oct 2026, 14:00 (hora italiana).");
+  assert.equal(t("Account non disponibile. Accedi nuovamente."), "Cuenta no disponible. Vuelve a acceder.");
+  assert.equal(t("Accesso non autorizzato o account sospeso. Contatta l’amministratore."), "Acceso no autorizado o cuenta suspendida. Contacta con el administrador.");
+  assert.equal(translateDisplay(125.4), 125.4);
+});
+
+test("The display compiler does not translate form values, data keys or free text fields", () => {
+  const plugin = localizeUi();
+  const transform = plugin.transform as (code: string, id: string) => { code: string };
+  const result = transform(
+    'export function View(){return <><option value="grano duro">Grano duro</option><input name="cliente" value={customer.name} placeholder="Cliente" /><span>{obs.cliente}</span><span>{obs.id}</span><span>{req.message}</span><Chart dataKey="dose" name="Tabacco" label={{value:"Azoto indicato"}} /></>}',
+    "/workspace/artifacts/ndvi-tabacco/src/Test.tsx",
+  ).code;
+  assert.match(result, /value="grano duro"/);
+  assert.match(result, /name="cliente"/);
+  assert.match(result, /value=\{customer.name\}/);
+  assert.match(result, /dataKey="dose"/);
+  assert.match(result, /placeholder=\{__ncLabel\("Cliente"\)\}/);
+  assert.match(result, /\{obs.cliente\}/);
+  assert.match(result, /\{obs.id\}/);
+  assert.match(result, /\{req.message\}/);
+  assert.match(result, /__ncDisplay\("Grano duro"\)/);
+});

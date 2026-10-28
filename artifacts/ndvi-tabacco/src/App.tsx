@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { getLocale, t } from "./i18n/runtime";
 const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -669,10 +670,10 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       doc.text("NitroCrop NDVI", 42, 18);
       doc.setFontSize(11);
       doc.setTextColor(40, 40, 40);
-      doc.text("Registro osservazioni NDVI", 42, 26);
+      doc.text(t("Registro osservazioni NDVI"), 42, 26);
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
-      doc.text(`Esportato il: ${new Date().toLocaleDateString("it-IT")}  —  ${osservazioni.length} osservazion${osservazioni.length === 1 ? "e" : "i"}`, 42, 33);
+      doc.text(t(`Esportato il: ${new Date().toLocaleDateString(getLocale())}  —  ${osservazioni.length} osservazion${osservazioni.length === 1 ? "e" : "i"}`), 42, 33);
 
       // Separator line
       doc.setDrawColor(22, 101, 52);
@@ -685,7 +686,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
           "ID", "Rilev.", "Trapianto", "Cliente", "Appezz.", "Gg",
           "M1", "M2", "M3", "M4", "M5",
           "Media", "Ottimale", "Diff.", "Dose / N punto\n(kg/ha)", "Lat", "Lng",
-        ]],
+        ].map(t)],
         body: osservazioni.map((o) => [
           o.id,
           o.data,
@@ -728,7 +729,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         doc.setFontSize(7);
         doc.setTextColor(150);
         doc.text(
-          `Pagina ${i} di ${pageCount}  —  NitroCrop NDVI · Taurus Agriculture Solution`,
+          t(`Pagina ${i} di ${pageCount}  —  NitroCrop NDVI · Taurus Agriculture Solution`),
           148.5, 205, { align: "center" }
         );
       }
@@ -886,8 +887,8 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                   <p className={densitaGrano.fuoriRange ? "text-xs font-medium text-amber-700" : "text-xs text-stone-500"}>
                     Input: {densitaUnita === "kg/ha"
                       ? `${densitaValore.toFixed(1)} kg seme/ha`
-                      : `${Math.round(densitaGrano.semiMqEquivalenti).toLocaleString("it-IT")} semi/m²`}
-                    {" "}· equivalente stimato: {Math.round(densitaGrano.semiHaEquivalenti).toLocaleString("it-IT")} semi/ha ({densitaGrano.semiMqEquivalenti.toFixed(0)} semi/m²) · coefficiente densità N: ×{densitaGrano.fattoreAzoto.toFixed(2)}
+                      : `${Math.round(densitaGrano.semiMqEquivalenti).toLocaleString(getLocale())} semi/m²`}
+                    {" "}· equivalente stimato: {Math.round(densitaGrano.semiHaEquivalenti).toLocaleString(getLocale())} semi/ha ({densitaGrano.semiMqEquivalenti.toFixed(0)} semi/m²) · coefficiente densità N: ×{densitaGrano.fattoreAzoto.toFixed(2)}
                     {densitaGrano.fuoriRange
                       ? densitaUnita === "kg/ha"
                         ? " · Quantità da verificare con varietà e tecnico aziendale."
@@ -896,7 +897,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                   </p>
                 ) : (
                   <p className="text-xs text-stone-400">
-                    Equivalente aziendale: {Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha · riferimento: {datiVarieta.densitaPianteDefault.toLocaleString("it-IT")} piante/ha · conversione: {Math.round(datiVarieta.densitaPianteDefault / datiVarieta.kgSemiDefault).toLocaleString("it-IT")} piante/kg · coefficiente densità azoto: ×{densita.fattoreAzoto.toFixed(2)}
+                    Equivalente aziendale: {Math.round(densita.pianteHaEquivalenti).toLocaleString(getLocale())} piante/ha · riferimento: {datiVarieta.densitaPianteDefault.toLocaleString(getLocale())} piante/ha · conversione: {Math.round(datiVarieta.densitaPianteDefault / datiVarieta.kgSemiDefault).toLocaleString(getLocale())} piante/kg · coefficiente densità azoto: ×{densita.fattoreAzoto.toFixed(2)}
                   </p>
                 )
               )}
@@ -1287,7 +1288,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
             <div className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs space-y-1">
               <p className="font-semibold text-stone-700">Coerenza resa e azoto</p>
               <p>
-                Densità: <strong>{Math.round(densita.pianteHaEquivalenti).toLocaleString("it-IT")} piante/ha</strong>
+                Densità: <strong>{Math.round(densita.pianteHaEquivalenti).toLocaleString(getLocale())} piante/ha</strong>
                 {" "}· resa: <strong>{resa.toFixed(1)} t/ha</strong> · asportazione base: {fabbisognoNBase} kg N/ha
                 {" "}× densità {densita.fattoreAzoto.toFixed(2)} = <strong>{risultati.fabbisognoN} kg N/ha</strong>.
                 {" "}Azoto totale del piano: <strong>{azotoTot} kg/ha</strong> · già distribuito: <strong>{azotoGiaDistribuito} kg/ha</strong> · residuo: <strong>{risultati.residuoPiano} kg/ha</strong>.
@@ -1485,9 +1486,9 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                       <td className="px-2 py-2 text-center text-xs font-mono text-stone-600">
                         {obs.densitaValore != null
                           ? <>
-                              {Number(obs.densitaValore).toLocaleString("it-IT")} {obs.densitaUnita ?? ""}
+                              {Number(obs.densitaValore).toLocaleString(getLocale())} {obs.densitaUnita ?? ""}
                               {isObsGrano && obs.pianteHaEquivalenti != null && obs.densitaUnita !== "semi/ha"
-                                ? <><br /><span className="text-stone-400">≈ {Math.round(obs.pianteHaEquivalenti).toLocaleString("it-IT")} semi/ha</span></>
+                                ? <><br /><span className="text-stone-400">≈ {Math.round(obs.pianteHaEquivalenti).toLocaleString(getLocale())} semi/ha</span></>
                                 : null}
                             </>
                           : "—"}
