@@ -19,7 +19,7 @@ type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "style" | "alt"> 
 const FONT = "'Inter', 'Segoe UI', system-ui, sans-serif";
 const CHAR_W = 0.53; // average glyph advance as fraction of font size
 
-function RegionLayer({ r, text, idx }: { r: FigureRegion; text: string; idx: number }) {
+export function RegionLayer({ r, text, idx }: { r: FigureRegion; text: string; idx: number }) {
   const lines = text.split("\n");
   const rot = r.rotate === -90;
   const boxW = rot ? r.h : r.w;

@@ -3,13 +3,19 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { translateDeck } from "./i18n";
 import manifest from "./data/slides-manifest.json";
+import uploadedFidelity from "./data/uploaded-deck-fidelity.json";
 import { FIGURE_LABELS } from "./data/figure-labels";
 
 test("All 13 imported slides have Italian, English and Spanish text", () => {
   assert.equal(manifest.length, 13);
   for (const slide of manifest) {
     const source = readFileSync(new URL(`../${slide.filepath}`, import.meta.url), "utf8");
-    for (const [, raw] of source.matchAll(/\bt\(("(?:[^"\\]|\\.)*")\)/g)) {
+    const literals = [
+      ...source.matchAll(/\bt\(("(?:[^"\\]|\\.)*")\)/g),
+      ...source.matchAll(/\bt\.part\(("(?:[^"\\]|\\.)*"), 0,/g),
+    ];
+    assert.ok(literals.length > 0, `Slide ${slide.position} has no translatable text`);
+    for (const [, raw] of literals) {
       const text = JSON.parse(raw);
       for (const language of ["it", "en", "es"] as const) {
         const translated = translateDeck(text, language);
@@ -46,43 +52,66 @@ test("All six original screenshots have bounded English and Spanish label layers
       assert.ok(region.y + region.h <= figure.viewH + 1, `Figure ${id}: vertical mask overflow`);
     }
   }
+});
+
+const FIGURES: Record<number, [string, number][]> = {
+  1: [["image_6", 3]], 5: [["image_6", 3]], 6: [["image_13", 5]], 7: [["image_14", 6]],
+  9: [["image_19", 7]], 10: [["image_20", 8]], 11: [["image_21", 9]],
+};
+
+test("The authoritative uploaded 13-slide deck is the active deck", () => {
+  assert.deepEqual(manifest.map((s) => s.position), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   for (const slide of manifest) {
-    const source = readFileSync(new URL(`../${slide.filepath}`, import.meta.url), "utf8");
-    if (/imported-presentation\/image_[356789]\.webp/.test(source)) {
-      assert.ok(source.includes("<LocalizedFigure"), `Slide ${slide.position} retains an untranslated screenshot`);
+    const n = slide.position;
+    assert.equal(slide.filepath, `src/pages/slides/ImportedSlide${n}.tsx`);
+    const active = readFileSync(new URL(`../${slide.filepath}`, import.meta.url), "utf8");
+    const original = uploadedFidelity.find((entry) => entry.position === n);
+    assert.ok(original, `Slide ${n} has a portable original-content fixture`);
+    assert.ok(active.includes(`export default ImportedSlide${n};`));
+    assert.ok(!active.includes("imported-presentation/"), `Slide ${n} still uses the previous deck assets`);
+    assert.ok(!/transform: `scale|slide-inner-|"[\d.]+px"|pptx-font-scale/.test(active), `Slide ${n} not normalised`);
+    // every uploaded image is referenced from the copied asset folder
+    for (const file of original.images) {
+      assert.ok(active.includes(`../../assets/uploaded-presentation/${file}`), `Slide ${n} lost ${file}`);
+    }
+    // every uploaded text run is preserved (Italian) in the active slide
+    const activeStrings = new Set([...active.matchAll(/"(?:[^"\\]|\\.)*"/g)].flatMap(([literal]) => {
+      try { return [JSON.parse(literal.replace(/\\x([0-9A-Fa-f]{2})/g, "\\u00$1"))]; }
+      catch { return []; }
+    }));
+    for (const text of original.textRuns) {
+      assert.ok(activeStrings.has(text), `Slide ${n} lost run ${text}`);
     }
   }
 });
 
-test("Requested figures use the current-app illustrative chrome in every language", async () => {
-  const { CHROME_FIGURES, chromeGeometry } = await import("./data/figure-chrome");
-  const comp = readFileSync(new URL("./components/LocalizedFigure.tsx", import.meta.url), "utf8");
-  for (const label of ["Schema dell\\u2019interfaccia", "Interface illustration", "Esquema de la interfaz",
-    "Rilievo e dati", "Elaborazioni e Mappe", "Field Survey and Data", "Processing and maps",
-    "Observaciones y datos", "Procesamiento y mapas", "NitroCrop NDVI", "#F6B42C", "#F09A1F", "#1F3D2B"]) {
-    assert.ok(comp.includes(label), `chrome missing ${label}`);
-  }
-  assert.ok(!comp.includes("Nitro Crop NDVI"));
-  assert.deepEqual(Object.keys(CHROME_FIGURES).map(Number), [3, 5, 6, 7, 8, 9]);
-  const expected: Record<number, [number, string][]> = {
-    1: [[3, "survey"]], 5: [[3, "survey"]], 6: [[5, "maps"]], 7: [[6, "survey"]],
-    9: [[7, "survey"]], 10: [[8, "maps"]], 11: [[9, "maps"]],
-  };
+test("Uploaded app screenshots carry EN/ES label layers on the measured figures", () => {
   for (const slide of manifest) {
-    const source = readFileSync(new URL(`../${slide.filepath}`, import.meta.url), "utf8");
-    assert.ok(!/chrome=\{false\}/.test(source), `Slide ${slide.position} opts out of chrome`);
-    assert.ok(!/top: "-\d/.test(source.slice(source.indexOf("<LocalizedFigure"))), `Slide ${slide.position} negative crop`);
-    for (const [id, mod] of expected[slide.position] ?? []) {
-      assert.ok(source.includes(`imageId={${id}} module="${mod}"`), `Slide ${slide.position} figure ${id} ${mod}`);
+    const active = readFileSync(new URL(`../${slide.filepath}`, import.meta.url), "utf8");
+    const expected = FIGURES[slide.position] ?? [];
+    const found = [...active.matchAll(/<FigureLabels imageId=\{(\d+)\} \/>/g)].map((m) => Number(m[1]));
+    assert.deepEqual(found, expected.map(([, id]) => id), `Slide ${slide.position} figure overlays`);
+    for (const [file, id] of expected) {
+      assert.ok(active.includes(`uploaded-presentation/${file}.`), `Slide ${slide.position} uses ${file}`);
+      const f = FIGURE_LABELS[id];
+      for (const r of f.regions) assert.ok(r.en.trim() && r.es.trim() && r.en !== undefined);
     }
   }
-  for (const [id, cfg] of Object.entries(CHROME_FIGURES)) {
-    const f = FIGURE_LABELS[Number(id)];
-    const g = chromeGeometry(f.viewW, f.viewH, cfg.cropTop, cfg.rail);
-    assert.ok(g.k > 0 && g.k <= 1 && g.bodyX + g.bodyW <= f.viewW + 0.01, `Figure ${id} body fits`);
-    if (cfg.rail) assert.ok(g.H >= g.bar + 330 * g.s, `Figure ${id} rail fits`);
-    for (const lang of ["it", "en", "es"] as const) assert.ok(f.alt[lang]);
+});
+
+test("Module navigation names follow the app (Rilievo e dati) in IT/EN/ES", () => {
+  assert.equal(translateDeck("Rilievo e dati", "it"), "Rilievo e dati");
+  assert.equal(translateDeck("Rilievo e dati", "en"), "Field Survey and Data");
+  assert.equal(translateDeck("Rilievo e dati", "es"), "Observaciones y datos");
+  assert.equal(translateDeck("Elaborazioni e Mappe", "en"), "Processing and maps");
+  assert.equal(translateDeck("Elaborazioni e Mappe", "es"), "Procesamiento y mapas");
+  const nav = "Navigazione MENU’: il pulsante NitroCrop NDVI apre a sinistra lʼelenco dei moduli e riporta a Rilievo e dati.";
+  assert.match(translateDeck(nav, "en"), /Field Survey and Data/);
+  assert.match(translateDeck(nav, "es"), /Observaciones y datos/);
+  for (const slide of manifest) {
+    const active = readFileSync(new URL(`../${slide.filepath}`, import.meta.url), "utf8");
+    assert.ok(!active.includes("Rilievo e Mappe"), `Slide ${slide.position} uses the old module name`);
+    assert.ok(!active.includes("Nitro Crop NDVI"));
   }
-  assert.equal(translateDeck("NitroCrop NDVI", "en"), "NitroCrop NDVI");
   assert.equal(translateDeck("NitroCrop NDVI", "es"), "NitroCrop NDVI");
 });

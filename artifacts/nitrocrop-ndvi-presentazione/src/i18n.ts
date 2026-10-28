@@ -54,6 +54,14 @@ export function translateDeck(source: string, lang: DeckLanguage): string {
 export function useDeckText() {
   const lang = useDeckLanguage();
   return Object.assign((source: string) => translateDeck(source, lang), {
+    /**
+     * Paragraph split into styled PowerPoint runs: Italian keeps each run,
+     * EN/ES render the whole translated paragraph in the first run.
+     */
+    part: (paragraph: string, index: number, fragment: string) => {
+      if (lang === "it") return fragment;
+      return index === 0 ? translateDeck(paragraph, lang) : "";
+    },
     font: (size: string, source: string) => {
       const value = size.match(/^([\d.]+)vw$/);
       if (lang === "it" || !value || !source.trim()) return size;

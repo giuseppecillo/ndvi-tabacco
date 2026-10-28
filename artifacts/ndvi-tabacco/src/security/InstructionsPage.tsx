@@ -44,7 +44,7 @@ export function InstructionsPage({ account }: { account: Account }) {
 
   useEffect(() => {
     const previous = document.title;
-    document.title = `${t("Istruzioni")} — Nitro Crop NDVI`;
+    document.title = `${t("Istruzioni")} — NitroCrop NDVI`;
     return () => { document.title = previous; };
   }, [language]);
 
@@ -68,7 +68,7 @@ export function InstructionsPage({ account }: { account: Account }) {
     <div className="min-h-[100dvh]">
       <TopBar account={account} />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
-        <ModuleHeading title="Nitro Crop NDVI"><Eyebrow>Istruzioni</Eyebrow></ModuleHeading>
+        <ModuleHeading title="NitroCrop NDVI"><Eyebrow>Istruzioni</Eyebrow></ModuleHeading>
         <p className="mt-3 text-sm text-[var(--nc-muted)]">La presentazione segue la lingua scelta nell’app, comprese le figure. Usa i pulsanti per scorrere le diapositive.</p>
         {slides.isPending && <div className="mt-6"><Skeleton rows={4} /></div>}
         {slides.isError && (
@@ -106,7 +106,7 @@ export function InstructionsPage({ account }: { account: Account }) {
               <iframe
                 ref={frame}
                 src={slideUrl}
-                title="Nitro Crop NDVI"
+                title={`${t("Istruzioni")} — NitroCrop NDVI`}
                 allowFullScreen
                 className="aspect-video w-full rounded-xl border border-[var(--nc-line)] bg-white"
               />

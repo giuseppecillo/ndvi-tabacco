@@ -29,6 +29,49 @@ test("English and Spanish cover access, app, map savings and administration", ()
   }
 });
 
+test("Instructions controls follow English and Spanish, including identical translated words", () => {
+  const reader = readFileSync(new URL("../security/InstructionsPage.tsx", import.meta.url), "utf8");
+  const controls = [
+    ["Istruzioni", "Instructions", "Instrucciones"],
+    ["Precedente", "Previous", "Anterior"],
+    ["Successiva", "Next", "Siguiente"],
+    ["Diapositiva", "Slide", "Diapositiva"],
+    ["Schermo intero", "Full screen", "Pantalla completa"],
+    ["Esci da schermo intero", "Exit full screen", "Salir de pantalla completa"],
+    ["Apri la presentazione in una nuova scheda", "Open the presentation in a new tab", "Abre la presentación en una pestaña nueva"],
+    ["Impossibile caricare la presentazione.", "Unable to load the presentation.", "No se pudo cargar la presentación."],
+    ["Ruota il dispositivo in orizzontale per leggere meglio le diapositive.", "Rotate your device to landscape to read the slides more easily.", "Gira el dispositivo en horizontal para leer mejor las diapositivas."],
+  ] as const;
+  for (const [source] of controls) assert.ok(reader.includes(source), source);
+  for (const language of ["en", "es"] as const) {
+    setLanguage(language);
+    for (const [source, en, es] of controls) assert.equal(t(source), language === "en" ? en : es, `${language}: ${source}`);
+  }
+  assert.ok(reader.includes("&lang=${language}"), "The embedded deck follows the app language");
+});
+
+test("Map and nitrogen savings widget labels are localized without changing units", () => {
+  const labels = [
+    ["Risparmio di azoto sull’intero poligono", "Nitrogen savings across the entire polygon", "Ahorro de nitrógeno en todo el polígono"],
+    ["Risparmio stimato", "Estimated savings", "Ahorro estimado"],
+    ["Risparmio %", "Savings %", "Ahorro %"],
+    ["Azoto previsto dal piano", "Planned nitrogen", "Nitrógeno previsto en el plan"],
+    ["Azoto distribuito + indicato dalla IDW", "Nitrogen applied + recommended by IDW", "Nitrógeno aplicado + recomendado por IDW"],
+    ["kg N sul poligono", "kg N across the polygon", "kg N en el polígono"],
+    ["Scenario", "Scenario", "Escenario"],
+    ["Dose min", "Min. rate", "Dosis mín."],
+    ["Dose media", "Mean rate", "Dosis media"],
+    ["Dose max", "Max. rate", "Dosis máx."],
+    ["Punti griglia", "Grid points", "Puntos de la malla"],
+  ] as const;
+  for (const language of ["en", "es"] as const) {
+    setLanguage(language);
+    for (const [source, en, es] of labels) assert.equal(t(source), language === "en" ? en : es, `${language}: ${source}`);
+    assert.equal(t("kg N/ha"), "kg N/ha");
+    assert.equal(translateDisplay(125.4), 125.4);
+  }
+});
+
 test("Dynamic subscriptions and guidance preserve their exact numbers", () => {
   setLanguage("en");
   assert.equal(t("12 giorni rimanenti"), "12 days remaining");
