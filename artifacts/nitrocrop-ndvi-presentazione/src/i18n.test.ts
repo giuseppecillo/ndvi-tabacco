@@ -80,7 +80,11 @@ test("The authoritative uploaded 13-slide deck is the active deck", () => {
       catch { return []; }
     }));
     for (const text of original.textRuns) {
-      assert.ok(activeStrings.has(text), `Slide ${n} lost run ${text}`);
+      // Explicit user-requested wording change; keep the import fixture immutable.
+      const expected = n === 12 && text === "Shapefile ZIP con dose IDW e "
+        ? "Shapefile ZIP con dose spazializzata e "
+        : text;
+      assert.ok(activeStrings.has(expected), `Slide ${n} lost run ${expected}`);
     }
   }
 });

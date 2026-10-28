@@ -144,6 +144,7 @@ export const deckTranslations: readonly (readonly [string, string, string])[] = 
   ["coordinate", "coordinates", "coordenadas"],
   ["PDF del registro in formato A4 orizzontale", "Register PDF in landscape A4 format", "PDF del registro en formato A4 horizontal"],
   ["Shapefile ZIP con dose IDW e riepilogo N", "Shapefile ZIP with IDW rate and N summary", "Shapefile ZIP con dosis IDW y resumen N"],
+  ["Shapefile ZIP con dose spazializzata e riepilogo N", "Shapefile ZIP with spatialized rate and N summary", "Shapefile ZIP con dosis espacializada y resumen N"],
   ["COMPATIBILITÀ", "COMPATIBILITY", "COMPATIBILIDAD"],
   ["Utilizzo previsto in QGIS, ArcGIS e", "Designed for use in QGIS, ArcGIS and", "Uso previsto en QGIS, ArcGIS y"],
   ["strumenti GDAl. Importa la mappa in Farm 2.0 VRT di Taurus Agriculture Solution Srl", "GDAL tools. Import the map into Farm 2.0 VRT by Taurus Agriculture Solution Srl", "herramientas GDAL. Importa el mapa en Farm 2.0 VRT de Taurus Agriculture Solution Srl"],

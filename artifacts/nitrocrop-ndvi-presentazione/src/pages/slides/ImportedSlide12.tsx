@@ -395,15 +395,15 @@ return (
           }}>{t("COMPATIBILIT\u00C0")}</span></p></div><div key={18} style={{
         position: "absolute",
         left: "52.8135vw",
-        top: "36.2333vh",
+        top: "31.0824vh",
         width: "39.6672vw",
-        height: "9.6472vh",
+        height: "22vh",
         boxSizing: "border-box",
         padding: "0vh 0vw 0vh 0vw",
         overflowWrap: "normal"
       }}><p style={{
           textAlign: "left",
-          lineHeight: "0.8465vw",
+          lineHeight: "0",
           fontSize: "1.6938vw",
           marginTop: "0",
           marginBottom: "0"
@@ -411,7 +411,7 @@ return (
             fontSize: t.font("1.6938vw", "\u00A0")
           }}>{t("\u00A0")}</span></p><p style={{
           textAlign: "left",
-          lineHeight: "0.8465vw",
+          lineHeight: "0",
           fontSize: "1.6938vw",
           marginTop: "0",
           marginBottom: "0"
@@ -419,7 +419,7 @@ return (
             fontSize: t.font("1.6938vw", "\u00A0")
           }}>{t("\u00A0")}</span></p><p style={{
           textAlign: "left",
-          lineHeight: "0.8465vw",
+          lineHeight: "2.3715vw",
           fontSize: "1.6938vw",
           marginTop: "0",
           marginBottom: "0"
@@ -429,7 +429,7 @@ return (
             color: "#A85E06"
           }}>{t("GIS")}</span></p><p style={{
           textAlign: "left",
-          lineHeight: "0.8465vw",
+          lineHeight: "1vw",
           fontSize: "1.6938vw",
           marginTop: "0",
           marginBottom: "0"
@@ -437,7 +437,7 @@ return (
             fontSize: t.font("1.6938vw", "\u00A0")
           }}>{t("\u00A0")}</span></p><p style={{
           textAlign: "left",
-          lineHeight: "0.8465vw",
+          lineHeight: "1vw",
           fontSize: "1.6938vw",
           marginTop: "0",
           marginBottom: "0"
@@ -445,34 +445,34 @@ return (
             fontSize: t.font("1.6938vw", "\u00A0")
           }}>{t("\u00A0")}</span></p><p style={{
           textAlign: "left",
-          lineHeight: "0.9993vw",
+          lineHeight: "2.6vw",
           fontSize: "1.9993vw",
-          marginTop: "0",
+          marginTop: "1.4vw",
           marginBottom: "0"
         }}><span style={{
-            fontSize: t.font("1.9993vw", "Shapefile ZIP con dose IDW e riepilogo N"),
+            fontSize: t.font("1.9993vw", "Shapefile ZIP con dose spazializzata e riepilogo N"),
             fontFamily: "'Inter', sans-serif",
             color: "#1E3A5F"
-          }}>{t.part("Shapefile ZIP con dose IDW e riepilogo N", 0, "Shapefile ZIP con dose IDW e ")}</span><span style={{
-            fontSize: t.font("1.9993vw", "Shapefile ZIP con dose IDW e riepilogo N"),
+          }}>{t.part("Shapefile ZIP con dose spazializzata e riepilogo N", 0, "Shapefile ZIP con dose spazializzata e ")}</span><span style={{
+            fontSize: t.font("1.9993vw", "Shapefile ZIP con dose spazializzata e riepilogo N"),
             fontFamily: "'Inter', sans-serif",
             color: "#1E3A5F"
-          }}>{t.part("Shapefile ZIP con dose IDW e riepilogo N", 1, "riepilogo")}</span><span style={{
-            fontSize: t.font("1.9993vw", "Shapefile ZIP con dose IDW e riepilogo N"),
+          }}>{t.part("Shapefile ZIP con dose spazializzata e riepilogo N", 1, "riepilogo")}</span><span style={{
+            fontSize: t.font("1.9993vw", "Shapefile ZIP con dose spazializzata e riepilogo N"),
             fontFamily: "'Inter', sans-serif",
             color: "#1E3A5F"
-          }}>{t.part("Shapefile ZIP con dose IDW e riepilogo N", 2, " N")}</span></p></div><div key={19} style={{
+          }}>{t.part("Shapefile ZIP con dose spazializzata e riepilogo N", 2, " N")}</span></p></div><div key={19} style={{
         position: "absolute",
         left: "52.8135vw",
-        top: "67.9324vh",
+        top: "59.3231vh",
         width: "34.5854vw",
-        height: "7.1546vh",
+        height: "17vh",
         boxSizing: "border-box",
         padding: "0vh 0vw 0vh 0vw",
         overflowWrap: "normal"
       }}><p style={{
           textAlign: "left",
-          lineHeight: "0.8465vw",
+          lineHeight: "2.3715vw",
           fontSize: "1.6938vw",
           marginTop: "0",
           marginBottom: "0"
@@ -482,7 +482,7 @@ return (
             color: "#A85E06"
           }}>{t("SISTEMA DI RIFERIMENTO")}</span></p><p style={{
           textAlign: "left",
-          lineHeight: "0.9993vw",
+          lineHeight: "1vw",
           fontSize: "1.9993vw",
           marginTop: "0",
           marginBottom: "0"
@@ -490,7 +490,7 @@ return (
             fontSize: t.font("1.9993vw", "\u00A0")
           }}>{t("\u00A0")}</span></p><p style={{
           textAlign: "left",
-          lineHeight: "0.9993vw",
+          lineHeight: "1vw",
           fontSize: "1.9993vw",
           marginTop: "0",
           marginBottom: "0"
@@ -498,9 +498,9 @@ return (
             fontSize: t.font("1.9993vw", "\u00A0")
           }}>{t("\u00A0")}</span></p><p style={{
           textAlign: "left",
-          lineHeight: "0.9993vw",
+          lineHeight: "2.6vw",
           fontSize: "1.9993vw",
-          marginTop: "0",
+          marginTop: "1.4vw",
           marginBottom: "0"
         }}><span style={{
             fontSize: t.font("1.9993vw", "Coordinate GIS esportate in WGS84"),

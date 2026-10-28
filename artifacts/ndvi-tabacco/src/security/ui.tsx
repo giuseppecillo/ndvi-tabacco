@@ -106,7 +106,7 @@ export function Eyebrow({ children }: { children: ReactNode }) {
 export function Brand() {
   return (
     <Link href="/" className="flex items-center gap-3">
-      <img src={taurusLogo} alt="Taurus Agriculture Solution" className="h-10 w-auto" />
+      <img src={taurusLogo} alt="Taurus Agriculture Solution" className="h-10 w-10 shrink-0 rounded-full object-contain bg-[#fff8ea] p-0.5 ring-1 ring-[#e8d9b8]" />
       <span className="nc-display text-lg font-semibold text-[var(--nc-leaf)]">NitroCrop NDVI</span>
     </Link>
   );
@@ -178,7 +178,7 @@ export function TopBar({ account }: { account?: Account | null }) {
           data-testid="button-brand-menu"
           className="nc-brand-btn"
         >
-          <img src={taurusLogo} alt="" className="h-9 w-auto shrink-0 rounded-md bg-[#fff8ea] p-0.5" />
+          <img src={taurusLogo} alt="" className="h-9 w-9 shrink-0 rounded-full object-contain bg-[#fff8ea] p-0.5 ring-1 ring-[#e8d9b8]" />
           <span className="nc-display truncate text-lg font-semibold">NitroCrop NDVI</span>
           <ChevronDown aria-hidden="true" className={`h-5 w-5 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
         </button>
