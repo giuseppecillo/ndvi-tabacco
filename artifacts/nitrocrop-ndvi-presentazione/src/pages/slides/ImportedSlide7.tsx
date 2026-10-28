@@ -196,12 +196,12 @@ return (
             fontSize: t.font("2vw", "Piano N ripartito per fase fenologica"),
             fontFamily: "'Inter', sans-serif",
             color: "#1E3A5F"
-          }}>{t("Piano N ripartito per fase fenologica")}</span></p></div><LocalizedFigure key={9} imageId={6} source={img_2} alt="Google Shape;162;p9" style={{
+          }}>{t("Piano N ripartito per fase fenologica")}</span></p></div><LocalizedFigure key={9} imageId={6} module="survey" source={img_2} alt="Google Shape;162;p9" style={{
         position: "absolute",
-        left: "40.953125vw",
-        top: "25.425926vh",
-        width: "57.521875vw",
-        height: "64.357407vh",
+        left: "44.9vw",
+        top: "25.43vh",
+        width: "49.8vw",
+        height: "63.5vh",
         boxSizing: "border-box",
         objectFit: "fill"
       }} /><img key={10} src={img_3} alt="Google Shape;163;p9" style={{

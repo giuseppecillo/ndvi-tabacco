@@ -320,12 +320,12 @@ return (
           width: "91.980208vw",
           height: "5vh",
           maxWidth: "none"
-        }} /></div><LocalizedFigure key={17} imageId={3} source={img_3} alt="Google Shape;33;p1" style={{
+        }} /></div><LocalizedFigure key={17} imageId={3} module="survey" source={img_3} alt="Google Shape;33;p1" style={{
         position: "absolute",
-        left: "60.795833vw",
-        top: "17.5vh",
-        width: "35.711458vw",
-        height: "70.5vh",
+        left: "60.8vw",
+        top: "19vh",
+        width: "35.71vw",
+        height: "63.1vh",
         boxSizing: "border-box",
         objectFit: "fill"
       }} />

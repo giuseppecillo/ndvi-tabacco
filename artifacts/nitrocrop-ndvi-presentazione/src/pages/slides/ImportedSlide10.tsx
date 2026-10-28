@@ -199,12 +199,12 @@ return (
             fontSize: t.font("2vw", "Statistiche di minimo, media, massimo e numero di celle"),
             fontFamily: "'Inter', sans-serif",
             color: "#1E3A5F"
-          }}>{t("Statistiche di minimo, media, massimo e numero di celle")}</span></p></div><LocalizedFigure key={9} imageId={8} source={img_2} alt="Google Shape;224;p15" style={{
+          }}>{t("Statistiche di minimo, media, massimo e numero di celle")}</span></p></div><LocalizedFigure key={9} imageId={8} module="maps" source={img_2} alt="Google Shape;224;p15" style={{
         position: "absolute",
-        left: "51.925vw",
-        top: "14.835185vh",
-        width: "38.597917vw",
-        height: "74.183333vh",
+        left: "55.1vw",
+        top: "14.84vh",
+        width: "32.3vw",
+        height: "74vh",
         boxSizing: "border-box",
         objectFit: "fill"
       }} /><img key={10} src={img_3} alt="Google Shape;225;p15" style={{

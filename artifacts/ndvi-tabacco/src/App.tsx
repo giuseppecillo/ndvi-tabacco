@@ -778,7 +778,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       <div className="max-w-2xl mx-auto space-y-6">
 
         {/* Header */}
-        <ModuleHeading title={t(activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : "Rilievo e Mappe")}>
+        <ModuleHeading title={t(activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : "Rilievo e dati")}>
           <p className="text-amber-900 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
         </ModuleHeading>
 

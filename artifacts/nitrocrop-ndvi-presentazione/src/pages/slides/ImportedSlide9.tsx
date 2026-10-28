@@ -196,12 +196,12 @@ return (
             fontSize: t.font("2vw", "Limite al residuo disponibile del piano"),
             fontFamily: "'Inter', sans-serif",
             color: "#1E3A5F"
-          }}>{t("Limite al residuo disponibile del piano")}</span></p></div><LocalizedFigure key={9} imageId={7} source={img_2} alt="Google Shape;207;p11" style={{
+          }}>{t("Limite al residuo disponibile del piano")}</span></p></div><LocalizedFigure key={9} imageId={7} module="survey" source={img_2} alt="Google Shape;207;p11" style={{
         position: "absolute",
-        left: "56.802083vw",
-        top: "10.131481vh",
-        width: "37.984375vw",
-        height: "80.718519vh",
+        left: "59.9vw",
+        top: "10.13vh",
+        width: "31.7vw",
+        height: "79vh",
         boxSizing: "border-box",
         objectFit: "fill"
       }} /><img key={10} src={img_3} alt="Google Shape;208;p11" style={{

@@ -196,7 +196,7 @@ export function TopBar({ account }: { account?: Account | null }) {
 function NavItems({ account, ready, out, close }: { account?: Account | null; ready: boolean; out: () => Promise<void>; close: () => void }) {
   useLanguage();
   const items: { href: string; label: string; show: boolean; id: string }[] = [
-    { href: "/user-portal", label: "Rilievo e Mappe", show: ready, id: "portal" },
+    { href: "/user-portal", label: "Rilievo e dati", show: ready, id: "portal" },
     { href: "/user-portal?module=maps", label: "Elaborazioni e Mappe", show: ready, id: "maps" },
     { href: "/instructions", label: "Istruzioni", show: ready, id: "instructions" },
     { href: "/account", label: "Il mio account", show: !!account, id: "account" },

@@ -198,18 +198,18 @@ return (
             color: "#1E3A5F"
           }}>{t("Piano azotato varietale corretto per resa e densità")}</span></p></div><div key={9} style={{
         position: "absolute",
-        left: "48.398958vw",
+        left: "51.4vw",
         top: "21.242593vh",
-        width: "44.484375vw",
-        height: "69.759259vh",
+        width: "38.4vw",
+        height: "68vh",
         boxSizing: "border-box",
         overflow: "hidden"
-      }}><LocalizedFigure imageId={3} chrome={false} source={img_2} alt="Google Shape;128;p6" style={{
+      }}><LocalizedFigure imageId={3} module="survey" source={img_2} alt="Google Shape;128;p6" style={{
           position: "absolute",
           left: "0vw",
-          top: "-30.08vh",
-          width: "44.484375vw",
-          height: "95.674074vh",
+          top: "0vh",
+          width: "38.4vw",
+          height: "68vh",
           maxWidth: "none"
         }} /></div><img key={10} src={img_3} alt="Google Shape;129;p6" style={{
         position: "absolute",

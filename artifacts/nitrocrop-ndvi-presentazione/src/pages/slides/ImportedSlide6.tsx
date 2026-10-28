@@ -199,12 +199,12 @@ return (
             fontSize: t.font("2vw", "Dose proporzionale al deficit e mai superiore al residuo del piano"),
             fontFamily: "'Inter', sans-serif",
             color: "#1E3A5F"
-          }}>{t("Dose proporzionale al deficit e mai superiore al residuo del piano")}</span></p></div><LocalizedFigure key={9} imageId={5} source={img_2} alt="Google Shape;145;p8" style={{
+          }}>{t("Dose proporzionale al deficit e mai superiore al residuo del piano")}</span></p></div><LocalizedFigure key={9} imageId={5} module="maps" source={img_2} alt="Google Shape;145;p8" style={{
         position: "absolute",
-        left: "43.10625vw",
-        top: "29.342593vh",
-        width: "56.25625vw",
-        height: "53.364815vh",
+        left: "43.1vw",
+        top: "29.34vh",
+        width: "56.26vw",
+        height: "58.3vh",
         boxSizing: "border-box",
         objectFit: "fill"
       }} /><img key={10} src={img_3} alt="Google Shape;146;p8" style={{

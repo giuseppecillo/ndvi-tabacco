@@ -20,7 +20,7 @@ test("English and Spanish cover access, app, map savings and administration", ()
     setLanguage(language);
     for (const source of [
       "Accedi a NitroCrop NDVI", "Password dimenticata?", "Supporto tecnico:", "Scrivi al supporto tecnico",
-      "Tabacco", "Grano duro", "Registro Osservazioni", "Parametri Colturali", "Rilievo e Mappe", "Istruzioni",
+      "Tabacco", "Grano duro", "Registro Osservazioni", "Parametri Colturali", "Rilievo e dati", "Istruzioni",
       "Precedente", "Successiva", "Apri la presentazione in una nuova scheda",
       "Risparmio di azoto sull’intero poligono", "Autorizza un nuovo utente",
       "Durata abbonamento (giorni)", "Informativa privacy e cookie",

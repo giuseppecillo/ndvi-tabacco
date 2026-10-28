@@ -204,12 +204,12 @@ return (
           marginBottom: "0"
         }}><span style={{
             fontSize: t.font("2vw", "")
-          }}>{t("")}</span></p></div><LocalizedFigure key={9} imageId={9} source={img_2} alt="Google Shape;241;p16" style={{
+          }}>{t("")}</span></p></div><LocalizedFigure key={9} imageId={9} module="maps" source={img_2} alt="Google Shape;241;p16" style={{
         position: "absolute",
-        left: "47.335417vw",
-        top: "29.142593vh",
-        width: "51.321875vw",
-        height: "44.65vh",
+        left: "47.3vw",
+        top: "29.14vh",
+        width: "51.32vw",
+        height: "55.2vh",
         boxSizing: "border-box",
         objectFit: "fill"
       }} /><img key={10} src={img_3} alt="Google Shape;242;p16" style={{

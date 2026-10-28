@@ -53,3 +53,36 @@ test("All six original screenshots have bounded English and Spanish label layers
     }
   }
 });
+
+test("Requested figures use the current-app illustrative chrome in every language", async () => {
+  const { CHROME_FIGURES, chromeGeometry } = await import("./data/figure-chrome");
+  const comp = readFileSync(new URL("./components/LocalizedFigure.tsx", import.meta.url), "utf8");
+  for (const label of ["Schema dell\\u2019interfaccia", "Interface illustration", "Esquema de la interfaz",
+    "Rilievo e dati", "Elaborazioni e Mappe", "Field Survey and Data", "Processing and maps",
+    "Observaciones y datos", "Procesamiento y mapas", "NitroCrop NDVI", "#F6B42C", "#F09A1F", "#1F3D2B"]) {
+    assert.ok(comp.includes(label), `chrome missing ${label}`);
+  }
+  assert.ok(!comp.includes("Nitro Crop NDVI"));
+  assert.deepEqual(Object.keys(CHROME_FIGURES).map(Number), [3, 5, 6, 7, 8, 9]);
+  const expected: Record<number, [number, string][]> = {
+    1: [[3, "survey"]], 5: [[3, "survey"]], 6: [[5, "maps"]], 7: [[6, "survey"]],
+    9: [[7, "survey"]], 10: [[8, "maps"]], 11: [[9, "maps"]],
+  };
+  for (const slide of manifest) {
+    const source = readFileSync(new URL(`../${slide.filepath}`, import.meta.url), "utf8");
+    assert.ok(!/chrome=\{false\}/.test(source), `Slide ${slide.position} opts out of chrome`);
+    assert.ok(!/top: "-\d/.test(source.slice(source.indexOf("<LocalizedFigure"))), `Slide ${slide.position} negative crop`);
+    for (const [id, mod] of expected[slide.position] ?? []) {
+      assert.ok(source.includes(`imageId={${id}} module="${mod}"`), `Slide ${slide.position} figure ${id} ${mod}`);
+    }
+  }
+  for (const [id, cfg] of Object.entries(CHROME_FIGURES)) {
+    const f = FIGURE_LABELS[Number(id)];
+    const g = chromeGeometry(f.viewW, f.viewH, cfg.cropTop, cfg.rail);
+    assert.ok(g.k > 0 && g.k <= 1 && g.bodyX + g.bodyW <= f.viewW + 0.01, `Figure ${id} body fits`);
+    if (cfg.rail) assert.ok(g.H >= g.bar + 330 * g.s, `Figure ${id} rail fits`);
+    for (const lang of ["it", "en", "es"] as const) assert.ok(f.alt[lang]);
+  }
+  assert.equal(translateDeck("NitroCrop NDVI", "en"), "NitroCrop NDVI");
+  assert.equal(translateDeck("NitroCrop NDVI", "es"), "NitroCrop NDVI");
+});

@@ -422,7 +422,7 @@ return (
             fontSize: "2vw",
             fontFamily: "'Inter', sans-serif",
             color: "#2A1A05"
-          }}>{t("Navigazione: il pulsante NitroCrop NDVI apre a sinistra l’elenco dei moduli e riporta a Rilievo e Mappe.")}</span></p></div><img key={19} src={img_1} alt="preencoded.png" style={{
+          }}>{t("Navigazione: il pulsante NitroCrop NDVI apre a sinistra l’elenco dei moduli e riporta a Rilievo e dati.")}</span></p></div><img key={19} src={img_1} alt="preencoded.png" style={{
         position: "absolute",
         left: "4.010417vw",
         top: "3.97963vh",

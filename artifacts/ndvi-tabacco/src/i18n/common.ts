@@ -37,7 +37,7 @@ export const common: readonly Translation[] = [
   ["Invio in corso...", "Sending...", "Enviando..."],
   ["Invio...", "Sending...", "Enviando..."],
   ["Richiesta inviata", "Request sent", "Solicitud enviada"],
-  ["Rilievo e Mappe", "Field Survey and Maps", "Observaciones y Mapas"],
+  ["Rilievo e dati", "Field Survey and Data", "Observaciones y datos"],
   ["Istruzioni", "Instructions", "Instrucciones"],
   ["Presentazione in italiano. Usa i pulsanti per scorrere le diapositive.", "Presentation in Italian. Use the buttons to browse the slides.", "Presentación en italiano. Usa los botones para recorrer las diapositivas."],
   ["La presentazione segue la lingua scelta nell’app, comprese le figure. Usa i pulsanti per scorrere le diapositive.", "The presentation follows the app's selected language, including figures. Use the buttons to browse the slides.", "La presentación sigue el idioma elegido en la aplicación, incluidas las figuras. Usa los botones para recorrer las diapositivas."],
