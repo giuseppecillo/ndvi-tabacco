@@ -7,6 +7,18 @@ import { privacy } from "./privacy";
 
 afterEach(() => setLanguage("it"));
 
+test("The mobile menu overlays the page without shrinking modules or their headings", () => {
+  const css = readFileSync(new URL("../security/security.css", import.meta.url), "utf8");
+  const desktop = css.match(/@media \(min-width: 1024px\) \{([^}]+\}[^}]*\})/)?.[0] ?? "";
+  assert.ok(desktop.includes('data-nav-open="true"'));
+  assert.ok(desktop.includes("margin-inline-start: var(--nc-rail-w)"));
+  assert.equal((css.match(/margin-inline-start: var\(--nc-rail-w\)/g) ?? []).length, 1);
+  assert.ok(css.includes("@media (max-width: 1023px)"));
+  assert.ok(css.includes(".nc-nav-backdrop { display: block; position: fixed;"));
+  assert.ok(css.includes(".nc-topbar { position: sticky; top: 0; z-index: 30;"));
+  assert.ok(!/data-nav-open[^}]+nc-modhead-(row|photo|title)/.test(css));
+});
+
 test("Spatialization, dose inspection and observation history are translated without changing stored data", () => {
   const copy = [
     ["Spazializza i tuoi dati", "Spatialize your data", "Espacializa tus datos"],

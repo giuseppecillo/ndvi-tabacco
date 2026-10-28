@@ -183,6 +183,7 @@ export function TopBar({ account }: { account?: Account | null }) {
           <ChevronDown aria-hidden="true" className={`h-5 w-5 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
         </button>
         <div className="hidden sm:block"><LanguageSelector /></div>
+        {open && <button type="button" className="nc-nav-backdrop" aria-label={t("Chiudi il menu")} tabIndex={-1} onClick={close} data-testid="button-nav-backdrop" />}
         {open && (
           <nav id="nc-topnav" aria-label="NitroCrop NDVI" className="nc-dropdown" data-testid="nav-dropdown">
             <NavItems account={account} ready={ready} out={out} close={close} />
