@@ -33,11 +33,17 @@ Un modulo Clerk incorporato nella home pubblica non deve usare `/` come prefisso
 
 **How to apply:** isolare i passaggi del modulo incorporato dal router delle pagine pubbliche; preservare invece il routing per percorso nelle pagine dedicate `/sign-in` e `/sign-up`. Verificare la navigazione reale alla privacy oltre al semplice caricamento del modulo.
 
-Per l’informativa l’utente ha dichiarato sede legale a Milano, conservazione di 5 anni per ciascuna categoria e accordi con i responsabili ai sensi dell’art. 28 GDPR. Ha poi precisato che «il Regno Unito è dove sarà il server»: è la sede futura prevista del server dell’applicazione, non la sede legale né una dichiarazione sul luogo di tutti i trattamenti dei fornitori. Ha approvato la rimozione dell’affermazione di assenza di trasferimenti extra UE.
+Per l’informativa l’utente ha confermato conservazione di 5 anni per ogni categoria dalla creazione dell’account da parte dell’amministratore, con scadenza unica anche per i dati aggiunti successivamente. Ha confermato basi giuridiche distinte: contratto per il servizio, legittimo interesse per sicurezza, obbligo legale per le richieste privacy.
 
-**Why:** sono informazioni fornite dal titolare, non esiti di una verifica tecnica o contrattuale dei fornitori.
+**Why:** il titolare ha confermato esplicitamente la decorrenza unica, dopo averne chiarito l’effetto sui dati aggiunti più tardi.
 
-**How to apply:** mantenere distinti la politica dichiarata, la verifica di contratti/subfornitori e l’applicazione operativa della conservazione. Non attestare localizzazione UE o cancellazione automatica solo perché sono descritte nell’informativa.
+**How to apply:** non sostituire la decorrenza con la data del singolo rilievo. Distinguere la politica dichiarata dall’effettiva applicazione operativa; non introdurre cancellazioni massive senza verificarne tutte le conseguenze.
+
+Taurus Agriculture Solution SRL ha sviluppato il software NitroCrop NDVI, è il fornitore della soluzione e il titolare del trattamento. L’utente ha ribadito che Taurus ha sviluppato il software e ha chiarito che con «fornitore» intende Taurus, non i servizi tecnici esterni. La precedente dichiarazione di accordi con responsabili e assenza di trasferimenti extra UE non è stata documentata. Ha descritto backup incrementali continui e crittografati, senza confermare servizio, scadenza o modalità di eliminazione.
+
+**Why:** l’utente ha ribadito il ruolo di Taurus nello sviluppo; il chiarimento non dimostra le condizioni contrattuali e operative dei servizi tecnici.
+
+**How to apply:** mantenere l’avviso di bozza finché contratti, ruoli, trasferimenti e backup non sono verificati. Non dichiarare assenza di fornitori, trattamento esclusivamente UE o proprietà tecniche dei backup come fatti accertati.
 
 L’utente specifica che l’applicazione è sviluppata interamente in Italia.
 
@@ -45,8 +51,8 @@ L’utente specifica che l’applicazione è sviluppata interamente in Italia.
 
 **How to apply:** distinguere il luogo di sviluppo dalla localizzazione del trattamento. Il primo non dimostra da solo dove hosting, autenticazione e cartografia trattano i dati.
 
-L’utente chiarisce che attualmente ha tutto su Replit e GitHub; prevede poi un dominio Aruba e l’uso di Supabase e Netlify.
+L’utente ha indicato Aruba per il dominio e Supabase e Netlify come intenzioni future. La firma di contratti non dimostra di per sé l’attivazione di questi servizi o una migrazione dei dati.
 
-**Why:** chiarimento successivo all’espressione ambigua «tutto su Aruba».
+**Why:** il titolare ha distinto la configurazione operativa dai progetti futuri.
 
-**How to apply:** trattare Supabase e Netlify come intenzioni future, non servizi già attivi. Il dominio Aruba non implica una migrazione dell’hosting né autorizza a rimuovere i fornitori effettivamente usati dall’informativa. Non avviare una migrazione sulla base di questo chiarimento.
+**How to apply:** preservare i fornitori effettivi nell’informativa e distinguere contratti, intenzioni e uso tecnico osservato; non avviare migrazioni implicite.
