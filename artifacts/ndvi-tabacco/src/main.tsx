@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import SecurityRoot from "./security/SecurityRoot";
 import "./index.css";
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(<SecurityRoot />);

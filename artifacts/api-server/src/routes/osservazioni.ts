@@ -1,7 +1,10 @@
 import { Router } from "express";
+import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
+import { requireAccount, requirePrivacyAck } from "../middlewares/access";
 
 const router = Router();
+router.use("/osservazioni", requireAccount, requirePrivacyAck);
 
 const FASI_N_GRANO: Record<string, { label: string; min: number; max: number }> = {
   "00–09": { label: "Semina / emergenza", min: 27, max: 36 },
@@ -199,7 +202,7 @@ router.get("/osservazioni", async (_req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT
-         id, data, data_trapianto AS "dataTrapianto",
+         observation_id AS id, data, data_trapianto AS "dataTrapianto",
          data_trapianto AS "dataSemina",
          tipo_intervento AS coltura,
          giorni,
@@ -219,7 +222,9 @@ router.get("/osservazioni", async (_req, res) => {
          lat, lng,
          created_at AS "createdAt"
        FROM osservazioni
-       ORDER BY created_at DESC`
+       WHERE owner_id=$1
+       ORDER BY created_at DESC`,
+       [res.locals.account.id],
     );
     const parsed = rows.map((r) => ({
        ...r,
@@ -247,13 +252,17 @@ router.get("/osservazioni", async (_req, res) => {
     }));
     res.json(parsed);
   } catch (err) {
-    res.status(500).json({ error: "DB error", detail: String(err) });
+    res.status(500).json({ error: "Impossibile caricare le osservazioni." });
   }
 });
 
 // POST — save a new observation
 router.post("/osservazioni", async (req, res) => {
   const o = req.body;
+  if (!o || typeof o.id !== "string" || !o.id.trim() || o.id.length > 100) {
+    res.status(400).json({ error: "ID osservazione non valido." });
+    return;
+  }
   const coltura = o.coltura ?? o.tipoIntervento ?? "tabacco";
   if (coltura !== "tabacco" && coltura !== "grano duro") {
     res.status(400).json({ error: "Coltura non supportata." });
@@ -272,9 +281,9 @@ router.post("/osservazioni", async (req, res) => {
          (id, data, data_trapianto, tipo_intervento, giorni, eta_piantina,
            cliente, appezzamento, resa, varieta, piante_semi_ha, piante_semi_unita, piante_ha_equivalenti,
             n1, n2, n3, n4, n5, media, ottimale, discostamento, dose,
-             fase_fenologica, bbch, fase_fonte, azoto_totale, azoto_gia_distribuito, quota_azoto, lat, lng)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)
-       ON CONFLICT (id) DO UPDATE SET
+             fase_fenologica, bbch, fase_fonte, azoto_totale, azoto_gia_distribuito, quota_azoto, lat, lng, owner_id, observation_id)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
+       ON CONFLICT (owner_id, observation_id) DO UPDATE SET
          data=$2, data_trapianto=$3, tipo_intervento=$4, giorni=$5, eta_piantina=$6,
           cliente=$7, appezzamento=$8, resa=$9, varieta=$10,
           piante_semi_ha=$11, piante_semi_unita=$12, piante_ha_equivalenti=$13,
@@ -283,39 +292,39 @@ router.post("/osservazioni", async (req, res) => {
              fase_fenologica=$23, bbch=$24, fase_fonte=$25, azoto_totale=$26, azoto_gia_distribuito=$27, quota_azoto=$28,
              lat=$29, lng=$30`,
       [
-          o.id, o.data, o.dataSemina || o.dataTrapianto || null, coltura, o.giorni,
+          randomUUID(), o.data, o.dataSemina || o.dataTrapianto || null, coltura, o.giorni,
         o.etaPiantina ?? "standard",
         o.cliente, o.appezzamento, o.resa, o.varieta,
         o.densitaValore ?? null, o.densitaUnita ?? null, o.pianteHaEquivalenti ?? null,
          o.n1, o.n2, o.n3, o.n4, o.n5, o.media, o.ottimale, o.discostamento, o.dose,
           o.faseFenologica ?? null, o.bbch ?? null, o.faseFonte ?? null,
            o.azotoTotale ?? null, o.azotoGiaDistribuito ?? null, o.quotaAzoto ?? null,
-           o.lat ?? null, o.lng ?? null,
+           o.lat ?? null, o.lng ?? null, res.locals.account.id, o.id.trim(),
       ]
     );
     res.status(201).json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: "DB error", detail: String(err) });
+    res.status(500).json({ error: "Impossibile salvare l’osservazione." });
   }
 });
 
 // DELETE — remove an observation by id
 router.delete("/osservazioni/:id", async (req, res) => {
   try {
-    await pool.query("DELETE FROM osservazioni WHERE id=$1", [req.params.id]);
+    await pool.query("DELETE FROM osservazioni WHERE observation_id=$1 AND owner_id=$2", [req.params.id, res.locals.account.id]);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: "DB error", detail: String(err) });
+    res.status(500).json({ error: "Impossibile eliminare l’osservazione." });
   }
 });
 
 // DELETE all — reset the entire registry
 router.delete("/osservazioni", async (_req, res) => {
   try {
-    await pool.query("DELETE FROM osservazioni");
+    await pool.query("DELETE FROM osservazioni WHERE owner_id=$1", [res.locals.account.id]);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: "DB error", detail: String(err) });
+    res.status(500).json({ error: "Impossibile cancellare il registro." });
   }
 });
 

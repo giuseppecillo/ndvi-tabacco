@@ -8,9 +8,12 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "esbuild src/routes/osservazioni.test.ts --bundle --platform=node --format=cjs --outfile=/tmp/api-server-osservazioni.test.cjs && node --test /tmp/api-server-osservazioni.test.cjs"
+    "test": "esbuild src/routes/osservazioni.test.ts src/lib/origin-policy.test.ts --bundle --platform=node --format=cjs --outdir=/tmp/nitrocrop-api-tests && node --test /tmp/nitrocrop-api-tests/routes/osservazioni.test.js /tmp/nitrocrop-api-tests/lib/origin-policy.test.js",
+    "test:access": "esbuild src/scripts/verify-access.ts --bundle --platform=node --format=esm --packages=external --outfile=node_modules/.cache/verify-access.mjs && node node_modules/.cache/verify-access.mjs"
   },
   "dependencies": {
+    "@clerk/express": "^2.1.84",
+    "@clerk/shared": "^4.42.0",
     "@types/pg": "^8.20.0",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
@@ -18,9 +21,12 @@
     "cors": "^2.8.6",
     "drizzle-orm": "catalog:",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "http-proxy-middleware": "^4.2.1",
     "pg": "^8.20.0",
     "pino": "^9.14.0",
-    "pino-http": "^10.5.0"
+    "pino-http": "^10.5.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

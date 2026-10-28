@@ -11,6 +11,215 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /auth/setup:
+    get:
+      operationId: getAccessSetup
+      responses:
+        "200":
+          description: Initial administrator activation availability
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [activationAvailable]
+                properties:
+                  activationAvailable: { type: boolean }
+  /auth/bootstrap-invite:
+    post:
+      operationId: sendAdministratorActivation
+      responses:
+        "200":
+          description: Activation email requested
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+  /auth/me:
+    get:
+      operationId: getMyAccount
+      responses:
+        "200":
+          description: Approved account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "401": { description: Not signed in }
+        "403": { description: Not authorized or suspended }
+  /auth/privacy-ack:
+    post:
+      operationId: acknowledgePrivacy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: { type: string }
+      responses:
+        "200":
+          description: Notice acknowledged
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+  /auth/export:
+    get:
+      operationId: exportMyData
+      responses:
+        "200":
+          description: JSON copy of profile, observations and privacy requests
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /auth/privacy-requests:
+    get:
+      operationId: listMyPrivacyRequests
+      responses:
+        "200":
+          description: Own privacy requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PrivacyRequest" }
+    post:
+      operationId: createPrivacyRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, message]
+              properties:
+                type: { type: string, enum: [erasure, rectification, restriction, objection, access] }
+                message: { type: string, minLength: 1, maxLength: 2000 }
+      responses:
+        "201":
+          description: Request registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PrivacyRequest" }
+  /admin/users:
+    get:
+      operationId: listManagedUsers
+      responses:
+        "200":
+          description: Administrator-only account list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Account" }
+    post:
+      operationId: inviteManagedUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, name]
+              properties:
+                email: { type: string, format: email, maxLength: 254 }
+                name: { type: string, maxLength: 120 }
+      responses:
+        "201":
+          description: Authorized account and invitation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+  /admin/users/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      operationId: updateManagedUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [active, suspended] }
+      responses:
+        "200":
+          description: Updated account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+    delete:
+      operationId: deleteManagedUser
+      responses:
+        "200":
+          description: Account and observations deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+  /admin/users/{id}/invite:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: resendManagedInvitation
+      responses:
+        "200":
+          description: Invitation requested
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+  /admin/privacy-requests:
+    get:
+      operationId: listManagedPrivacyRequests
+      responses:
+        "200":
+          description: Requests for review by the controller
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PrivacyRequest" }
+  /admin/privacy-requests/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      operationId: updateManagedPrivacyRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status, response]
+              properties:
+                status: { type: string, enum: [in_progress, completed, rejected] }
+                response: { type: string, minLength: 1, maxLength: 2000 }
+      responses:
+        "200":
+          description: Updated privacy request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PrivacyRequest" }
+  /admin/audit:
+    get:
+      operationId: listSecurityEvents
+      responses:
+        "200":
+          description: Last 100 account administration events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, action, createdAt]
+                  properties:
+                    id: { type: string }
+                    action: { type: string }
+                    targetId: { type: [string, "null"] }
+                    createdAt: { type: string }
   /healthz:
     get:
       operationId: healthCheck
@@ -26,6 +235,35 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    Message:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+    Account:
+      type: object
+      required: [id, email, name, role, status, privacyAcknowledged, privacyVersion, activated, createdAt]
+      properties:
+        id: { type: string }
+        email: { type: string }
+        name: { type: string }
+        role: { type: string, enum: [admin, user] }
+        status: { type: string, enum: [active, suspended, deleting] }
+        privacyAcknowledged: { type: boolean }
+        privacyVersion: { type: string }
+        activated: { type: boolean }
+        createdAt: { type: string }
+    PrivacyRequest:
+      type: object
+      required: [id, userId, type, message, status, response, createdAt]
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        type: { type: string, enum: [erasure, rectification, restriction, objection, access] }
+        message: { type: string }
+        status: { type: string, enum: [pending, in_progress, completed, rejected] }
+        response: { type: string }
+        createdAt: { type: string }
     HealthStatus:
       type: object
       properties:

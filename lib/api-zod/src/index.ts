@@ -1,2 +1,4 @@
 export * from "./generated/api";
-export * from "./generated/types";
+// Body schemas have the same names as Orval's request-body types.
+// Keep schemas at the root and expose generated TS types in their own namespace.
+export * as ApiTypes from "./generated/types";

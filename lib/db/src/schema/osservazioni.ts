@@ -1,4 +1,5 @@
-import { integer, numeric, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { integer, numeric, pgTable, text, timestamp, varchar, uniqueIndex } from "drizzle-orm/pg-core";
+import { appUsersTable } from "./security";
 
 /**
  * Persistent observations shared by the tobacco NDVI calculator and the
@@ -7,6 +8,8 @@ import { integer, numeric, pgTable, text, timestamp, varchar } from "drizzle-orm
  */
 export const osservazioniTable = pgTable("osservazioni", {
   id: text("id").primaryKey(),
+  ownerId: text("owner_id").references(() => appUsersTable.id, { onDelete: "cascade" }),
+  observationId: text("observation_id"),
   data: text("data").notNull(),
   dataTrapianto: text("data_trapianto"),
   tipoIntervento: text("tipo_intervento").notNull(),
@@ -37,4 +40,6 @@ export const osservazioniTable = pgTable("osservazioni", {
   azotoTotale: numeric("azoto_totale"),
   azotoGiaDistribuito: numeric("azoto_gia_distribuito"),
   quotaAzoto: numeric("quota_azoto"),
-});
+}, (table) => [
+  uniqueIndex("osservazioni_owner_display_idx").on(table.ownerId, table.observationId),
+]);

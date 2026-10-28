@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -189,10 +189,11 @@ export type Observation = {
 const PARAMETRI_AZIENDALI_STORAGE_KEY = "ndvi-tabacco-parametri-aziendali";
 const FINESTRE_DAS_GRANO_STORAGE_KEY = "ndvi-tabacco-finestre-das-grano-v2";
 
-function caricaParametriAziendali(): Record<string, ParametriAziendali> {
+function caricaParametriAziendali(storageScope: string, migrateLegacySettings: boolean): Record<string, ParametriAziendali> {
   if (typeof window === "undefined") return PARAMETRI_AZIENDALI_DEFAULT;
   try {
-    const salvati = JSON.parse(window.localStorage.getItem(PARAMETRI_AZIENDALI_STORAGE_KEY) ?? "null");
+    const salvati = JSON.parse(window.localStorage.getItem(`${PARAMETRI_AZIENDALI_STORAGE_KEY}:${storageScope}`) ??
+      (migrateLegacySettings ? window.localStorage.getItem(PARAMETRI_AZIENDALI_STORAGE_KEY) : null) ?? "null");
     if (!salvati || typeof salvati !== "object") return PARAMETRI_AZIENDALI_DEFAULT;
     return Object.fromEntries(
       Object.entries(PARAMETRI_AZIENDALI_DEFAULT).map(([label, defaults]) => {
@@ -217,10 +218,11 @@ function caricaParametriAziendali(): Record<string, ParametriAziendali> {
   }
 }
 
-function caricaFinestreDasGrano(): FinestraDasLocale[] {
+function caricaFinestreDasGrano(storageScope: string, migrateLegacySettings: boolean): FinestraDasLocale[] {
   if (typeof window === "undefined") return FINESTRE_DAS_LOCALI_TEMPLATE;
   try {
-    const salvate = JSON.parse(window.localStorage.getItem(FINESTRE_DAS_GRANO_STORAGE_KEY) ?? "null");
+    const salvate = JSON.parse(window.localStorage.getItem(`${FINESTRE_DAS_GRANO_STORAGE_KEY}:${storageScope}`) ??
+      (migrateLegacySettings ? window.localStorage.getItem(FINESTRE_DAS_GRANO_STORAGE_KEY) : null) ?? "null");
     if (!Array.isArray(salvate) || salvate.length !== FINESTRE_DAS_LOCALI_TEMPLATE.length) {
       return FINESTRE_DAS_LOCALI_TEMPLATE;
     }
@@ -316,7 +318,12 @@ function NumberInput({
 
 const today = new Date().toISOString().slice(0, 10);
 
-export default function App() {
+export default function App({ storageScope, migrateLegacySettings = false }: { storageScope: string; migrateLegacySettings?: boolean }) {
+  const activeAccountView = useRef(true);
+  useEffect(() => {
+    activeAccountView.current = true;
+    return () => { activeAccountView.current = false; };
+  }, []);
   const [activeTab, setActiveTab]       = useState<"calcolatore" | "elaborazioni">("calcolatore");
   const [obsId, setObsId]               = useState("1");
   const [coltura, setColtura]           = useState<Coltura>("tabacco");
@@ -333,7 +340,7 @@ export default function App() {
   const [bbchGrano, setBbchGrano] = useState("");
   const [bbchGranoConfermato, setBbchGranoConfermato] = useState(false);
   const [azotoGiaDistribuito, setAzotoGiaDistribuito] = useState(0);
-  const [finestreDasGrano, setFinestreDasGrano] = useState<FinestraDasLocale[]>(caricaFinestreDasGrano);
+  const [finestreDasGrano, setFinestreDasGrano] = useState<FinestraDasLocale[]>(() => caricaFinestreDasGrano(storageScope, migrateLegacySettings));
   const [n1, setN1] = useState(0.42);
   const [n2, setN2] = useState(0.38);
   const [n3, setN3] = useState(0.41);
@@ -343,7 +350,7 @@ export default function App() {
   const [osservazioni, setOsservazioni] = useState<Observation[]>([]);
   const [loadingOss, setLoadingOss] = useState(true);
   const [parametriAziendali, setParametriAziendali] = useState<Record<string, ParametriAziendali>>(
-    caricaParametriAziendali
+    () => caricaParametriAziendali(storageScope, migrateLegacySettings)
   );
   const isGranoDuro = coltura === "grano duro";
   const datiGrano = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
@@ -359,28 +366,37 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetch("/api/osservazioni")
-      .then((r) => r.json())
-      .then((data: Observation[]) => setOsservazioni(data))
-      .catch(() => {})
+    const controller = new AbortController();
+    fetch("/api/osservazioni", { signal: controller.signal })
+      .then((r) => {
+        if (!r.ok) throw new Error("Caricamento non riuscito.");
+        return r.json();
+      })
+      .then((data: Observation[]) => {
+        if (!controller.signal.aborted) setOsservazioni(data);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setErrors(current => ({ ...current, save: "Impossibile caricare il registro. Verifica l’accesso e aggiorna la pagina." }));
+      })
       .finally(() => setLoadingOss(false));
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(FINESTRE_DAS_GRANO_STORAGE_KEY, JSON.stringify(finestreDasGrano));
+      window.localStorage.setItem(`${FINESTRE_DAS_GRANO_STORAGE_KEY}:${storageScope}`, JSON.stringify(finestreDasGrano));
     } catch {
       // Le finestre restano utilizzabili nella sessione se lo storage è disabilitato.
     }
-  }, [finestreDasGrano]);
+  }, [finestreDasGrano, storageScope]);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(PARAMETRI_AZIENDALI_STORAGE_KEY, JSON.stringify(parametriAziendali));
+      window.localStorage.setItem(`${PARAMETRI_AZIENDALI_STORAGE_KEY}:${storageScope}`, JSON.stringify(parametriAziendali));
     } catch {
       // La calibrazione resta disponibile nella sessione anche se lo storage è disabilitato.
     }
-  }, [parametriAziendali]);
+  }, [parametriAziendali, storageScope]);
 
   // Auto-fill resa, azoto e densità quando cambia la varietà.
   useEffect(() => {
@@ -530,6 +546,9 @@ export default function App() {
     const num = parseInt(trimmedIdFinal);
 
     const doSave = (lat: number | null, lng: number | null) => {
+      // GPS callbacks can arrive after logout or an account switch. Never send
+      // the previous account's form through the new browser session.
+      if (!activeAccountView.current) return;
       const nuova: Observation = {
         id: trimmedIdFinal,
         coltura,
@@ -616,13 +635,21 @@ export default function App() {
 
   const eliminaOsservazione = useCallback((id: string) => {
     fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
-      .then(() => setOsservazioni((prev) => prev.filter((o) => o.id !== id)));
+      .then((response) => {
+        if (!response.ok) throw new Error("Eliminazione non riuscita.");
+        setOsservazioni((prev) => prev.filter((o) => o.id !== id));
+      })
+      .catch(() => setErrors(current => ({ ...current, save: "Impossibile eliminare l’osservazione. Verifica l’accesso e riprova." })));
   }, []);
 
   const resetRegistro = useCallback(() => {
     if (!window.confirm("Sei sicuro di voler cancellare tutto il registro? L'operazione è irreversibile.")) return;
     fetch("/api/osservazioni", { method: "DELETE" })
-      .then(() => setOsservazioni([]));
+      .then((response) => {
+        if (!response.ok) throw new Error("Cancellazione non riuscita.");
+        setOsservazioni([]);
+      })
+      .catch(() => setErrors(current => ({ ...current, save: "Impossibile cancellare il registro. Verifica l’accesso e riprova." })));
   }, []);
 
   const esportaPDF = useCallback(() => {
