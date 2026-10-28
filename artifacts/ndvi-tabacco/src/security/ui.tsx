@@ -12,6 +12,22 @@ export const PRIVACY_CONTACT = "privacy@taurusagsolution.com";
 export const SUPPORT_CONTACT = "password@taurusagsolution.com";
 export const TECHNICAL_SUPPORT_CONTACT = "support@taurusagsolution.com";
 
+export function TechnicalSupport({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="flex flex-col items-start gap-2 text-sm">
+      <a
+        href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`}
+        className="inline-flex items-center justify-center rounded-full bg-[var(--nc-leaf)] px-4 py-2 text-center font-semibold text-[var(--nc-paper)] hover:bg-[var(--nc-leaf-2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--nc-leaf)]"
+      >
+        Scrivi al supporto tecnico
+      </a>
+      {!compact && (
+        <span className="break-all text-[var(--nc-muted)] select-text">{TECHNICAL_SUPPORT_CONTACT}</span>
+      )}
+    </div>
+  );
+}
+
 export function errText(e: unknown): string {
   const d = (e as { data?: unknown } | null)?.data;
   if (d && typeof d === "object" && typeof (d as { error?: unknown }).error === "string") {
@@ -116,7 +132,7 @@ export function TopBar({ account }: { account?: Account | null }) {
           {account && <Link href="/account" className={link}>Il mio account</Link>}
           {account?.role === "admin" && account.status === "active" && <Link href="/admin" className={link}>Amministrazione</Link>}
           <Link href="/privacy" className={link}>Privacy</Link>
-          <a href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`} className={link}>Supporto tecnico</a>
+          <TechnicalSupport compact />
           <LanguageSelector />
           <button onClick={() => void out()} className="ml-1 rounded-full border border-[var(--nc-line)] px-3 py-1.5 text-sm font-semibold text-[var(--nc-leaf)] hover:bg-[var(--nc-paper-2)]">Esci</button>
         </nav>

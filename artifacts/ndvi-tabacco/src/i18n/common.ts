@@ -3,6 +3,7 @@ import type { Translation } from "./runtime";
 export const common: readonly Translation[] = [
   ["Lingua", "Language", "Idioma"],
   ["Supporto tecnico", "Technical support", "Soporte técnico"],
+  ["Scrivi al supporto tecnico", "Email technical support", "Escribe al soporte técnico"],
   ["Supporto tecnico:", "Technical support:", "Soporte técnico:"],
   ["Assistenza password", "Password assistance", "Ayuda con la contraseña"],
   ["Supporto alla fertilizzazione azotata di grano e tabacco.", "Nitrogen fertilization support for wheat and tobacco.", "Apoyo a la fertilización nitrogenada de trigo y tabaco."],
