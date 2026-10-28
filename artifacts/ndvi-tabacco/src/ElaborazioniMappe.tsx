@@ -21,11 +21,12 @@ import "leaflet/dist/leaflet.css";
 import shp from "shpjs";
 import { Observation } from "./App";
 import {
-  KmlPolygon, ControlPoint, PolyIdwResult,
+  KmlPolygon, ControlPoint, PolyIdwResult, IdwGridPoint, findDoseCell,
   parseKml, parseKmz, parseShpPolygons,
   computeIdwGrid, downloadShapefile, downloadGeoTiff,
 } from "./utils/geoUtils";
 import { NitrogenSavings } from "./components/NitrogenSavings";
+import { t, useLanguage } from "./i18n/runtime";
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
 
@@ -64,16 +65,26 @@ function renderIdwOverlay(result: PolyIdwResult): string {
 
 // ── Leaflet map sub-component ─────────────────────────────────────────────────
 
+type MapPick = { lat: number; lng: number; cell?: IdwGridPoint };
+
 function MapView({ result }: { result: PolyIdwResult }) {
+  const language = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.CircleMarker | null>(null);
   const [hover, setHover] = useState<{ lat: number; lng: number; dose: number } | null>(null);
+  // Persistent click/tap inspection; cleared when the result changes.
+  const [selected, setSelected] = useState<MapPick | null>(null);
 
   useEffect(() => {
+    setSelected(null);
+    setHover(null);
     if (!containerRef.current || !result.grid.length) return;
     const [west, south, east, north] = result.bbox;
     const bounds = L.latLngBounds([[south, west], [north, east]]);
 
     const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true });
+    mapRef.current = map;
 
     // Satellite basemap — Esri World Imagery (free, no key)
     L.tileLayer(
@@ -88,7 +99,7 @@ function MapView({ result }: { result: PolyIdwResult }) {
     // Polygon outline
     L.polygon(
       result.polygon.ring.map(([lng, lat]) => [lat, lng] as [number, number]),
-      { color: "#166534", weight: 2.5, fill: false, dashArray: undefined }
+      { color: "#166534", weight: 2.5, fill: false, dashArray: undefined, interactive: false }
     ).addTo(map);
 
     // Control points with tooltip
@@ -113,27 +124,49 @@ function MapView({ result }: { result: PolyIdwResult }) {
     });
     resizeObserver.observe(containerRef.current);
 
-    // GIS info on mouse move
-    const { cellSizeDeg, grid } = result;
-    const halfLat = cellSizeDeg.lat * 0.65;
-    const halfLon = cellSizeDeg.lon * 0.65;
-
+    // Hover preview (desktop). Outside the polygon there is no value.
     function onMove(e: L.LeafletMouseEvent) {
       const { lat, lng } = e.latlng;
-      const cell = grid.find(
-        g => Math.abs(g.lat - lat) < halfLat && Math.abs(g.lng - lng) < halfLon
-      );
+      const cell = findDoseCell(result, lng, lat);
       setHover(cell ? { lat, lng, dose: cell.dose } : null);
+    }
+    // Click / tap fixes the inspected cell until cleared or changed.
+    function onPick(e: L.LeafletMouseEvent) {
+      const { lat, lng } = e.latlng;
+      setSelected({ lat, lng, cell: findDoseCell(result, lng, lat) });
     }
     map.on("mousemove", onMove);
     map.on("mouseout", () => setHover(null));
+    map.on("click", onPick);
 
-    return () => { resizeObserver.disconnect(); map.remove(); };
+    return () => {
+      resizeObserver.disconnect();
+      markerRef.current = null;
+      mapRef.current = null;
+      map.remove();
+    };
   }, [result]);
+
+  // Marker on the selected interpolated grid cell (none outside the polygon).
+  useEffect(() => {
+    const map = mapRef.current;
+    markerRef.current?.remove();
+    markerRef.current = null;
+    if (!map || !selected?.cell) return;
+    const { cell } = selected;
+    markerRef.current = L.circleMarker([cell.lat, cell.lng], {
+      radius: 9, color: "#fff8ea", weight: 3, fillColor: "#14532d", fillOpacity: 0.95,
+    })
+      .bindTooltip(`${t("Cella della griglia interpolata")}: ${cell.dose.toFixed(1)} kg N/ha`, {
+        direction: "top", offset: [0, -8],
+      })
+      .addTo(map);
+  }, [selected, language]);
 
   const { min, max } = result.stats;
 
   return (
+    <div>
     <div className="relative rounded-xl overflow-hidden border border-stone-200 shadow">
       <div ref={containerRef} className="nc-map-canvas w-full" />
 
@@ -145,7 +178,7 @@ function MapView({ result }: { result: PolyIdwResult }) {
         </div>
       ) : (
         <div className="absolute bottom-3 left-3 bg-black/50 text-white/70 text-[11px] rounded-md px-2 py-1 pointer-events-none z-[1000]">
-          Sposta il cursore sulla mappa per i valori
+          Sposta il cursore o tocca la mappa per i valori
         </div>
       )}
 
@@ -166,6 +199,54 @@ function MapView({ result }: { result: PolyIdwResult }) {
           <div className="w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white flex-shrink-0" />
           <span className="text-stone-500 text-[10px]">ctrl pt</span>
         </div>
+      </div>
+    </div>
+
+      {/* Persistent inspection of the tapped / clicked grid cell */}
+      <div
+        role="status"
+        aria-live="polite"
+        data-testid="map-dose-inspection"
+        className="mt-2 rounded-xl border border-emerald-200 bg-[#fff8ea] px-4 py-3 text-sm"
+      >
+        {!selected ? (
+          <p className="text-stone-600">Tocca o fai clic su un punto del poligono per fissare la dose interpolata.</p>
+        ) : selected.cell ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Cella della griglia interpolata (IDW), non un rilievo GPS</p>
+              <p className="text-2xl font-bold tabular-nums text-green-900">
+                {selected.cell.dose.toFixed(1)} <span className="text-base font-semibold">kg N/ha</span>
+              </p>
+              <p className="font-mono text-xs text-stone-600">
+                {selected.cell.lat.toFixed(6)}, {selected.cell.lng.toFixed(6)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="self-start rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 sm:self-center"
+            >
+              Cancella selezione
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-stone-800">Nessun valore interpolato: il punto è fuori dal poligono.</p>
+              <p className="font-mono text-xs text-stone-600">
+                {selected.lat.toFixed(6)}, {selected.lng.toFixed(6)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="self-start rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 sm:self-center"
+            >
+              Cancella selezione
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -626,7 +707,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
             Elaborazione in corso…
           </>
         ) : (
-          <>🗺 Avvia Elaborazione IDW</>
+          <>Spazializza i tuoi dati</>
         )}
       </button>
 

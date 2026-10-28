@@ -1,12 +1,13 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearch } from "wouter";
 import { ModuleHeading } from "./security/ModuleHeading";
-import { getLocale, t } from "./i18n/runtime";
+import { getLocale, t, useLanguage } from "./i18n/runtime";
 const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { ObservationDistributionChart } from "./ObservationDistributionChart";
+import { ObservationList } from "./components/ObservationList";
 import { exportObservationsCsv } from "./utils/geoUtils";
 const bibliografiaNdviTabaccoUrl = `${import.meta.env.BASE_URL}bibliografia-ndvi-tabacco.md`;
 import {
@@ -155,6 +156,12 @@ export const PARAMETRI_AZIENDALI_DEFAULT: Record<string, ParametriAziendali> =
     ])
   );
 
+type ActiveTab = "calcolatore" | "elaborazioni" | "storico";
+function tabFromSearch(search: string): ActiveTab {
+  const module = new URLSearchParams(search).get("module");
+  return module === "maps" ? "elaborazioni" : module === "history" ? "storico" : "calcolatore";
+}
+
 export type Observation = {
   id: string;
   coltura: Coltura;
@@ -187,6 +194,7 @@ export type Observation = {
   quotaAzoto?: number | null;
   lat: number | null;
   lng: number | null;
+  createdAt?: string | null;
 };
 
 const PARAMETRI_AZIENDALI_STORAGE_KEY = "ndvi-tabacco-parametri-aziendali";
@@ -328,12 +336,17 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     return () => { activeAccountView.current = false; };
   }, []);
   const search = useSearch();
-  const [activeTab, setActiveTab] = useState<"calcolatore" | "elaborazioni">(
-    () => new URLSearchParams(search).get("module") === "maps" ? "elaborazioni" : "calcolatore",
-  );
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => tabFromSearch(search));
   useEffect(() => {
-    setActiveTab(new URLSearchParams(search).get("module") === "maps" ? "elaborazioni" : "calcolatore");
+    setActiveTab(tabFromSearch(search));
   }, [search]);
+  const language = useLanguage();
+  useEffect(() => {
+    const title = activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : activeTab === "storico" ? "Storico Rilievi" : "Rilievo e dati";
+    const previous = document.title;
+    document.title = `${t(title)} — NitroCrop NDVI`;
+    return () => { document.title = previous; };
+  }, [activeTab, language]);
   useEffect(() => {
     const openHome = () => setActiveTab("calcolatore");
     window.addEventListener("nitrocrop:open-home", openHome);
@@ -613,8 +626,8 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
           if (!response.ok) throw new Error("Salvataggio non riuscito.");
           return response.json();
         })
-        .then(() => {
-          setOsservazioni((prev) => [nuova, ...prev]);
+        .then((saved: { createdAt?: string | null }) => {
+          setOsservazioni((prev) => [{ ...nuova, createdAt: saved.createdAt ?? null }, ...prev.filter(o => o.id !== nuova.id)]);
           setObsId(isNaN(num) ? "" : String(num + 1));
         })
         .catch(() => setErrors((current) => ({
@@ -778,12 +791,29 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       <div className="max-w-2xl mx-auto space-y-6">
 
         {/* Header */}
-        <ModuleHeading title={t(activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : "Rilievo e dati")}>
+        <ModuleHeading title={t(activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : activeTab === "storico" ? "Storico Rilievi" : "Rilievo e dati")}>
           <p className="text-amber-900 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
         </ModuleHeading>
 
         <div hidden={activeTab !== "elaborazioni"}>
           <ElaborazioniMappe osservazioni={osservazioni} />
+        </div>
+
+        {/* Storico Rilievi — kept mounted (hidden) to preserve open groups and search */}
+        <div hidden={activeTab !== "storico"} data-testid="module-history">
+          <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-stone-200">
+            {loadingOss ? (
+              <div className="space-y-2" aria-busy="true" aria-label={t("Caricamento osservazioni…")}>
+                {[0, 1, 2].map(i => <div key={i} className="h-14 rounded-xl bg-stone-100 animate-pulse" />)}
+              </div>
+            ) : osservazioni.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-stone-300 bg-[#fff8ea] px-4 py-6 text-center text-sm text-stone-600">
+                Nessun rilievo salvato. Le osservazioni registrate in Rilievo e dati compariranno qui, raggruppate per cliente e data.
+              </p>
+            ) : (
+              <ObservationList osservazioni={osservazioni} />
+            )}
+          </div>
         </div>
 
         {/* Input Card — shown only in calcolatore tab */}

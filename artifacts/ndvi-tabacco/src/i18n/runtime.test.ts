@@ -7,6 +7,22 @@ import { privacy } from "./privacy";
 
 afterEach(() => setLanguage("it"));
 
+test("Spatialization, dose inspection and observation history are translated without changing stored data", () => {
+  const copy = [
+    ["Spazializza i tuoi dati", "Spatialize your data", "Espacializa tus datos"],
+    ["Osservazioni salvate", "Saved observations", "Observaciones guardadas"],
+    ["Salvata il", "Saved on", "Guardada el"],
+    ["Ora di salvataggio non disponibile", "Save time not available", "Hora de guardado no disponible"],
+    ["Cella della griglia interpolata", "Interpolated grid cell", "Celda de la malla interpolada"],
+    ["Nessun valore interpolato: il punto è fuori dal poligono.", "No interpolated value: the point is outside the polygon.", "Sin valor interpolado: el punto está fuera del polígono."],
+  ];
+  for (const [language, index] of [["en", 1], ["es", 2]] as const) {
+    setLanguage(language);
+    for (const row of copy) assert.equal(t(row[0]), row[index]);
+    assert.equal(t("Azienda Rossi - Campo 42"), "Azienda Rossi - Campo 42");
+  }
+});
+
 test("Italian remains the default and unsupported copy remains unchanged", () => {
   assert.equal(getLanguage(), "it");
   assert.equal(t("Tabacco"), "Tabacco");

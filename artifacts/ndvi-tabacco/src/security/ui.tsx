@@ -198,16 +198,20 @@ function NavItems({ account, ready, out, close }: { account?: Account | null; re
   const items: { href: string; label: string; show: boolean; id: string }[] = [
     { href: "/user-portal", label: "Rilievo e dati", show: ready, id: "portal" },
     { href: "/user-portal?module=maps", label: "Elaborazioni e Mappe", show: ready, id: "maps" },
+    { href: "/user-portal?module=history", label: "Storico Rilievi", show: ready, id: "history" },
     { href: "/instructions", label: "Istruzioni", show: ready, id: "instructions" },
     { href: "/account", label: "Il mio account", show: !!account, id: "account" },
     { href: "/admin", label: "Amministrazione", show: account?.role === "admin" && account.status === "active", id: "admin" },
     { href: "/privacy", label: "Privacy", show: true, id: "privacy" },
   ];
   const [location] = useLocation();
-  const isMaps = new URLSearchParams(useSearch()).get("module") === "maps";
+  const module = new URLSearchParams(useSearch()).get("module");
+  const isMaps = module === "maps";
+  const isHistory = module === "history";
   const current = (href: string) => {
-    if (href === "/user-portal") return location === "/user-portal" && !isMaps;
+    if (href === "/user-portal") return location === "/user-portal" && !isMaps && !isHistory;
     if (href === "/user-portal?module=maps") return location === "/user-portal" && isMaps;
+    if (href === "/user-portal?module=history") return location === "/user-portal" && isHistory;
     return location === href;
   };
   return (

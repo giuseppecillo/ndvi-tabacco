@@ -70,6 +70,23 @@ export interface PolyIdwResult {
   nitrogenSummary?: NitrogenSummary;
 }
 
+/** Pick an interpolated grid cell, never extrapolate a dose outside the field. */
+export function findDoseCell(result: PolyIdwResult, lng: number, lat: number): IdwGridPoint | undefined {
+  if (!Number.isFinite(lng) || !Number.isFinite(lat) || !pip(lng, lat, result.polygon.ring)) return undefined;
+  const proj = `+proj=utm +zone=${result.utmZone} ${result.utmSouth ? "+south" : ""} +datum=WGS84 +units=m +no_defs`;
+  const [x, y] = toUTM(proj, lng, lat);
+  let selected: IdwGridPoint | undefined;
+  let distance = Infinity;
+  for (const cell of result.grid) {
+    const d = (cell.utmX - x) ** 2 + (cell.utmY - y) ** 2;
+    if (d < distance && Number.isFinite(cell.dose)) {
+      distance = d;
+      selected = cell;
+    }
+  }
+  return selected;
+}
+
 // ── KML parser ───────────────────────────────────────────────────────────────
 
 /**

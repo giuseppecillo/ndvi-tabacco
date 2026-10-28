@@ -26,8 +26,14 @@ import {
   stimaFaseGranoDaDas,
 } from "./calculations";
 import { serieDistribuzioneOsservazioni } from "./observationDistribution";
+import type { Observation } from "./App";
+import { groupObservations, ndviDeviation } from "./utils/observationHistory";
+import { buildObservationWorkbook } from "./utils/observationExcel";
+import { readFileSync } from "node:fs";
+import { setLanguage, t } from "./i18n/runtime";
 import {
   computeIdwGrid,
+  findDoseCell,
   downloadGeoTiff,
   downloadShapefile,
   type PolyIdwResult,
@@ -160,7 +166,106 @@ function readTiffAsciiTag(buffer: ArrayBuffer, wantedTag: number): string {
   assert.fail(`TIFF tag ${wantedTag} not found`);
 }
 
+describe("registro per cliente e giornata ed export Excel", () => {
+  const png = new Uint8Array(readFileSync(new URL("../public/taurus-logo.png", import.meta.url)));
+  const logos = { taurus: png };
+  const fixture = (changes: Partial<Observation> = {}): Observation => ({
+    id: "p1", coltura: "tabacco", data: "2026-10-01", dataTrapianto: "2026-08-20",
+    giorni: 42, etaPiantina: "standard", cliente: "Rossi", appezzamento: "Nord",
+    resa: 4.5, varieta: "Burley", n1: .5, n2: .5, n3: .5, n4: .5, n5: .5,
+    media: .5, ottimale: .64, discostamento: .14, dose: 26.3, azotoTotale: 120,
+    azotoGiaDistribuito: 0, lat: 42.0003, lng: 12.0003, ...changes,
+  });
+
+  it("raggruppa tutti i punti per cliente e data di rilievo, non per data di salvataggio", () => {
+    const input = [
+      fixture({ createdAt: "2026-10-02T12:00:00Z" }),
+      fixture({ id: "p2", appezzamento: "Sud", createdAt: "2026-10-03T12:00:00Z" }),
+      fixture({ id: "p3", data: "2026-10-02", createdAt: null }),
+      fixture({ id: "p4", cliente: "Altro cliente" }),
+    ];
+    const groups = groupObservations(input);
+    assert.equal(groups.length, 3);
+    assert.equal(groups[0].date, "2026-10-02");
+    const rossi = groups.find(g => g.cliente === "Rossi" && g.date === "2026-10-01")!;
+    assert.deepEqual(rossi.observations.map(o => o.id), ["p2", "p1"]);
+    assert.equal(input[0].id, "p1");
+  });
+
+  it("usa uno scostamento coerente medio meno ottimale, senza inventare percentuali a denominatore zero", () => {
+    const below = ndviDeviation(fixture());
+    assert.ok(Math.abs(below.absolute! + .14) < 1e-10);
+    assert.ok(Math.abs(below.percent! + 21.875) < 1e-10);
+    assert.ok(ndviDeviation(fixture({ media: .8 })).absolute! > 0);
+    assert.equal(ndviDeviation(fixture({ ottimale: 0 })).percent, null);
+    assert.deepEqual(ndviDeviation(fixture({ media: NaN })), { absolute: null, percent: null });
+  });
+
+  it("esporta tutti i punti in un vero XLSX con valori numerici e testi utente mai eseguiti come formule", async () => {
+    const group = groupObservations([
+      fixture({ id: "=SUM(1,2)", cliente: "Rossi & Figli", appezzamento: "<Nord>" }),
+      fixture({ id: "p2", cliente: "Rossi & Figli", lat: null, lng: null, createdAt: null }),
+    ])[0];
+    const zip = await JSZip.loadAsync(await buildObservationWorkbook(group, s => `EN ${s}`, logos));
+    assert.ok(zip.file("[Content_Types].xml"));
+    assert.ok(zip.file("xl/workbook.xml"));
+    const sheet = await zip.file("xl/worksheets/sheet1.xml")!.async("string");
+    assert.equal((sheet.match(/<row r=/g) ?? []).length, 6);
+    assert.ok(sheet.includes('r="E1"'));
+    assert.ok(sheet.includes("NitroCrop NDVI"));
+    assert.ok(sheet.includes("EN Tutti i diritti Riservati"));
+    assert.equal(zip.file("xl/media/nitrocrop.png"), null);
+    assert.ok(zip.file("xl/media/taurus.png"));
+    assert.ok(zip.file("xl/drawings/drawing1.xml"));
+    assert.ok(zip.file("xl/worksheets/_rels/sheet1.xml.rels"));
+    assert.ok(sheet.includes("EN NDVI medio"));
+    assert.ok(sheet.includes("=SUM(1,2)"));
+    assert.ok(sheet.includes("Rossi &amp; Figli"));
+    assert.ok(sheet.includes("&lt;Nord&gt;"));
+    assert.ok(sheet.includes("<v>26.3</v>"));
+    assert.ok(sheet.includes("<v>-21.875"));
+    assert.ok(!sheet.includes("<f>"));
+    assert.ok(!sheet.includes("NaN"));
+    assert.ok(!sheet.includes("Infinity"));
+  });
+
+  it("traduce le intestazioni del file Excel in inglese e spagnolo senza tradurre i dati del cliente", async () => {
+    const group = groupObservations([fixture({ cliente: "Azienda Rossi" })])[0];
+    try {
+      for (const language of ["en", "es"] as const) {
+        setLanguage(language);
+        const zip = await JSZip.loadAsync(await buildObservationWorkbook(group, t, logos));
+        const sheet = await zip.file("xl/worksheets/sheet1.xml")!.async("string");
+        assert.ok(sheet.includes(language === "en" ? "Phenological stage" : "Fase fenológica"));
+        assert.ok(sheet.includes(t("Tutti i diritti Riservati")));
+        const header = sheet.match(/<row r="6">([\s\S]*?)<\/row>/)![1];
+        for (const italian of ["Cliente", "Data del rilievo", "Appezzamento", "Varietà", "Fase fenologica", "Fonte della fase", "Età piantina", "Scostamento registrato"]) {
+          assert.ok(header.includes(t(italian)));
+        }
+        assert.notEqual(t("Fase fenologica"), "Fase fenologica");
+        assert.ok(sheet.includes("Azienda Rossi"));
+      }
+    } finally {
+      setLanguage("it");
+    }
+  });
+});
+
 describe("riepilogo azoto della mappa IDW", () => {
+  it("legge la dose della cella sulla mappa senza estrapolare fuori dal poligono", () => {
+    const result = computeIdwGrid({
+      name: "Campo consultabile",
+      ring: [[12, 42], [12.0012, 42], [12.0012, 42.0009], [12, 42.0009]],
+    }, [{ obsId: "click", cliente: "A", appezzamento: "Campo", lng: 12.0003, lat: 42.0003, dose: 20, azotoTotale: 100 }]);
+    const cell = result.grid[0];
+    assert.ok(cell);
+    assert.equal(findDoseCell(result, cell.lng, cell.lat), cell);
+    assert.equal(findDoseCell(result, 12.0006, 42.00045)?.dose, 20);
+    assert.equal(findDoseCell(result, 12.1, 42.1), undefined);
+    assert.equal(findDoseCell(result, NaN, 42), undefined);
+    assert.equal(findDoseCell({ ...result, grid: [] }, 12.0006, 42.00045), undefined);
+  });
+
   it("mantiene la mappa senza inventare risparmi quando il piano manca o è incompleto", () => {
     const polygon = {
       name: "Piano incompleto",

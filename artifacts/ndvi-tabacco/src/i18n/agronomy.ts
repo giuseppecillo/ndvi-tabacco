@@ -71,6 +71,7 @@ export const agronomy: readonly Translation[] = [
   ["Fabbisogno corretto", "Adjusted requirement", "Necesidad ajustada"],
   ["Fabbisogno azoto totale calcolato", "Calculated total nitrogen requirement", "Necesidad total de nitrógeno calculada"],
   ["Fase", "Stage", "Fase"],
+  ["Fase fenologica", "Phenological stage", "Fase fenológica"],
   ["Fase fenologica: conferma BBCH", "Growth stage: confirm BBCH", "Fase fenológica: confirmar BBCH"],
   ["Fase attesa dai DAS", "Expected stage from DAS", "Fase esperada según DDS"],
   ["BBCH confermato", "Confirmed BBCH", "BBCH confirmado"],

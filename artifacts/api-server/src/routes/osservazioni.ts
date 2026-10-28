@@ -276,13 +276,13 @@ router.post("/osservazioni", async (req, res) => {
     return;
   }
   try {
-    await pool.query(
+    const saved = await pool.query(
       `INSERT INTO osservazioni
          (id, data, data_trapianto, tipo_intervento, giorni, eta_piantina,
            cliente, appezzamento, resa, varieta, piante_semi_ha, piante_semi_unita, piante_ha_equivalenti,
             n1, n2, n3, n4, n5, media, ottimale, discostamento, dose,
-             fase_fenologica, bbch, fase_fonte, azoto_totale, azoto_gia_distribuito, quota_azoto, lat, lng, owner_id, observation_id)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
+             fase_fenologica, bbch, fase_fonte, azoto_totale, azoto_gia_distribuito, quota_azoto, lat, lng, owner_id, observation_id, created_at)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,now())
        ON CONFLICT (owner_id, observation_id) DO UPDATE SET
          data=$2, data_trapianto=$3, tipo_intervento=$4, giorni=$5, eta_piantina=$6,
           cliente=$7, appezzamento=$8, resa=$9, varieta=$10,
@@ -290,7 +290,8 @@ router.post("/osservazioni", async (req, res) => {
           n1=$14, n2=$15, n3=$16, n4=$17, n5=$18,
            media=$19, ottimale=$20, discostamento=$21, dose=$22,
              fase_fenologica=$23, bbch=$24, fase_fonte=$25, azoto_totale=$26, azoto_gia_distribuito=$27, quota_azoto=$28,
-             lat=$29, lng=$30`,
+             lat=$29, lng=$30
+       RETURNING created_at AS "createdAt"`,
       [
           randomUUID(), o.data, o.dataSemina || o.dataTrapianto || null, coltura, o.giorni,
         o.etaPiantina ?? "standard",
@@ -302,7 +303,7 @@ router.post("/osservazioni", async (req, res) => {
            o.lat ?? null, o.lng ?? null, res.locals.account.id, o.id.trim(),
       ]
     );
-    res.status(201).json({ ok: true });
+    res.status(201).json({ ok: true, createdAt: saved.rows[0].createdAt });
   } catch (err) {
     res.status(500).json({ error: "Impossibile salvare l’osservazione." });
   }
