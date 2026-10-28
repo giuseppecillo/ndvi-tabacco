@@ -161,6 +161,34 @@ function readTiffAsciiTag(buffer: ArrayBuffer, wantedTag: number): string {
 }
 
 describe("riepilogo azoto della mappa IDW", () => {
+  it("mantiene la mappa senza inventare risparmi quando il piano manca o è incompleto", () => {
+    const polygon = {
+      name: "Piano incompleto",
+      ring: [[12, 42], [12.0012, 42], [12.0012, 42.0009], [12, 42.0009]] as [number, number][],
+    };
+    const point = { obsId: "legacy", cliente: "A", appezzamento: "Campo", lng: 12.0003, lat: 42.0003, dose: 20 };
+    for (const controls of [
+      [point],
+      [point, { ...point, obsId: "complete", lng: 12.0009, azotoTotale: 100, azotoGiaDistribuito: 50 }],
+      [{ ...point, azotoTotale: Number.NaN }],
+      [{ ...point, azotoTotale: -1 }],
+    ]) {
+      const result = computeIdwGrid(polygon, controls);
+      assert.ok(result.grid.length > 0);
+      assert.equal(result.nitrogenSummary, undefined);
+    }
+  });
+
+  it("mostra uno zero reale e non confonde un piano nullo con dati mancanti", () => {
+    const result = computeIdwGrid({
+      name: "Piano zero",
+      ring: [[12, 42], [12.0012, 42], [12.0012, 42.0009], [12, 42.0009]],
+    }, [{ obsId: "zero", cliente: "A", appezzamento: "Campo", lng: 12.0003, lat: 42.0003, dose: 0, azotoTotale: 0, azotoGiaDistribuito: 0 }]);
+    assert.ok(result.nitrogenSummary);
+    assert.equal(result.nitrogenSummary.savedTotalKg, 0);
+    assert.equal(result.nitrogenSummary.savedPercent, 0);
+  });
+
   it("confronta piano e dose IDW sull'intera superficie del poligono", () => {
     const polygon = {
       name: "Campo prova",

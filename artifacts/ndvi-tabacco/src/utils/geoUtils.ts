@@ -326,10 +326,10 @@ export function computeIdwGrid(
   const utmN    = Math.max(...utmYs);
   const areaHa  = polygonAreaM2(utmRing) / 10_000;
   const planControls = utmControls
-    .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale))
+    .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale) && c.azotoTotale >= 0)
     .map(c => ({ utmX: c.utmX, utmY: c.utmY, dose: c.azotoTotale! }));
   const distributedControls = utmControls
-    .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale))
+    .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale) && c.azotoTotale >= 0)
     .map(c => ({
       utmX: c.utmX,
       utmY: c.utmY,
@@ -371,7 +371,10 @@ export function computeIdwGrid(
   const indicatedPerHa = Math.min(distributedPerHa + mean, plannedPerHa);
   const savedPerHa = Math.max(0, plannedPerHa - indicatedPerHa);
   const savedPercent = plannedPerHa > 0 ? (savedPerHa / plannedPerHa) * 100 : 0;
-  const nitrogenSummary = plannedValues.length && areaHa > 0 ? {
+  // A partial baseline would compare doses from all observations with a plan
+  // inferred from only some of them. Keep the map, but never invent savings.
+  const completePlan = planControls.length === utmControls.length;
+  const nitrogenSummary = completePlan && plannedValues.length && areaHa > 0 ? {
     areaHa,
     plannedPerHa,
     indicatedPerHa,
