@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearch } from "wouter";
+import { ModuleHeading } from "./security/ModuleHeading";
 import { getLocale, t } from "./i18n/runtime";
 const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import jsPDF from "jspdf";
@@ -777,12 +778,9 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       <div className="max-w-2xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-amber-300 bg-amber-100 px-4 py-5 text-center">
-          <h1 className="text-2xl font-bold text-amber-950 sm:text-3xl">
-            {activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : "Rilievo e Mappe"}
-          </h1>
+        <ModuleHeading title={t(activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : "Rilievo e Mappe")}>
           <p className="text-amber-900 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
-        </div>
+        </ModuleHeading>
 
         {activeTab === "elaborazioni" && (
           <ElaborazioniMappe osservazioni={osservazioni} />

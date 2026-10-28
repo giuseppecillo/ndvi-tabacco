@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useGetAccessSetup, useSendAdministratorActivation } from "@workspace/api-client-react";
 import { Brand, Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, TECHNICAL_SUPPORT_CONTACT, TechnicalSupport, taurusLogo } from "./ui";
 import { LanguageSelector } from "../i18n/LanguageSelector";
+import { ModuleHeading } from "./ModuleHeading";
 
 function PublicHeader() {
   return (
@@ -138,16 +139,16 @@ export function PrivacyPage() {
       <PublicHeader />
       <main className="mx-auto max-w-4xl px-4 pb-10">
         <div role="note" className="nc-rise mt-6 rounded-2xl border-2 border-[var(--nc-wheat)] bg-[var(--nc-wheat-soft)] p-5">
-          <p className="nc-mono text-xs uppercase tracking-[0.18em] text-[#8a5a12]">Bozza — verifiche da completare</p>
+          <p className="nc-mono text-xs uppercase tracking-[0.18em] text-[#8a5a12]">Informazioni confermate dal titolare</p>
           <p className="nc-display mt-1 text-2xl font-semibold">Informazioni sul trattamento dei dati</p>
-          <p className="mt-2 text-sm">Sede, decorrenza della conservazione e basi giuridiche sono state confermate dal titolare. Restano da verificare i rapporti con i servizi esterni, gli eventuali trasferimenti e le condizioni dei backup. L’informativa non è definitiva e non costituisce certificazione di conformità.</p>
+          <p className="mt-2 text-sm">Questa informativa riporta le informazioni confermate da Taurus Agriculture Solution SRL: gestione del servizio, accordi privacy con i fornitori, hosting nel Regno Unito ed eliminazione dei backup entro 24 ore dalla cancellazione. Non costituisce una certificazione di conformità né una verifica tecnica indipendente dei servizi.</p>
         </div>
-        <h1 className="nc-display nc-rise nc-d1 mt-10 text-4xl font-semibold text-[var(--nc-leaf)] md:text-5xl">Informativa privacy e cookie</h1>
+        <ModuleHeading title="Informativa privacy e cookie" className="mt-8" />
         <p className="mt-3 text-[var(--nc-muted)]">NitroCrop NDVI, ai sensi degli artt. 13-14 del Regolamento UE 2016/679.</p>
-        <p className="mt-2 text-sm text-[var(--nc-muted)]">Versione informativa: <span className="nc-mono">2026-10-28.4</span></p>
+        <p className="mt-2 text-sm text-[var(--nc-muted)]">Versione informativa: <span className="nc-mono">2026-10-28.5</span></p>
         <div className="mt-8">
           <Sec n="01" title="Titolare del trattamento">
-            <p>Taurus Agriculture Solution SRL ha sviluppato il software NitroCrop NDVI ed è il titolare del trattamento.</p>
+            <p>Taurus Agriculture Solution SRL ha sviluppato e gestisce il servizio NitroCrop NDVI ed è il titolare del trattamento.</p>
             <p>Taurus Agriculture Solution SRL. Sede legale: <strong>Viale Giustiniano n. 8, Milano</strong>. Contatto privacy: <a className="underline" href={`mailto:${PRIVACY_CONTACT}`}>{PRIVACY_CONTACT}</a>.</p>
             <p>Per assistenza password: <a className="underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>. Per supporto tecnico: <a className="underline" href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`}>{TECHNICAL_SUPPORT_CONTACT}</a>.</p>
             <p>Questi contatti di assistenza non identificano il mittente delle email automatiche: inviti e recuperi password sono inviati dal servizio di autenticazione.</p>
@@ -168,12 +169,15 @@ export function PrivacyPage() {
             <p>Non chiediamo un consenso generalizzato. La casella "Ho letto" al primo accesso registra solo la presa visione della versione corrente di questa informativa e non è un consenso per marketing.</p>
           </Sec>
           <Sec n="04" title="Cookie e archiviazione locale">
-            <p>L’app non aggiunge strumenti di profilazione o marketing: utilizza cookie di autenticazione e sessione e memoria locale per le impostazioni tecniche, separate per account. I servizi esterni possono utilizzare propri meccanismi di sicurezza; la relativa verifica va completata dal titolare.</p>
+            <p>L’app non aggiunge strumenti di profilazione o marketing: utilizza cookie necessari per autenticazione e sessione e memoria locale per le impostazioni tecniche, separate per account. I servizi esterni utilizzano i propri meccanismi di funzionamento e sicurezza secondo le relative condizioni privacy. La presa visione di questa informativa non è un consenso marketing.</p>
           </Sec>
           <Sec n="05" title="Servizi esterni">
             <p>Clerk per l’autenticazione; Replit per l’hosting dell’applicazione e del database; Esri per le tessere satellitari/cartografiche. I servizi cartografici ricevono dal browser le richieste delle porzioni di mappa visualizzate.</p>
-            <p>Restano da verificare i ruoli dei servizi esterni e dei loro subfornitori e gli accordi applicabili, inclusi quelli ai sensi dell’art. 28 GDPR ove richiesti.</p>
-            <p>Localizzazione del trattamento, eventuali trasferimenti fuori dallo Spazio economico europeo e relative garanzie restano da verificare. Non è confermato che tutti i dati siano trattati esclusivamente nell’Unione europea.</p>
+            <p>Il titolare indica Aruba, Replit, Supabase e Netlify tra i fornitori contrattualizzati e conferma che i relativi contratti sono correttamente gestiti e controfirmati. Questa conferma non equivale a una verifica indipendente dei contratti.</p>
+            <p>Il titolare conferma che i contratti comprendono gli accordi privacy richiesti dal GDPR. I fornitori trattano i dati necessari ai rispettivi servizi secondo i ruoli e gli accordi applicabili; quando operano come responsabili del trattamento, sono vincolati agli accordi previsti dall’art. 28 GDPR.</p>
+            <p>Il Paese di hosting confermato dal titolare è il Regno Unito, che è fuori dallo Spazio economico europeo. Per i trasferimenti coperti dal suo ambito si applica la decisione di adeguatezza della Commissione europea ai sensi dell’art. 45 GDPR, rinnovata il 19 dicembre 2025. Non si dichiara che tutti i servizi o subfornitori trattino i dati esclusivamente nell’Unione europea o nel Regno Unito.</p>
+            <p>Eventuali ulteriori trasferimenti fuori dallo Spazio economico europeo richiedono le garanzie previste dal capo V GDPR, come una decisione di adeguatezza o clausole contrattuali standard e, ove necessarie, misure supplementari. Puoi chiedere al contatto privacy del titolare informazioni sui destinatari, sui Paesi e una copia delle garanzie applicabili.</p>
+            <p><a className="underline" href="https://commission.europa.eu/document/download/b36eedab-43b8-46eb-ac30-a8d1e6e69f51_en?filename=Renewal%20UK%20adequacy%20GDPR.pdf" target="_blank" rel="noreferrer">Riferimento ufficiale: decisione della Commissione europea sul Regno Unito.</a></p>
           </Sec>
           <Sec n="06" title="Conservazione">
             <p>Il periodo di conservazione dichiarato dal titolare è di 5 anni per ciascuna delle seguenti categorie di dati:</p>
@@ -185,8 +189,8 @@ export function PrivacyPage() {
               <li>Richieste privacy e relative risposte: <strong>5 anni</strong>.</li>
             </ul>
             <p>Per tutte le categorie, i cinque anni decorrono dalla creazione dell’account da parte dell’amministratore. La scadenza è unica anche per i dati aggiunti successivamente: non decorre dalla data di ciascun rilievo o richiesta.</p>
-            <p>La politica indicata dal titolare prevede la cancellazione o l’anonimizzazione alla scadenza. L’app non esegue una cancellazione automatica dopo cinque anni: l’attuazione della politica resta da completare. La cancellazione dell’account elimina anche i rilievi dai sistemi attivi, ma non attesta l’eliminazione immediata delle copie di backup o dei dati conservati dai servizi esterni.</p>
-            <p>Le caratteristiche dei backup, i tempi di conservazione ed eliminazione delle copie e le procedure di ripristino restano da verificare con i servizi utilizzati.</p>
+            <p>La politica indicata dal titolare prevede la cancellazione o l’anonimizzazione alla scadenza. La scadenza quinquennale non è automatizzata nell’app: l’eliminazione o l’anonimizzazione deve essere eseguita dal titolare. La cancellazione dell’account elimina anche i rilievi dai sistemi attivi, fatti salvi eventuali obblighi di conservazione previsti dalla legge.</p>
+            <p>Secondo la politica confermata dal titolare, i backup sono incrementali continui, cifrati in transito e a riposo, e vengono eliminati entro 24 ore dalla cancellazione dei dati cui si riferiscono. La gestione delle copie e degli eventuali ripristini spetta al titolare e ai fornitori. Queste informazioni descrivono la politica dichiarata e non attestano una verifica tecnica indipendente o una modifica dei sistemi di backup.</p>
           </Sec>
           <Sec n="07" title="I tuoi diritti">
             <p>Puoi chiedere accesso, esportazione, rettifica, limitazione, opposizione e cancellazione. Dalla pagina "Il mio account" scarichi i tuoi dati in formato JSON e invii richieste tracciate. Puoi anche scrivere a {PRIVACY_CONTACT}.</p>
