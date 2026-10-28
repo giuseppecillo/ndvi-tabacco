@@ -1,7 +1,9 @@
 import { afterEach, test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { getLanguage, getLocale, setLanguage, t, translateDisplay } from "./runtime";
 import { localizeUi } from "../../localize-ui";
+import { privacy } from "./privacy";
 
 afterEach(() => setLanguage("it"));
 
@@ -42,21 +44,37 @@ test("Dynamic subscriptions and guidance preserve their exact numbers", () => {
   assert.equal(translateDisplay(125.4), 125.4);
 });
 
-test("Updated privacy terms are available in English and Spanish", () => {
+test("Current draft privacy terms are available in English and Spanish", () => {
+  const publicPage = readFileSync(new URL("../security/PublicPages.tsx", import.meta.url), "utf8");
+  const currentCopy = privacy.filter(([source]) => publicPage.includes(source));
   for (const language of ["en", "es"] as const) {
     setLanguage(language);
     for (const text of [
-      "Informativa aggiornata", "Informazioni sul trattamento dei dati", "Milano", "5 anni",
+      "Bozza — verifiche da completare", "Informazioni sul trattamento dei dati", "Viale Giustiniano n. 8, Milano", "5 anni",
       "Dati di account (nome e indirizzo email):",
       "Dati di cliente, azienda, appezzamento e coltura:",
       "Rilievi di campo, coordinate GPS, valori NDVI, date e parametri agronomici:",
       "Log di autenticazione, sessione, sicurezza e azioni amministrative:",
       "Richieste privacy e relative risposte:",
-      "Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR.",
-      "Secondo quanto dichiarato dal titolare, non sono previsti trasferimenti di dati personali al di fuori dell’Unione europea. Il titolare verifica che contratti, subfornitori, assistenza e configurazioni tecniche dei servizi esterni rispettino questa indicazione.",
+      ...currentCopy.map(([source]) => source).filter((source) => source !== "Privacy"),
     ]) assert.notEqual(t(text), text, `${language}: ${text}`);
-    assert.match(t("Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR."), /28/);
+    for (const [source] of currentCopy) {
+      const translated = t(source);
+      if (source.includes("art. 28")) assert.match(translated, /28/);
+      if (source.includes("Esri")) assert.match(translated, /Esri/);
+    }
   }
+});
+
+test("The public privacy version matches the API acknowledgment version", () => {
+  const page = readFileSync(new URL("../security/PublicPages.tsx", import.meta.url), "utf8");
+  const server = readFileSync(new URL("../../../api-server/src/lib/security-db.ts", import.meta.url), "utf8");
+  const version = server.match(/PRIVACY_VERSION = "([^"]+)"/)?.[1];
+  assert.ok(version);
+  assert.ok(page.includes(`>${version}</span>`));
+  assert.ok(page.includes("Bozza — verifiche da completare"));
+  assert.ok(!page.includes("Il titolare dichiara che i rapporti con i responsabili"));
+  assert.ok(!page.includes("non sono previsti trasferimenti"));
 });
 
 test("The display compiler does not translate form values, data keys or free text fields", () => {

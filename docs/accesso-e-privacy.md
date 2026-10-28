@@ -58,19 +58,44 @@ Si tratta di gestione manuale degli accessi: nessun pagamento o rinnovo automati
 
 ## Prima della pubblicazione
 
-L’informativa riporta le informazioni dichiarate dal titolare: sede legale a
-Milano, conservazione di 5 anni per ogni categoria (account, dati cliente,
-rilievi/GPS/NDVI e parametri agronomici, log di sicurezza, richieste privacy),
-accordi con i responsabili ai sensi dell’art. 28 GDPR e nessun trasferimento
-previsto fuori dall’Unione europea. Le stesse informazioni sono disponibili
-in italiano, inglese e spagnolo.
+**Stato: bozza, non pronta per la pubblicazione come informativa definitiva.**
+Versione del testo pubblico e della presa visione API: `2026-10-28.4`.
+Le modifiche sostanziali richiedono una nuova presa visione, non consenso marketing.
 
-Il titolare deve verificare che contratti, subfornitori, assistenza,
-localizzazione dei servizi e backup corrispondano alla dichiarazione.
-L’aggiornamento dell’informativa non verifica né modifica la localizzazione
-dei fornitori e non introduce un processo automatico di cancellazione dopo
-5 anni. L’applicazione operativa del termine resta da curare dal titolare.
-Nessuna certificazione GDPR è implicita nell’implementazione tecnica.
+Informazioni confermate dal titolare:
+- Taurus Agriculture Solution SRL, Viale Giustiniano n. 8, Milano:
+  ha sviluppato il software NitroCrop NDVI, ne è il fornitore ed è titolare
+  del trattamento.
+- Conservazione di 5 anni per ogni categoria: account, dati cliente,
+  rilievi/GPS/NDVI e parametri agronomici, log di sicurezza, richieste privacy.
+  Il termine decorre per tutte le categorie dalla creazione dell’account da
+  parte dell’amministratore, anche per dati aggiunti successivamente.
+- Basi giuridiche distinte: contratto per il servizio (art. 6.1.b GDPR),
+  legittimo interesse per sicurezza e prevenzione abusi (art. 6.1.f),
+  obbligo legale per le richieste di esercizio dei diritti (art. 6.1.c).
+
+Verifiche ancora necessarie prima di eliminare l’avviso di bozza:
+- L’app usa Clerk, Replit ed Esri come servizi tecnici esterni. Il titolare
+  ha chiarito che per «fornitore» intende Taurus, fornitore della soluzione:
+  questo non conferma i ruoli privacy dei servizi tecnici né gli accordi applicabili.
+  Verificare contratti, accordi ex art. 28 ove richiesti e subfornitori.
+- Non è verificata la precedente dichiarazione di assenza di trasferimenti
+  extra UE: accertare localizzazione, assistenza, subfornitori e garanzie per
+  gli eventuali trasferimenti fuori dallo SEE.
+- Il titolare ha descritto backup incrementali continui e crittografati in
+  transito e a riposo, ma non ha fornito riscontro del servizio interessato,
+  durata, eliminazione delle copie o gestione dei ripristini. Non presentare
+  tali caratteristiche come tecnicamente verificate.
+- Definire e applicare la cancellazione/anonimizzazione alla scadenza unica
+  quinquennale, anche per dati dei fornitori e backup; gestire i ripristini in
+  modo da non reintrodurre dati già cancellati. Nessuna cancellazione automatica
+  quinquennale è attualmente introdotta dall’aggiornamento dell’informativa.
+- Completare la verifica dei cookie e dei meccanismi tecnici dei servizi esterni.
+
+Il testo pubblico e gli avvisi sono disponibili in italiano, inglese e spagnolo.
+L’aggiornamento non cambia autorizzazioni, isolamento dei rilievi, localizzazione
+dei servizi o politiche operative di backup. Nessuna certificazione GDPR è
+implicita nell’implementazione tecnica.
 
 L’indirizzo per assistenza password e quello per la privacy sono contatti
 applicativi. Non è stato configurato un mittente aziendale per le email:
