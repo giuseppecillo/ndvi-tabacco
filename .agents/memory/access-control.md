@@ -38,3 +38,9 @@ Per l’informativa l’utente ha dichiarato sede legale a Milano, conservazione
 **Why:** sono informazioni fornite dal titolare, non esiti di una verifica tecnica o contrattuale dei fornitori.
 
 **How to apply:** mantenere distinti la politica dichiarata, la verifica di contratti/subfornitori e l’applicazione operativa della conservazione. Non attestare localizzazione UE o cancellazione automatica solo perché sono descritte nell’informativa.
+
+L’utente specifica che l’applicazione è sviluppata interamente in Italia.
+
+**Why:** chiarimento esplicito dell’utente sul contesto del prodotto.
+
+**How to apply:** distinguere il luogo di sviluppo dalla localizzazione del trattamento. Il primo non dimostra da solo dove hosting, autenticazione e cartografia trattano i dati.
