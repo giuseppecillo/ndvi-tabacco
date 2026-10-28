@@ -1,146 +1,106 @@
 [
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000001",
+    "id": "423ab43d-b7a2-4d4a-af10-215a7fb53a0c",
     "position": 1,
-    "filepath": "src/pages/slides/Cover.tsx",
-    "title": "NitroCrop NDVI",
-    "description": "NitroCrop NDVI",
+    "filepath": "src/pages/slides/ImportedSlide1.tsx",
+    "title": "Nitro Crop NDVI",
+    "description": "Diapositiva 1 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000002",
+    "id": "9cc4460b-08bf-4b4e-9dee-8c1ebf9c5d7e",
     "position": 2,
-    "filepath": "src/pages/slides/Decisione.tsx",
+    "filepath": "src/pages/slides/ImportedSlide2.tsx",
     "title": "Dalla misura alla decisione",
-    "description": "Dalla misura alla decisione",
+    "description": "Diapositiva 2 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000003",
+    "id": "96bf7d5d-8d17-40dc-899a-2f1c80884f67",
     "position": 3,
-    "filepath": "src/pages/slides/Flusso.tsx",
+    "filepath": "src/pages/slides/ImportedSlide3.tsx",
     "title": "Il flusso operativo",
-    "description": "Il flusso operativo",
+    "description": "Diapositiva 3 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000004",
+    "id": "b39d8f8e-3b50-4d6b-ba54-81445f805029",
     "position": 4,
-    "filepath": "src/pages/slides/Parametri.tsx",
-    "title": "Anagrafica e parametri comuni",
-    "description": "Anagrafica e parametri comuni",
-    "speakerNotes": ""
-  },
-  {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000005",
-    "position": 5,
-    "filepath": "src/pages/slides/Rilievo.tsx",
+    "filepath": "src/pages/slides/ImportedSlide4.tsx",
     "title": "Rilievo NDVI in campo",
-    "description": "Rilievo NDVI in campo",
+    "description": "Diapositiva 4 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000006",
-    "position": 6,
-    "filepath": "src/pages/slides/TabaccoInput.tsx",
+    "id": "38cc38ab-55fd-468c-8d2f-a603e1cce07a",
+    "position": 5,
+    "filepath": "src/pages/slides/ImportedSlide5.tsx",
     "title": "Esempio operativo: tabacco",
-    "description": "Esempio operativo: tabacco",
+    "description": "Diapositiva 5 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000007",
-    "position": 7,
-    "filepath": "src/pages/slides/CurvaTabacco.tsx",
-    "title": "Riferimento NDVI del tabacco",
-    "description": "Riferimento NDVI del tabacco",
-    "speakerNotes": ""
-  },
-  {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000008",
-    "position": 8,
-    "filepath": "src/pages/slides/TabaccoRisultati.tsx",
+    "id": "05352272-dd7d-47b2-b988-3afe5e3144cb",
+    "position": 6,
+    "filepath": "src/pages/slides/ImportedSlide6.tsx",
     "title": "Risultati per il tabacco",
-    "description": "Risultati per il tabacco",
+    "description": "Diapositiva 6 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000009",
-    "position": 9,
-    "filepath": "src/pages/slides/GranoInput.tsx",
-    "title": "Esempio operativo: grano duro",
-    "description": "Esempio operativo: grano duro",
+    "id": "da8066d6-6900-474c-a706-5ac1d56cffc1",
+    "position": 7,
+    "filepath": "src/pages/slides/ImportedSlide7.tsx",
+    "title": "Esempio operativo:grano duro",
+    "description": "Diapositiva 7 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000010",
-    "position": 10,
-    "filepath": "src/pages/slides/GranoPiano.tsx",
+    "id": "6882736d-b379-4d1f-aacd-9f117c959674",
+    "position": 8,
+    "filepath": "src/pages/slides/ImportedSlide8.tsx",
     "title": "Fase fenologica e piano N del grano",
-    "description": "Fase fenologica e piano N del grano",
+    "description": "Diapositiva 8 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000011",
-    "position": 11,
-    "filepath": "src/pages/slides/GranoRisultati.tsx",
-    "title": "Risultati per il grano duro",
-    "description": "Risultati per il grano duro",
+    "id": "5d1f3abc-c8b7-4ac4-9e48-b5a5829891a0",
+    "position": 9,
+    "filepath": "src/pages/slides/ImportedSlide9.tsx",
+    "title": "Risultati per il grano",
+    "description": "Diapositiva 9 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000012",
-    "position": 12,
-    "filepath": "src/pages/slides/Registro.tsx",
-    "title": "Registro delle osservazioni",
-    "description": "Registro delle osservazioni",
-    "speakerNotes": ""
-  },
-  {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000013",
-    "position": 13,
-    "filepath": "src/pages/slides/PercheIdw.tsx",
-    "title": "Perché interpolare i punti",
-    "description": "Perché interpolare i punti",
-    "speakerNotes": ""
-  },
-  {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000014",
-    "position": 14,
-    "filepath": "src/pages/slides/MetodoIdw.tsx",
-    "title": "Come viene costruita la mappa IDW",
-    "description": "Come viene costruita la mappa IDW",
-    "speakerNotes": ""
-  },
-  {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000015",
-    "position": 15,
-    "filepath": "src/pages/slides/Mappa.tsx",
+    "id": "eff2d76f-9293-4855-ba25-78e1c75e999e",
+    "position": 10,
+    "filepath": "src/pages/slides/ImportedSlide10.tsx",
     "title": "Lettura della mappa",
-    "description": "Lettura della mappa",
+    "description": "Diapositiva 10 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000016",
-    "position": 16,
-    "filepath": "src/pages/slides/Risparmio.tsx",
-    "title": "Risparmio di azoto sul poligono",
-    "description": "Risparmio di azoto sul poligono",
+    "id": "c8fa98ad-7753-4385-998e-cdc3016fa665",
+    "position": 11,
+    "filepath": "src/pages/slides/ImportedSlide11.tsx",
+    "title": "Risparmio di azoto sul",
+    "description": "Diapositiva 11 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000017",
-    "position": 17,
-    "filepath": "src/pages/slides/Export.tsx",
+    "id": "25f8a8b8-4d5d-44a1-87eb-654ca48754a2",
+    "position": 12,
+    "filepath": "src/pages/slides/ImportedSlide12.tsx",
     "title": "Output ed esportazioni",
-    "description": "Output ed esportazioni",
+    "description": "Diapositiva 12 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   },
   {
-    "id": "8f5d7a20-34c1-4bd7-9a12-000000000018",
-    "position": 18,
-    "filepath": "src/pages/slides/Responsabile.tsx",
+    "id": "1c4b2fac-eab8-44f1-94e4-66cea5231d11",
+    "position": 13,
+    "filepath": "src/pages/slides/ImportedSlide13.tsx",
     "title": "Uso responsabile e valore operativo",
-    "description": "Uso responsabile e valore operativo",
+    "description": "Diapositiva 13 della presentazione Nitro Crop NDVI fornita dal titolare.",
     "speakerNotes": ""
   }
 ]

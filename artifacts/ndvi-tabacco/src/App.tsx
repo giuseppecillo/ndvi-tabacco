@@ -1088,7 +1088,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                   Per ogni fase sono mostrati BBCH, durata e intervallo NDVI atteso: il riferimento puntuale resta la curva continua del DAS rilevato.
                   Le finestre DAS orientano il rilievo; il BBCH osservato e confermato resta l’unica fonte per l’indicazione di fase.
                 </p>
-                <div className="mt-3 overflow-x-auto">
+                <div className="nc-scroll-x mt-3 overflow-x-auto">
                   <table className="w-full min-w-[520px] text-xs">
                     <thead><tr className="border-b border-stone-200 text-left text-stone-500">
                       <th className="px-2 py-2">DAS stimati</th><th className="px-2 py-2">Durata</th><th className="px-2 py-2">BBCH</th><th className="px-2 py-2">Fase</th><th className="px-2 py-2">NDVI riferimento</th><th className="px-2 py-2">Guida N</th>
@@ -1428,7 +1428,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
               </div>
             </div>
             <ObservationDistributionChart observations={osservazioni} />
-            <div className="overflow-x-auto">
+            <div className="nc-scroll-x overflow-x-auto">
               <table className="w-full text-sm border-collapse min-w-[1250px]">
                 <thead>
                   <tr className="bg-green-800 text-white">

@@ -37,3 +37,21 @@
 .cl-formFieldInput::placeholder { color: #8a948b; opacity: 1; }
 .cl-formButtonPrimary:hover { background: #2e5a3e !important; }
 .cl-footerActionLink:hover { color: #a06a18 !important; }
+
+/* Responsive helpers (phone / tablet) */
+html, body { overflow-x: clip; max-width: 100%; }
+#root { max-width: 100vw; overflow-x: clip; }
+.nc-scroll-x { max-width: 100%; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.nc-map-canvas { height: 440px; }
+@media (max-width: 767px) {
+  .nc-map-canvas { height: min(360px, 62dvh); }
+  .nc-sec input, .nc-sec select, .nc-sec textarea { font-size: 16px !important; }
+}
+@media (pointer: coarse) {
+  .nc-sec button, .nc-sec select, .nc-sec a.nc-touch { min-height: 44px; }
+}
+.nc-slide-shell:fullscreen { background: var(--nc-ink, #18231c); display: flex; align-items: center; justify-content: center; }
+.nc-slide-shell:fullscreen iframe { width: min(100vw, calc(100dvh * 16 / 9)); height: auto; border: 0; border-radius: 0; }
+.nc-rotate-hint { display: none; }
+.nc-sec .grid > * { min-width: 0; }
+@media (max-width: 767px) and (orientation: portrait) { .nc-rotate-hint { display: flex; } }

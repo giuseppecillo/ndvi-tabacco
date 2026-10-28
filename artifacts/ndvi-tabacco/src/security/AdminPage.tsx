@@ -171,10 +171,10 @@ function Audit() {
   return (
     <Card>
       <h2 className="nc-display text-xl font-semibold">Registro di sicurezza</h2>
-      <div className="mt-3 max-h-[28rem] overflow-auto">
+      <div className="nc-scroll-x mt-3 max-h-[28rem] overflow-auto">
         {q.isPending ? <Skeleton /> : q.isError ? <ErrorNote error={q.error} onRetry={() => void q.refetch()} /> :
           q.data.length === 0 ? <p className="text-sm text-[var(--nc-muted)]">Nessun evento registrato.</p> :
-            <table className="nc-mono w-full text-xs">
+            <table className="nc-mono w-full min-w-[480px] text-xs">
               <thead className="text-left text-[var(--nc-muted)]"><tr><th className="py-2">Data</th><th>Azione</th><th>Oggetto</th></tr></thead>
               <tbody>{q.data.map(ev => (
                 <tr key={ev.id} className="border-t border-[var(--nc-line)]"><td className="py-2 pr-3 whitespace-nowrap">{fmtDate(ev.createdAt)}</td><td className="pr-3">{ev.action}</td><td className="break-all text-[var(--nc-muted)]">{ev.targetId ?? "-"}</td></tr>

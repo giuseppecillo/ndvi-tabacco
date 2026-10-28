@@ -20,3 +20,9 @@ Il supporto tecnico deve aprire la posta dell’utente verso support@taurusagsol
 **Why:** l’utente ha approvato esplicitamente un pulsante per scrivere dalla propria posta, non un modulo interno o un invio automatico.
 
 **How to apply:** mantenere questo comportamento quando si modificano i contatti; non introdurre raccolta di dati diagnostici o allegati automatici senza nuova autorizzazione.
+
+La presentazione nelle Istruzioni deve essere disponibile in italiano, inglese e spagnolo, comprese le etichette nelle figure. Conservare figure, loghi, grafici e valori numerici.
+
+**Why:** l’utente ha richiesto esplicitamente che anche le figure siano tradotte e mantenute.
+
+**How to apply:** non limitarsi a tradurre titoli o didascalie; verificare le scritte incorporate nelle schermate, mantenendo invariati dati e identificatori.
