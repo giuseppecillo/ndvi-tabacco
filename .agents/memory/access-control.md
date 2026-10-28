@@ -37,7 +37,7 @@ Per l’informativa l’utente ha confermato conservazione di 5 anni per ogni ca
 
 **Why:** il titolare ha confermato esplicitamente la decorrenza unica, dopo averne chiarito l’effetto sui dati aggiunti più tardi.
 
-**How to apply:** non sostituire la decorrenza con la data del singolo rilievo. Distinguere la politica dichiarata dall’effettiva applicazione operativa; non introdurre cancellazioni massive senza verificarne tutte le conseguenze.
+**How to apply:** non sostituire la decorrenza con la data del singolo rilievo. Distinguere la politica dichiarata dall’effettiva applicazione operativa. Un report non autorizza cancellazioni; richiedere verifica delle eccezioni e conferma per singolo account, senza introdurre cancellazioni massive non autorizzate.
 
 Taurus Agriculture Solution SRL ha sviluppato e gestisce NitroCrop NDVI, è il fornitore della soluzione e il titolare del trattamento. Il titolare ha confermato contratti gestiti e controfirmati con Aruba, Replit, Supabase e Netlify, comprensivi degli accordi privacy richiesti dal GDPR; hosting nel Regno Unito; backup incrementali continui cifrati in transito e a riposo, eliminati entro 24 ore dalla cancellazione dei dati.
 

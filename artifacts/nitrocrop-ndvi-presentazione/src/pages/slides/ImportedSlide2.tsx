@@ -17,21 +17,23 @@ return (
         backgroundColor: "#FAFBFC"
       }} /><div key={1} style={{
         position: "absolute",
-        left: "4.010417vw",
-        top: "3.97963vh",
-        width: "91.979167vw",
-        height: "7.037037vh",
+        left: "0vw",
+        top: "2.5vh",
+        width: "100vw",
+        height: "8.6vh",
         boxSizing: "border-box",
-        backgroundColor: "transparent"
+        background: "linear-gradient(180deg, #F6B42C 0%, #F09A1F 100%)",
+        borderBottom: "1px solid #C97A12"
       }} /><div key={2} style={{
         position: "absolute",
         left: "4.010417vw",
-        top: "5.692593vh",
-        width: "1.979167vw",
-        height: "3.518519vh",
+        top: "4.6vh",
+        width: "19.5vw",
+        height: "5.6vh",
         boxSizing: "border-box",
-        backgroundColor: "#0D9488",
-        borderRadius: "3.84px"
+        backgroundColor: "#FFD36B",
+        border: "1px solid #C97A12",
+        borderRadius: "999px"
       }} /><div key={3} style={{
         position: "absolute",
         left: "6.998958vw",
@@ -55,7 +57,7 @@ return (
             fontSize: t.font("1.5vw", "NitroCrop NDVI"),
             fontFamily: "'Inter', sans-serif",
             fontWeight: "700",
-            color: "#1E3A5F"
+            color: "#2A1A05"
           }}>{t("NitroCrop NDVI")}</span></p></div><div key={4} style={{
         position: "absolute",
         left: "84.421875vw",
@@ -79,7 +81,7 @@ return (
             fontSize: t.font("1.5vw", "PANORAMICA"),
             fontFamily: "'Inter', sans-serif",
             fontWeight: "700",
-            color: "#64748B"
+            color: "#2A1A05"
           }}>{t("PANORAMICA")}</span></p></div><div key={5} style={{
         position: "absolute",
         left: "4vw",
@@ -103,7 +105,7 @@ return (
             fontSize: t.font("4vw", "Dalla misura alla decisione"),
             fontFamily: "'Inter', sans-serif",
             fontWeight: "700",
-            color: "#1E3A5F"
+            color: "#1F3D2B"
           }}>{t("Dalla misura alla decisione")}</span></p></div><div key={6} style={{
         position: "absolute",
         left: "4vw",
@@ -138,7 +140,7 @@ return (
             fontSize: t.font("1.694444vw", "RILIEVO"),
             fontFamily: "'Inter', sans-serif",
             fontWeight: "700",
-            color: "#0D9488"
+            color: "#A85E06"
           }}>{t("RILIEVO")}</span></p></div><div key={8} style={{
         position: "absolute",
         left: "6.051042vw",
@@ -226,7 +228,7 @@ return (
             fontSize: t.font("1.694444vw", "INDICAZIONE"),
             fontFamily: "'Inter', sans-serif",
             fontWeight: "700",
-            color: "#0D9488"
+            color: "#A85E06"
           }}>{t("INDICAZIONE")}</span></p></div><div key={12} style={{
         position: "absolute",
         left: "53.051042vw",

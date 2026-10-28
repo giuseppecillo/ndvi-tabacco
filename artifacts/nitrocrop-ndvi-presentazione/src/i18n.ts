@@ -35,7 +35,7 @@ export function translateDeck(source: string, lang: DeckLanguage): string {
   const normalized = normalize(source);
   if (!normalized || normalized === "5" || normalized === "NDVI" ||
       normalized === "GIS" || normalized === "Taurus Agriculture Solution") return normalized;
-  if (normalized === "NitroCrop NDVI") return "Nitro Crop NDVI";
+  if (normalized === "NitroCrop NDVI") return "NitroCrop NDVI";
   const page = normalized.match(/^Pagina (\d+)$/);
   if (page) return `${{ it: "Pagina", en: "Page", es: "Página" }[lang]} ${page[1]}`;
   const row = translations.get(normalized);

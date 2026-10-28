@@ -19,21 +19,23 @@ return (
         backgroundColor: "#FAFBFC"
       }} /><div key={1} style={{
         position: "absolute",
-        left: "4.010417vw",
-        top: "3.97963vh",
-        width: "91.979167vw",
-        height: "7.037037vh",
+        left: "0vw",
+        top: "2.5vh",
+        width: "100vw",
+        height: "8.6vh",
         boxSizing: "border-box",
-        backgroundColor: "transparent"
+        background: "linear-gradient(180deg, #F6B42C 0%, #F09A1F 100%)",
+        borderBottom: "1px solid #C97A12"
       }} /><div key={2} style={{
         position: "absolute",
         left: "4.010417vw",
-        top: "5.692593vh",
-        width: "1.979167vw",
-        height: "3.518519vh",
+        top: "4.6vh",
+        width: "19.5vw",
+        height: "5.6vh",
         boxSizing: "border-box",
-        backgroundColor: "#0D9488",
-        borderRadius: "3.84px"
+        backgroundColor: "#FFD36B",
+        border: "1px solid #C97A12",
+        borderRadius: "999px"
       }} /><div key={3} style={{
         position: "absolute",
         left: "6.998958vw",
@@ -57,7 +59,7 @@ return (
             fontSize: t.font("1.5vw", "NitroCrop NDVI"),
             fontFamily: "'Inter', sans-serif",
             fontWeight: "700",
-            color: "#1E3A5F"
+            color: "#2A1A05"
           }}>{t("NitroCrop NDVI")}</span></p></div><div key={4} style={{
         position: "absolute",
         left: "87.748958vw",
@@ -81,7 +83,7 @@ return (
             fontSize: t.font("1.5vw", "TABACCO"),
             fontFamily: "'Inter', sans-serif",
             fontWeight: "700",
-            color: "#64748B"
+            color: "#2A1A05"
           }}>{t("TABACCO")}</span></p></div><div key={5} style={{
         position: "absolute",
         left: "4vw",
@@ -105,7 +107,7 @@ return (
             fontSize: t.font("3.694444vw", "Risultati per il tabacco"),
             fontFamily: "'Inter', sans-serif",
             fontWeight: "700",
-            color: "#1E3A5F"
+            color: "#1F3D2B"
           }}>{t("Risultati per il tabacco")}</span></p></div><div key={6} style={{
         position: "absolute",
         left: "89.838542vw",

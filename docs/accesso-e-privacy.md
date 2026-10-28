@@ -101,6 +101,10 @@ Responsabilità operative da mantenere:
   garanzie o tempi di conservazione.
 
 Il testo pubblico e gli avvisi sono disponibili in italiano, inglese e spagnolo.
+La procedura operativa, gli avvisi amministrativi e il report in sola lettura
+sono descritti in [procedura-conservazione.md](procedura-conservazione.md).
+Non automatizzano né autorizzano cancellazioni: ogni account richiede verifica
+delle eccezioni, conferma individuale e piano per fornitori/copie.
 L’aggiornamento non cambia autorizzazioni, isolamento dei rilievi, localizzazione
 dei servizi o politiche operative di backup. Nessuna certificazione GDPR è
 implicita nell’implementazione tecnica.

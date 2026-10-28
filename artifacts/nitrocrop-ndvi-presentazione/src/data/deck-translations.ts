@@ -1,4 +1,5 @@
 export const deckTranslations: readonly (readonly [string, string, string])[] = [
+  ["Navigazione: il pulsante NitroCrop NDVI apre a sinistra l’elenco dei moduli e riporta a Rilievo e Mappe.", "Navigation: the NitroCrop NDVI button opens the module list on the left and returns to Field Survey and Maps.", "Navegación: el botón NitroCrop NDVI abre a la izquierda la lista de módulos y vuelve a Observaciones y Mapas."],
   ["AGRICOLTURA DI PRECISIONE", "PRECISION AGRICULTURE", "AGRICULTURA DE PRECISIÓN"],
   ["Supporto operativo alla fertilizzazione azotata di", "Practical nitrogen fertilization support for", "Apoyo práctico a la fertilización nitrogenada de"],
   ["tabacco e grano duro", "tobacco and durum wheat", "tabaco y trigo duro"],
