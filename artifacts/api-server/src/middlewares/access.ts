@@ -4,6 +4,7 @@ import pool from "../lib/db";
 import { PRIVACY_VERSION } from "../lib/security-db";
 import { getClerkProxyHost } from "./clerkProxyMiddleware";
 import { safeBrowserOrigin } from "../lib/origin-policy";
+import { subscriptionInfo } from "../lib/subscription";
 
 export interface LocalAccount {
   id: string;
@@ -14,6 +15,8 @@ export interface LocalAccount {
   status: "active" | "suspended" | "deleting";
   privacy_version: string | null;
   created_at: Date;
+  subscription_expires_at: Date | null;
+  subscription_duration_days: number | null;
 }
 
 export const requireAccount: RequestHandler = async (req, res, next) => {
@@ -64,6 +67,14 @@ export const requireAccount: RequestHandler = async (req, res, next) => {
 export const requireAdmin: RequestHandler = (_req, res, next) => {
   if (res.locals.account?.role !== "admin") {
     res.status(403).json({ error: "Funzione riservata all’amministratore." });
+    return;
+  }
+  next();
+};
+
+export const requireSubscription: RequestHandler = (_req, res, next) => {
+  if (subscriptionInfo(res.locals.account).subscriptionExpired) {
+    res.status(403).json({ error: "Abbonamento scaduto. Contatta l’amministratore per il rinnovo.", code: "SUBSCRIPTION_EXPIRED" });
     return;
   }
   next();

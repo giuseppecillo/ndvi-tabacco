@@ -36,6 +36,14 @@ export interface Account {
   privacyVersion: string;
   activated: boolean;
   createdAt: string;
+  /** @nullable */
+  subscriptionExpiresAt: string | null;
+  /** @nullable */
+  subscriptionDurationDays: number | null;
+  /** @nullable */
+  subscriptionDaysRemaining: number | null;
+  subscriptionExpired: boolean;
+  subscriptionExempt: boolean;
 }
 
 export type PrivacyRequestType = typeof PrivacyRequestType[keyof typeof PrivacyRequestType];
@@ -108,6 +116,11 @@ export type InviteManagedUserBody = {
   email: string;
   /** @maxLength 120 */
   name: string;
+  /**
+     * @minimum 1
+     * @maximum 3650
+     */
+  subscriptionDays?: number;
 };
 
 export type UpdateManagedUserBodyStatus = typeof UpdateManagedUserBodyStatus[keyof typeof UpdateManagedUserBodyStatus];
@@ -119,7 +132,12 @@ export const UpdateManagedUserBodyStatus = {
 } as const;
 
 export type UpdateManagedUserBody = {
-  status: UpdateManagedUserBodyStatus;
+  status?: UpdateManagedUserBodyStatus;
+  /**
+     * @minimum 1
+     * @maximum 3650
+     */
+  subscriptionDays?: number;
 };
 
 export type UpdateManagedPrivacyRequestBodyStatus = typeof UpdateManagedPrivacyRequestBodyStatus[keyof typeof UpdateManagedPrivacyRequestBodyStatus];

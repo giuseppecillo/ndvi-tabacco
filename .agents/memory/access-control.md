@@ -14,3 +14,9 @@ I rilievi precedenti all’introduzione degli account appartengono all’amminis
 **Why:** preservare il lavoro esistente senza esporlo ai nuovi clienti.
 
 **How to apply:** importazioni, ripristini e migrazioni devono mantenere questa attribuzione; non distribuire il registro storico agli utenti invitati.
+
+La durata dell’abbonamento è gestita solo dall’amministratore; l’utente deve vedere la propria scadenza e i giorni residui.
+
+**Why:** richiesta esplicita dell’utente di controllare la durata nella gestione amministrativa e mostrarla nell’app.
+
+**How to apply:** non consentire rinnovi autonomi attraverso campi client. La scadenza sospende l’utilizzo operativo senza cancellare i rilievi o impedire l’esportazione personale e le richieste privacy. Il conteggio è gestione manuale degli accessi, non un’integrazione di pagamento.

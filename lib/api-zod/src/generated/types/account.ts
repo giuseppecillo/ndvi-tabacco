@@ -18,4 +18,12 @@ export interface Account {
   privacyVersion: string;
   activated: boolean;
   createdAt: string;
+  /** @nullable */
+  subscriptionExpiresAt: Date | null;
+  /** @nullable */
+  subscriptionDurationDays: number | null;
+  /** @nullable */
+  subscriptionDaysRemaining: number | null;
+  subscriptionExpired: boolean;
+  subscriptionExempt: boolean;
 }

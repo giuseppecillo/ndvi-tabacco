@@ -27,7 +27,12 @@ export const GetMyAccountResponse = zod.object({
   "privacyAcknowledged": zod.boolean(),
   "privacyVersion": zod.string(),
   "activated": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "subscriptionExpiresAt": zod.coerce.date().nullable(),
+  "subscriptionDurationDays": zod.number().nullable(),
+  "subscriptionDaysRemaining": zod.number().nullable(),
+  "subscriptionExpired": zod.boolean(),
+  "subscriptionExempt": zod.boolean()
 })
 
 
@@ -74,7 +79,12 @@ export const ListManagedUsersResponseItem = zod.object({
   "privacyAcknowledged": zod.boolean(),
   "privacyVersion": zod.string(),
   "activated": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "subscriptionExpiresAt": zod.coerce.date().nullable(),
+  "subscriptionDurationDays": zod.number().nullable(),
+  "subscriptionDaysRemaining": zod.number().nullable(),
+  "subscriptionExpired": zod.boolean(),
+  "subscriptionExempt": zod.boolean()
 })
 export const ListManagedUsersResponse = zod.array(ListManagedUsersResponseItem)
 
@@ -83,11 +93,15 @@ export const inviteManagedUserBodyEmailMax = 254;
 
 export const inviteManagedUserBodyNameMax = 120;
 
+export const inviteManagedUserBodySubscriptionDaysDefault = 30;
+export const inviteManagedUserBodySubscriptionDaysMax = 3650;
+
 
 
 export const InviteManagedUserBody = zod.object({
   "email": zod.string().email().max(inviteManagedUserBodyEmailMax),
-  "name": zod.string().max(inviteManagedUserBodyNameMax)
+  "name": zod.string().max(inviteManagedUserBodyNameMax),
+  "subscriptionDays": zod.number().min(1).max(inviteManagedUserBodySubscriptionDaysMax).default(inviteManagedUserBodySubscriptionDaysDefault)
 })
 
 
@@ -95,8 +109,13 @@ export const UpdateManagedUserParams = zod.object({
   "id": zod.coerce.string()
 })
 
+export const updateManagedUserBodySubscriptionDaysMax = 3650;
+
+
+
 export const UpdateManagedUserBody = zod.object({
-  "status": zod.enum(['active', 'suspended'])
+  "status": zod.enum(['active', 'suspended']).optional(),
+  "subscriptionDays": zod.number().min(1).max(updateManagedUserBodySubscriptionDaysMax).optional()
 })
 
 export const UpdateManagedUserResponse = zod.object({
@@ -108,7 +127,12 @@ export const UpdateManagedUserResponse = zod.object({
   "privacyAcknowledged": zod.boolean(),
   "privacyVersion": zod.string(),
   "activated": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "subscriptionExpiresAt": zod.coerce.date().nullable(),
+  "subscriptionDurationDays": zod.number().nullable(),
+  "subscriptionDaysRemaining": zod.number().nullable(),
+  "subscriptionExpired": zod.boolean(),
+  "subscriptionExempt": zod.boolean()
 })
 
 

@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMyAccountQueryKey, useAcknowledgePrivacy, type Account } from "@workspace/api-client-react";
 import { Btn, Card, ErrorNote, Eyebrow, Skeleton, TopBar, errStatus, errText, useMyAccount, useSignOutAll } from "./ui";
+import { SubscriptionSummary } from "./SubscriptionSummary";
 
 function Frame({ children, account }: { children: ReactNode; account?: Account | null }) {
   return (
@@ -68,8 +69,8 @@ function PrivacyAck({ account }: { account: Account }) {
  * Renders children only for a signed-in, active, approved account.
  * requireAck: also requires current privacy acknowledgment.
  */
-export function AccountGate({ children, requireAck = true, requireAdmin = false }: {
-  children: (account: Account) => ReactNode; requireAck?: boolean; requireAdmin?: boolean;
+export function AccountGate({ children, requireAck = true, requireAdmin = false, requireSubscription = true }: {
+  children: (account: Account) => ReactNode; requireAck?: boolean; requireAdmin?: boolean; requireSubscription?: boolean;
 }) {
   const { isLoaded, isSignedIn } = useAuth();
   const q = useMyAccount(!!isSignedIn);
@@ -88,6 +89,15 @@ export function AccountGate({ children, requireAck = true, requireAdmin = false 
     return <Blocked title={account.status === "deleting" ? "Account in eliminazione" : "Account sospeso"} body="L'accesso ai dati è bloccato. Contatta l'amministratore della tua azienda." onRetry={() => void q.refetch()} />;
   }
   if (requireAdmin && account.role !== "admin") return <Redirect to="/user-portal" />;
+  if (requireSubscription && account.subscriptionExpired) return (
+    <Frame account={account}>
+      <h1 className="mb-4 text-2xl font-semibold">Rinnova il tuo abbonamento</h1>
+      <SubscriptionSummary account={account} />
+      <p className="mt-4">L’accesso ai rilievi è sospeso fino al rinnovo da parte dell’amministratore. I dati restano conservati e puoi ancora esercitare i tuoi diritti privacy.</p>
+      <Link href="/account" className="mt-4 inline-block font-semibold underline">Il mio account e richieste privacy</Link>
+      <Btn className="ml-4 mt-4" onClick={() => void q.refetch()}>Verifica rinnovo</Btn>
+    </Frame>
+  );
   if (requireAck && !account.privacyAcknowledged) return <PrivacyAck account={account} />;
   return <>{children(account)}</>;
 }

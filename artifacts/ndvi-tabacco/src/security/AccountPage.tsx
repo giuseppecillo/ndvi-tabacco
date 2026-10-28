@@ -6,6 +6,7 @@ import {
   type Account, type CreatePrivacyRequestBodyType,
 } from "@workspace/api-client-react";
 import { Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, Skeleton, TopBar, errText, fmtDate } from "./ui";
+import { SubscriptionSummary } from "./SubscriptionSummary";
 
 export const REQ_LABEL: Record<string, string> = {
   access: "Accesso", rectification: "Rettifica", restriction: "Limitazione", objection: "Opposizione", erasure: "Cancellazione",
@@ -42,6 +43,7 @@ export function AccountPage({ account }: { account: Account }) {
   return (
     <div className="min-h-[100dvh]">
       <TopBar account={account} />
+      <div className="mx-auto max-w-5xl px-4 pt-5"><SubscriptionSummary account={account} /></div>
       <main className="mx-auto max-w-5xl px-4 py-10">
         <Eyebrow>Profilo e diritti sui dati</Eyebrow>
         <h1 className="nc-display mt-2 text-4xl font-semibold text-[var(--nc-leaf)]">{account.name || account.email}</h1>

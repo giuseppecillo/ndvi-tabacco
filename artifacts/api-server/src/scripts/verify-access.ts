@@ -97,6 +97,24 @@ try {
   check("privacy request invisible to another user", (await request(b.identityId, "/auth/privacy-requests")).body.length === 0);
   check("administrator can respond to privacy request", (await request(admin.identityId, `/admin/privacy-requests/${privacy.body.id}`, "PATCH", { status: "completed", response: "Synthetic response" })).status === 200);
   check("requester can read response", (await request(a.identityId, "/auth/privacy-requests")).body[0].response === "Synthetic response");
+  check("user cannot change own subscription", (await request(a.identityId, `/admin/users/${a.id}`, "PATCH", { subscriptionDays: 999 })).status === 403);
+  for (const days of [0, -1, 1.5, 3651]) {
+    check("invalid duration rejected", (await request(admin.identityId, `/admin/users/${a.id}`, "PATCH", { subscriptionDays: days })).status === 400);
+  }
+  check("empty update rejected", (await request(admin.identityId, `/admin/users/${a.id}`, "PATCH", {})).status === 400);
+  const renewed = await request(admin.identityId, `/admin/users/${a.id}`, "PATCH", { subscriptionDays: 5 });
+  check("admin changes duration and deadline", renewed.status === 200 && renewed.body.subscriptionDurationDays === 5 && renewed.body.subscriptionDaysRemaining === 5);
+  check("another user's duration unchanged", (await request(b.identityId, "/auth/me")).body.subscriptionDurationDays === 30);
+  await pool.query("UPDATE app_users SET subscription_expires_at=now()-interval '1 second' WHERE id=$1", [a.id]);
+  const expired = await request(a.identityId, "/auth/me");
+  check("expired account reports zero days without blocking identity", expired.status === 200 && expired.body.subscriptionExpired === true && expired.body.subscriptionDaysRemaining === 0);
+  for (const method of ["GET", "POST", "DELETE"]) {
+    check("expired session cannot access observation endpoints", (await request(a.identityId, "/osservazioni", method, method === "POST" ? sampleObservation("expired") : undefined)).status === 403);
+  }
+  check("expired user retains personal data export", (await request(a.identityId, "/auth/export")).status === 200);
+  check("expired user retains privacy request access", (await request(a.identityId, "/auth/privacy-requests")).status === 200);
+  check("admin renewal restores expired subscription", (await request(admin.identityId, `/admin/users/${a.id}`, "PATCH", { subscriptionDays: 7 })).body.subscriptionDaysRemaining === 7);
+  check("renewal preserves and restores own registry", (await request(a.identityId, "/osservazioni")).body.length === 1);
   check("admin can suspend", (await request(admin.identityId, `/admin/users/${a.id}`, "PATCH", { status: "suspended" })).status === 200);
   check("existing suspended session cannot read data", (await request(a.identityId, "/osservazioni")).status === 403);
   check("existing suspended session cannot write data", (await request(a.identityId, "/osservazioni", "POST", sampleObservation("denied"))).status === 403);

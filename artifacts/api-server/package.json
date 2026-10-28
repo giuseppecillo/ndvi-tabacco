@@ -8,8 +8,9 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "esbuild src/routes/osservazioni.test.ts src/lib/origin-policy.test.ts --bundle --platform=node --format=cjs --outdir=/tmp/nitrocrop-api-tests && node --test /tmp/nitrocrop-api-tests/routes/osservazioni.test.js /tmp/nitrocrop-api-tests/lib/origin-policy.test.js",
-    "test:access": "esbuild src/scripts/verify-access.ts --bundle --platform=node --format=esm --packages=external --outfile=node_modules/.cache/verify-access.mjs && node node_modules/.cache/verify-access.mjs"
+    "test": "esbuild src/routes/osservazioni.test.ts src/lib/origin-policy.test.ts src/lib/subscription.test.ts --bundle --platform=node --format=cjs --outdir=/tmp/nitrocrop-api-tests && node --test /tmp/nitrocrop-api-tests/routes/osservazioni.test.js /tmp/nitrocrop-api-tests/lib/origin-policy.test.js /tmp/nitrocrop-api-tests/lib/subscription.test.js",
+    "test:access": "esbuild src/scripts/verify-access.ts --bundle --platform=node --format=esm --packages=external --outfile=node_modules/.cache/verify-access.mjs && node node_modules/.cache/verify-access.mjs",
+    "setup:admin": "esbuild src/scripts/setup-admin.ts --bundle --platform=node --format=esm --packages=external --outfile=node_modules/.cache/setup-admin.mjs && node node_modules/.cache/setup-admin.mjs"
   },
   "dependencies": {
     "@clerk/express": "^2.1.84",

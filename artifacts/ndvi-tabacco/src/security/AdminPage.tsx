@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getListManagedPrivacyRequestsQueryKey, getListManagedUsersQueryKey, getListSecurityEventsQueryKey,
@@ -8,20 +8,26 @@ import {
 } from "@workspace/api-client-react";
 import { Btn, Card, ErrorNote, Eyebrow, OkNote, Skeleton, TopBar, fmtDate } from "./ui";
 import { REQ_LABEL, STATUS_LABEL } from "./AccountPage";
+import { SubscriptionSummary } from "./SubscriptionSummary";
 
 const input = "w-full rounded-xl border border-[var(--nc-line)] bg-[var(--nc-paper)] px-3 py-2.5 text-sm outline-none focus:border-[var(--nc-leaf)]";
 
 function InviteForm() {
   const qc = useQueryClient();
   const [email, setEmail] = useState(""); const [name, setName] = useState("");
+  const [days, setDays] = useState("30");
   const m = useInviteManagedUser({ mutation: { onSuccess: () => { setEmail(""); setName(""); qc.invalidateQueries({ queryKey: getListManagedUsersQueryKey() }); } } });
   return (
     <Card>
       <h2 className="nc-display text-xl font-semibold">Autorizza un nuovo utente</h2>
       <p className="mt-1 text-sm text-[var(--nc-muted)]">L'utente riceve un invito via email e sceglie da solo la propria password. L'invito scade dopo 7 giorni e può essere reinviato al massimo ogni 15 minuti.</p>
-      <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]" onSubmit={e => { e.preventDefault(); m.mutate({ data: { email: email.trim(), name: name.trim() } }); }}>
+      <p className="mt-2 text-sm text-[var(--nc-muted)]">L’abbonamento decorre dalla creazione dell’utente, anche se l’invito non è ancora stato accettato.</p>
+      <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); m.mutate({ data: { email: email.trim(), name: name.trim(), subscriptionDays: Number(days) } }); }}>
         <input className={input} placeholder="Nome e cognome" value={name} maxLength={120} required onChange={e => setName(e.target.value)} />
         <input className={input} type="email" placeholder="email@azienda.it" value={email} maxLength={254} required onChange={e => setEmail(e.target.value)} />
+        <label className="text-sm font-medium">Durata abbonamento (giorni)
+          <input className={`${input} mt-1`} type="number" min={1} max={3650} step={1} value={days} required onChange={e => setDays(e.target.value)} />
+        </label>
         <Btn type="submit" disabled={m.isPending || !email.trim() || !name.trim()}>{m.isPending ? "Invio..." : "Invita"}</Btn>
       </form>
       <div className="mt-3">
@@ -56,6 +62,8 @@ function DeleteDialog({ user, onClose }: { user: Account; onClose: () => void })
 
 function UserRow({ u, me, onDelete }: { u: Account; me: Account; onDelete: () => void }) {
   const qc = useQueryClient();
+  const [days, setDays] = useState(String(u.subscriptionDurationDays ?? 30));
+  useEffect(() => { setDays(String(u.subscriptionDurationDays ?? 30)); }, [u.subscriptionDurationDays]);
   const upd = useUpdateManagedUser({ mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: getListManagedUsersQueryKey() }) } });
   const resend = useResendManagedInvitation();
   const protectedUser = u.id === me.id || u.role === "admin";
@@ -65,7 +73,7 @@ function UserRow({ u, me, onDelete }: { u: Account; me: Account; onDelete: () =>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-semibold">{u.name} {u.role === "admin" && <span className="nc-mono ml-1 text-xs text-[var(--nc-wheat)]">ADMIN</span>}</p>
-          <p className="nc-mono text-xs text-[var(--nc-muted)]">{u.email}</p>
+          <p className="nc-mono break-all text-xs text-[var(--nc-muted)]">{u.email}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badge}`}>{u.status === "active" ? "Attivo" : u.status === "suspended" ? "Sospeso" : "In eliminazione"}</span>
@@ -81,6 +89,18 @@ function UserRow({ u, me, onDelete }: { u: Account; me: Account; onDelete: () =>
         </div>
       </div>
       <div className="mt-2 space-y-2">
+        <SubscriptionSummary account={u} compact />
+        {!protectedUser && u.status !== "deleting" && <form className="flex flex-wrap items-end gap-2" onSubmit={e => {
+          e.preventDefault();
+          upd.mutate({ id: u.id, data: { subscriptionDays: Number(days) } });
+        }}>
+          <label className="text-sm">Durata da oggi (giorni)
+            <input aria-label={`Durata abbonamento di ${u.name}`} className={`${input} mt-1 max-w-40`} type="number" required min={1} max={3650} step={1} value={days} onChange={e => setDays(e.target.value)} />
+          </label>
+          <Btn type="submit" disabled={upd.isPending}>{upd.isPending ? "Salvataggio..." : "Imposta da oggi"}</Btn>
+          <p className="w-full text-xs text-[var(--nc-muted)]">Sostituisce la scadenza con oggi + giorni indicati, senza sommare quelli residui. Non riattiva un account sospeso.</p>
+        </form>}
+        {upd.isSuccess && <OkNote>Utente aggiornato.</OkNote>}
         {upd.isError && <ErrorNote error={upd.error} />}
         {resend.isError && <ErrorNote error={resend.error} />}
         {resend.isSuccess && <OkNote>{resend.data.message}</OkNote>}
@@ -90,7 +110,7 @@ function UserRow({ u, me, onDelete }: { u: Account; me: Account; onDelete: () =>
 }
 
 function Users({ me }: { me: Account }) {
-  const q = useListManagedUsers();
+  const q = useListManagedUsers({ query: { queryKey: getListManagedUsersQueryKey(), refetchInterval: 15000, refetchOnWindowFocus: true } });
   const [del, setDel] = useState<Account | null>(null);
   return (
     <Card>

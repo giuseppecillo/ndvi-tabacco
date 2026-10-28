@@ -11,4 +11,9 @@ export type InviteManagedUserBody = {
   email: string;
   /** @maxLength 120 */
   name: string;
+  /**
+     * @minimum 1
+     * @maximum 3650
+     */
+  subscriptionDays?: number;
 };

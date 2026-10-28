@@ -8,5 +8,10 @@
 import type { UpdateManagedUserBodyStatus } from './updateManagedUserBodyStatus';
 
 export type UpdateManagedUserBody = {
-  status: UpdateManagedUserBodyStatus;
+  status?: UpdateManagedUserBodyStatus;
+  /**
+     * @minimum 1
+     * @maximum 3650
+     */
+  subscriptionDays?: number;
 };

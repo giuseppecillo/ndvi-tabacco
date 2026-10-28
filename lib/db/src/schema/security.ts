@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 
 export const appUsersTable = pgTable("app_users", {
@@ -8,6 +9,8 @@ export const appUsersTable = pgTable("app_users", {
   name: text("name").notNull().default(""),
   role: text("role").notNull().default("user"),
   status: text("status").notNull().default("active"),
+  subscriptionDurationDays: integer("subscription_duration_days").default(30),
+  subscriptionExpiresAt: timestamp("subscription_expires_at", { withTimezone: true }).default(sql`now() + interval '30 days'`),
   privacyVersion: text("privacy_version"),
   privacyAckAt: timestamp("privacy_ack_at", { withTimezone: true }),
   invitationId: text("invitation_id"),

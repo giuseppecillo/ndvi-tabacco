@@ -54,6 +54,8 @@ export async function initializeSecurity() {
       );
       ALTER TABLE osservazioni ADD COLUMN IF NOT EXISTS owner_id text REFERENCES app_users(id) ON DELETE CASCADE;
       ALTER TABLE osservazioni ADD COLUMN IF NOT EXISTS observation_id text;
+      ALTER TABLE app_users ADD COLUMN IF NOT EXISTS subscription_duration_days integer DEFAULT 30 CHECK (subscription_duration_days BETWEEN 1 AND 3650);
+      ALTER TABLE app_users ADD COLUMN IF NOT EXISTS subscription_expires_at timestamptz DEFAULT (now() + interval '30 days');
       UPDATE osservazioni SET observation_id = id WHERE observation_id IS NULL;
       CREATE UNIQUE INDEX IF NOT EXISTS osservazioni_owner_display_idx ON osservazioni(owner_id, observation_id);
     `);

@@ -7,6 +7,7 @@ import { Link, Redirect, Route, Switch, useLocation, Router as WouterRouter } fr
 import App from "../App";
 import "./security.css";
 import { AccountGate } from "./Gate";
+import { SubscriptionSummary } from "./SubscriptionSummary";
 import { AccountPage } from "./AccountPage";
 import { AdminPage } from "./AdminPage";
 import { Landing, PrivacyPage, PublicFooter } from "./PublicPages";
@@ -199,6 +200,7 @@ function Portal() {
       {account => (
         <div className="min-h-[100dvh]">
           <TopBar account={account} />
+          <div className="mx-auto max-w-6xl px-4 py-3"><SubscriptionSummary account={account} /></div>
           <App key={account.id} storageScope={account.id} migrateLegacySettings={account.role === "admin"} />
         </div>
       )}
@@ -237,7 +239,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/sign-up/*?" component={SignUpPage} />
           <Route path="/user-portal" component={Portal} />
           <Route path="/account">
-            <AccountGate requireAck={false}>{a => <AccountPage key={a.id} account={a} />}</AccountGate>
+            <AccountGate requireAck={false} requireSubscription={false}>{a => <AccountPage key={a.id} account={a} />}</AccountGate>
           </Route>
           <Route path="/admin">
             <AccountGate requireAdmin>{a => <AdminPage key={a.id} account={a} />}</AccountGate>

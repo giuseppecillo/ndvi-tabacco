@@ -3,12 +3,14 @@ import { clerkClient } from "@clerk/express";
 import pool from "./db";
 import { audit, PRIVACY_VERSION } from "./security-db";
 import type { LocalAccount } from "../middlewares/access";
+import { subscriptionInfo } from "./subscription";
 
 export const accountJson = (a: LocalAccount) => ({
   id: a.id, email: a.email, name: a.name, role: a.role, status: a.status,
   privacyAcknowledged: a.privacy_version === PRIVACY_VERSION,
   privacyVersion: PRIVACY_VERSION, activated: !!a.clerk_user_id,
   createdAt: a.created_at.toISOString(),
+  ...subscriptionInfo(a),
 });
 
 export const requestColumns = `id, user_id AS "userId", type, message, status, response, created_at AS "createdAt"`;

@@ -9,6 +9,7 @@ import pool from "../lib/db";
 import { audit, PRIVACY_VERSION } from "../lib/security-db";
 import { accountJson, deleteAccount, inviteAccount, requestColumns } from "../lib/account-actions";
 import { requireAccount, requireAdmin, type LocalAccount } from "../middlewares/access";
+import { DEFAULT_SUBSCRIPTION_DAYS, subscriptionExpiry, validSubscriptionDays } from "../lib/subscription";
 
 const router = Router();
 const privateRouter = Router();
@@ -102,10 +103,11 @@ adminRouter.get("/users", async (_req, res) => {
 adminRouter.post("/users", accountLimit, async (req, res) => {
   const result = InviteManagedUserBody.safeParse(req.body);
   if (!result.success) return res.status(400).json({ error: "Inserisci un indirizzo email valido e un nome (massimo 120 caratteri)." });
+  if (!validSubscriptionDays(result.data.subscriptionDays ?? DEFAULT_SUBSCRIPTION_DAYS)) return res.status(400).json({ error: "La durata deve essere un numero intero da 1 a 3650 giorni." });
   const email = result.data.email.trim().toLowerCase();
   const { rows } = await pool.query<LocalAccount>(
-    `INSERT INTO app_users(id,email,name) VALUES($1,$2,$3) ON CONFLICT(email) DO NOTHING RETURNING *`,
-    [randomUUID(), email, result.data.name.trim()],
+    `INSERT INTO app_users(id,email,name,subscription_duration_days,subscription_expires_at) VALUES($1,$2,$3,$4,$5) ON CONFLICT(email) DO NOTHING RETURNING *`,
+    [randomUUID(), email, result.data.name.trim(), result.data.subscriptionDays ?? DEFAULT_SUBSCRIPTION_DAYS, subscriptionExpiry(result.data.subscriptionDays ?? DEFAULT_SUBSCRIPTION_DAYS)],
   );
   if (!rows[0]) return res.status(409).json({ error: "Esiste già un utente con questa email. Usa Reinvia invito oppure Abilita." });
   await audit(res.locals.account.id, rows[0].id, "user_authorized");
@@ -119,12 +121,20 @@ adminRouter.post("/users", accountLimit, async (req, res) => {
 });
 adminRouter.patch("/users/:id", accountLimit, async (req, res) => {
   const result = UpdateManagedUserBody.safeParse(req.body);
-  if (!result.success) return res.status(400).json({ error: "Stato non valido." });
+  if (!result.success || (result.data.status === undefined && result.data.subscriptionDays === undefined)) return res.status(400).json({ error: "Indica uno stato o una durata valida da 1 a 3650 giorni." });
+  if (result.data.subscriptionDays !== undefined && !validSubscriptionDays(result.data.subscriptionDays)) return res.status(400).json({ error: "La durata deve essere un numero intero da 1 a 3650 giorni." });
   const target = (await pool.query<LocalAccount>("SELECT * FROM app_users WHERE id=$1", [req.params.id])).rows[0];
   if (!target) return res.status(404).json({ error: "Utente non trovato." });
   if (target.role === "admin" || target.status === "deleting") return res.status(400).json({ error: "Non puoi modificare questo account." });
-  const { rows } = await pool.query<LocalAccount>("UPDATE app_users SET status=$2 WHERE id=$1 RETURNING *", [target.id, result.data.status]);
-  await audit(res.locals.account.id, target.id, `user_${result.data.status}`);
+  const days = result.data.subscriptionDays;
+  const { rows } = await pool.query<LocalAccount>(
+    `UPDATE app_users SET status=COALESCE($2,status),
+      subscription_duration_days=COALESCE($3,subscription_duration_days),
+      subscription_expires_at=COALESCE($4,subscription_expires_at) WHERE id=$1 RETURNING *`,
+    [target.id, result.data.status ?? null, days ?? null, days === undefined ? null : subscriptionExpiry(days)],
+  );
+  if (result.data.status) await audit(res.locals.account.id, target.id, `user_${result.data.status}`);
+  if (days !== undefined) await audit(res.locals.account.id, target.id, "subscription_updated");
   return res.json(accountJson(rows[0]));
 });
 adminRouter.post("/users/:id/invite", accountLimit, async (req, res) => {

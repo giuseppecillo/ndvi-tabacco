@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
-import { requireAccount, requirePrivacyAck } from "../middlewares/access";
+import { requireAccount, requirePrivacyAck, requireSubscription } from "../middlewares/access";
 
 const router = Router();
-router.use("/osservazioni", requireAccount, requirePrivacyAck);
+router.use("/osservazioni", requireAccount, requireSubscription, requirePrivacyAck);
 
 const FASI_N_GRANO: Record<string, { label: string; min: number; max: number }> = {
   "00–09": { label: "Semina / emergenza", min: 27, max: 36 },
