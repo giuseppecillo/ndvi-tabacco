@@ -37,7 +37,7 @@ export const common: readonly Translation[] = [
   ["Invio in corso...", "Sending...", "Enviando..."],
   ["Invio...", "Sending...", "Enviando..."],
   ["Richiesta inviata", "Request sent", "Solicitud enviada"],
-  ["Strumento", "Application", "Aplicación"],
+  ["Rilievo e Mappe", "Field Survey and Maps", "Observaciones y Mapas"],
   ["Il mio account", "My account", "Mi cuenta"],
   ["Amministrazione", "Administration", "Administración"],
   ["Esci", "Sign out", "Cerrar sesión"],
