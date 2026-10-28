@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useSearch } from "wouter";
 import { getLocale, t } from "./i18n/runtime";
 const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import jsPDF from "jspdf";
@@ -325,7 +326,18 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     activeAccountView.current = true;
     return () => { activeAccountView.current = false; };
   }, []);
-  const [activeTab, setActiveTab]       = useState<"calcolatore" | "elaborazioni">("calcolatore");
+  const search = useSearch();
+  const [activeTab, setActiveTab] = useState<"calcolatore" | "elaborazioni">(
+    () => new URLSearchParams(search).get("module") === "maps" ? "elaborazioni" : "calcolatore",
+  );
+  useEffect(() => {
+    setActiveTab(new URLSearchParams(search).get("module") === "maps" ? "elaborazioni" : "calcolatore");
+  }, [search]);
+  useEffect(() => {
+    const openHome = () => setActiveTab("calcolatore");
+    window.addEventListener("nitrocrop:open-home", openHome);
+    return () => window.removeEventListener("nitrocrop:open-home", openHome);
+  }, []);
   const [obsId, setObsId]               = useState("1");
   const [coltura, setColtura]           = useState<Coltura>("tabacco");
   const [data, setData]                 = useState(today);
@@ -765,27 +777,11 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       <div className="max-w-2xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="text-center flex flex-col items-center gap-2">
-          <img src={taurusLogo} alt="Taurus Agriculture Solution" className="h-28 w-auto drop-shadow-md" />
-          <h1 className="text-3xl font-bold text-green-900">NitroCrop NDVI</h1>
-          <p className="text-green-700 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
-        </div>
-
-        {/* Tab navigation */}
-        <div className="flex rounded-xl overflow-hidden border border-green-200 shadow-sm">
-          {(["calcolatore", "elaborazioni"] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
-                activeTab === tab
-                  ? "bg-green-800 text-white"
-                  : "bg-white text-green-800 hover:bg-green-50"
-              }`}
-            >
-              {tab === "calcolatore" ? isGranoDuro ? "🌾 Pianificatore azoto" : "🌿 NitroCrop NDVI" : "🗺 Elaborazioni e Mappe"}
-            </button>
-          ))}
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-amber-300 bg-amber-100 px-4 py-5 text-center">
+          <h1 className="text-2xl font-bold text-amber-950 sm:text-3xl">
+            {activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : "Rilievo e Mappe"}
+          </h1>
+          <p className="text-amber-900 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
         </div>
 
         {activeTab === "elaborazioni" && (
