@@ -166,9 +166,14 @@ export function PrivacyPage() {
             <p>L’app non aggiunge strumenti di profilazione o marketing: utilizza cookie di autenticazione e sessione e memoria locale per le impostazioni tecniche, separate per account. I servizi esterni possono utilizzare propri meccanismi di sicurezza; la relativa verifica va completata dal titolare.</p>
           </Sec>
           <Sec n="05" title="Servizi esterni">
-            <p>Clerk per l'autenticazione; Replit per l'hosting dell'applicazione e del database; fornitori di tessere satellitari/cartografiche, che ricevono dal browser le richieste delle porzioni di mappa visualizzate.</p>
+            <p>Attualmente l’app utilizza Clerk per l’autenticazione, Replit per l’hosting dell’applicazione e del database ed Esri/ArcGIS per le immagini delle mappe. Il servizio cartografico riceve dal browser le richieste delle porzioni di mappa visualizzate.</p>
             <p>Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR.</p>
-            <p>Secondo quanto dichiarato dal titolare, non sono previsti trasferimenti di dati personali al di fuori dell’Unione europea. Il titolare verifica che contratti, subfornitori, assistenza e configurazioni tecniche dei servizi esterni rispettino questa indicazione.</p>
+            <h3 className="font-semibold">Localizzazione prevista e trasferimenti extra UE</h3>
+            <p>La localizzazione prevista dal titolare per i server e per il trattamento dei dati è il Regno Unito. Si tratta di una configurazione futura: questa indicazione non attesta che tutti i servizi attualmente utilizzati siano già configurati in tale Paese. La sede legale del titolare resta a Milano, Italia.</p>
+            <p>Il Regno Unito è un Paese esterno all’Unione europea. I trasferimenti verso tale Paese possono basarsi sulla decisione di adeguatezza della Commissione europea ai sensi dell’art. 45 GDPR, nei limiti del suo ambito di applicazione e finché rimane in vigore.</p>
+            <p>La scelta di server nel Regno Unito non esclude ulteriori trattamenti in altri Paesi da parte dei fornitori o dei loro subfornitori. Prima della migrazione o dell’attivazione di nuovi servizi, il titolare verifica e documenta localizzazione effettiva, accessi di assistenza, backup e garanzie per ciascun servizio. Per eventuali trasferimenti non coperti da una decisione di adeguatezza devono essere individuate le garanzie applicabili previste dal Capo V GDPR, incluse, ove appropriate, le clausole contrattuali standard.</p>
+            <p>Questa informativa non dichiara l’assenza di trasferimenti extra UE e non certifica una localizzazione già verificata per tutti i fornitori. Per informazioni sulle destinazioni effettive e sulle garanzie applicabili puoi contattare {PRIVACY_CONTACT}.</p>
+            <p><a className="underline" href="https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/adequacy-decisions_en" target="_blank" rel="noopener noreferrer">Decisioni di adeguatezza della Commissione europea</a></p>
           </Sec>
           <Sec n="06" title="Conservazione">
             <p>Il periodo di conservazione dichiarato dal titolare è di 5 anni per ciascuna delle seguenti categorie di dati:</p>

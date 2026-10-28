@@ -61,9 +61,20 @@ Si tratta di gestione manuale degli accessi: nessun pagamento o rinnovo automati
 L’informativa riporta le informazioni dichiarate dal titolare: sede legale a
 Milano, conservazione di 5 anni per ogni categoria (account, dati cliente,
 rilievi/GPS/NDVI e parametri agronomici, log di sicurezza, richieste privacy),
-accordi con i responsabili ai sensi dell’art. 28 GDPR e nessun trasferimento
-previsto fuori dall’Unione europea. Le stesse informazioni sono disponibili
-in italiano, inglese e spagnolo.
+accordi con i responsabili ai sensi dell’art. 28 GDPR. Il titolare ha chiarito
+che la localizzazione futura prevista per server e trattamento è il Regno Unito,
+non la sede legale, che resta a Milano. L’informativa non afferma più l’assenza
+di trasferimenti extra UE e distingue il progetto futuro dalla configurazione
+effettiva dei fornitori attualmente usati. Le stesse informazioni sono
+disponibili in italiano, inglese e spagnolo.
+
+Il Regno Unito è extra UE. Il testo cita l’art. 45 GDPR e la decisione di
+adeguatezza nel suo ambito e finché vigente, con collegamento alla fonte della
+Commissione europea. Non certifica automaticamente la copertura dei servizi,
+dei subfornitori o di trasferimenti successivi verso altri Paesi.
+
+Aruba è previsto per il dominio; Supabase e Netlify sono intenzioni future,
+non fornitori dichiarati già attivi. Non è stata eseguita alcuna migrazione.
 
 Il titolare deve verificare che contratti, subfornitori, assistenza,
 localizzazione dei servizi e backup corrispondano alla dichiarazione.

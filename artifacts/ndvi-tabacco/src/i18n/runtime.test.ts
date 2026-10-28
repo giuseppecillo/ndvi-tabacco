@@ -1,5 +1,6 @@
 import { afterEach, test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { getLanguage, getLocale, setLanguage, t, translateDisplay } from "./runtime";
 import { localizeUi } from "../../localize-ui";
 
@@ -53,10 +54,24 @@ test("Updated privacy terms are available in English and Spanish", () => {
       "Log di autenticazione, sessione, sicurezza e azioni amministrative:",
       "Richieste privacy e relative risposte:",
       "Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR.",
-      "Secondo quanto dichiarato dal titolare, non sono previsti trasferimenti di dati personali al di fuori dell’Unione europea. Il titolare verifica che contratti, subfornitori, assistenza e configurazioni tecniche dei servizi esterni rispettino questa indicazione.",
+      "Localizzazione prevista e trasferimenti extra UE",
+      "La localizzazione prevista dal titolare per i server e per il trattamento dei dati è il Regno Unito. Si tratta di una configurazione futura: questa indicazione non attesta che tutti i servizi attualmente utilizzati siano già configurati in tale Paese. La sede legale del titolare resta a Milano, Italia.",
+      "Il Regno Unito è un Paese esterno all’Unione europea. I trasferimenti verso tale Paese possono basarsi sulla decisione di adeguatezza della Commissione europea ai sensi dell’art. 45 GDPR, nei limiti del suo ambito di applicazione e finché rimane in vigore.",
+      "La scelta di server nel Regno Unito non esclude ulteriori trattamenti in altri Paesi da parte dei fornitori o dei loro subfornitori. Prima della migrazione o dell’attivazione di nuovi servizi, il titolare verifica e documenta localizzazione effettiva, accessi di assistenza, backup e garanzie per ciascun servizio. Per eventuali trasferimenti non coperti da una decisione di adeguatezza devono essere individuate le garanzie applicabili previste dal Capo V GDPR, incluse, ove appropriate, le clausole contrattuali standard.",
+      "Decisioni di adeguatezza della Commissione europea",
     ]) assert.notEqual(t(text), text, `${language}: ${text}`);
     assert.match(t("Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR."), /28/);
   }
+});
+
+test("Privacy distinguishes planned UK processing from the Milan office and retains five years", () => {
+  const page = readFileSync(new URL("../security/PublicPages.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(page, /non sono previsti trasferimenti/);
+  assert.match(page, /configurazione futura/);
+  assert.match(page, /sede legale del titolare resta a Milano, Italia/);
+  assert.match(page, /art\. 45 GDPR/);
+  assert.equal(page.match(/<strong>5 anni<\/strong>/g)?.length, 5);
+  assert.doesNotMatch(page, /Supabase|Netlify/);
 });
 
 test("The display compiler does not translate form values, data keys or free text fields", () => {
