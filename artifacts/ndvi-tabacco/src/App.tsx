@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useSearch } from "wouter";
+import { ModuleHeading } from "./security/ModuleHeading";
 import { getLocale, t } from "./i18n/runtime";
 const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import jsPDF from "jspdf";
@@ -325,7 +327,18 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     activeAccountView.current = true;
     return () => { activeAccountView.current = false; };
   }, []);
-  const [activeTab, setActiveTab]       = useState<"calcolatore" | "elaborazioni">("calcolatore");
+  const search = useSearch();
+  const [activeTab, setActiveTab] = useState<"calcolatore" | "elaborazioni">(
+    () => new URLSearchParams(search).get("module") === "maps" ? "elaborazioni" : "calcolatore",
+  );
+  useEffect(() => {
+    setActiveTab(new URLSearchParams(search).get("module") === "maps" ? "elaborazioni" : "calcolatore");
+  }, [search]);
+  useEffect(() => {
+    const openHome = () => setActiveTab("calcolatore");
+    window.addEventListener("nitrocrop:open-home", openHome);
+    return () => window.removeEventListener("nitrocrop:open-home", openHome);
+  }, []);
   const [obsId, setObsId]               = useState("1");
   const [coltura, setColtura]           = useState<Coltura>("tabacco");
   const [data, setData]                 = useState(today);
@@ -765,28 +778,9 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       <div className="max-w-2xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="text-center flex flex-col items-center gap-2">
-          <img src={taurusLogo} alt="Taurus Agriculture Solution" className="h-28 w-auto drop-shadow-md" />
-          <h1 className="text-3xl font-bold text-green-900">NitroCrop NDVI</h1>
-          <p className="text-green-700 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
-        </div>
-
-        {/* Tab navigation */}
-        <div className="flex rounded-xl overflow-hidden border border-green-200 shadow-sm">
-          {(["calcolatore", "elaborazioni"] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
-                activeTab === tab
-                  ? "bg-green-800 text-white"
-                  : "bg-white text-green-800 hover:bg-green-50"
-              }`}
-            >
-              {tab === "calcolatore" ? isGranoDuro ? "🌾 Pianificatore azoto" : "🌿 NitroCrop NDVI" : "🗺 Elaborazioni e Mappe"}
-            </button>
-          ))}
-        </div>
+        <ModuleHeading title={t(activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : "Rilievo e Mappe")}>
+          <p className="text-amber-900 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
+        </ModuleHeading>
 
         {activeTab === "elaborazioni" && (
           <ElaborazioniMappe osservazioni={osservazioni} />
@@ -1088,7 +1082,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                   Per ogni fase sono mostrati BBCH, durata e intervallo NDVI atteso: il riferimento puntuale resta la curva continua del DAS rilevato.
                   Le finestre DAS orientano il rilievo; il BBCH osservato e confermato resta l’unica fonte per l’indicazione di fase.
                 </p>
-                <div className="mt-3 overflow-x-auto">
+                <div className="nc-scroll-x mt-3 overflow-x-auto">
                   <table className="w-full min-w-[520px] text-xs">
                     <thead><tr className="border-b border-stone-200 text-left text-stone-500">
                       <th className="px-2 py-2">DAS stimati</th><th className="px-2 py-2">Durata</th><th className="px-2 py-2">BBCH</th><th className="px-2 py-2">Fase</th><th className="px-2 py-2">NDVI riferimento</th><th className="px-2 py-2">Guida N</th>
@@ -1428,7 +1422,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
               </div>
             </div>
             <ObservationDistributionChart observations={osservazioni} />
-            <div className="overflow-x-auto">
+            <div className="nc-scroll-x overflow-x-auto">
               <table className="w-full text-sm border-collapse min-w-[1250px]">
                 <thead>
                   <tr className="bg-green-800 text-white">

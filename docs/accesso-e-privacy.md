@@ -58,30 +58,52 @@ Si tratta di gestione manuale degli accessi: nessun pagamento o rinnovo automati
 
 ## Prima della pubblicazione
 
-L’informativa riporta le informazioni dichiarate dal titolare: sede legale a
-Milano, conservazione di 5 anni per ogni categoria (account, dati cliente,
-rilievi/GPS/NDVI e parametri agronomici, log di sicurezza, richieste privacy),
-accordi con i responsabili ai sensi dell’art. 28 GDPR. Il titolare ha chiarito
-che la sede futura prevista per il server dell’applicazione è il Regno Unito,
-non la sede legale, che resta a Milano. L’informativa non afferma più l’assenza
-di trasferimenti extra UE e distingue il progetto futuro dalla configurazione
-effettiva dei fornitori attualmente usati. Le stesse informazioni sono
-disponibili in italiano, inglese e spagnolo.
+**Stato: informativa aggiornata con le informazioni confermate dal titolare.**
+Versione del testo pubblico e della presa visione API: `2026-10-28.5`.
+Le modifiche sostanziali richiedono una nuova presa visione, non consenso marketing.
 
-Il Regno Unito è extra UE. Il testo cita l’art. 45 GDPR e la decisione di
-adeguatezza nel suo ambito e finché vigente, con collegamento alla fonte della
-Commissione europea. Non certifica automaticamente la copertura dei servizi,
-dei subfornitori o di trasferimenti successivi verso altri Paesi.
+Informazioni confermate dal titolare:
+- Taurus Agriculture Solution SRL, Viale Giustiniano n. 8, Milano:
+  ha sviluppato il software NitroCrop NDVI, ne è il fornitore ed è titolare
+  del trattamento.
+- Conservazione di 5 anni per ogni categoria: account, dati cliente,
+  rilievi/GPS/NDVI e parametri agronomici, log di sicurezza, richieste privacy.
+  Il termine decorre per tutte le categorie dalla creazione dell’account da
+  parte dell’amministratore, anche per dati aggiunti successivamente.
+- Basi giuridiche distinte: contratto per il servizio (art. 6.1.b GDPR),
+  legittimo interesse per sicurezza e prevenzione abusi (art. 6.1.f),
+  obbligo legale per le richieste di esercizio dei diritti (art. 6.1.c).
 
-Aruba è previsto per il dominio; Supabase e Netlify sono intenzioni future,
-non fornitori dichiarati già attivi. Non è stata eseguita alcuna migrazione.
+Ulteriori conferme ricevute dal titolare:
+- Taurus Agriculture Solution SRL gestisce il servizio oltre ad averlo sviluppato.
+- I contratti con Aruba, Replit, Supabase e Netlify sono correttamente gestiti
+  e controfirmati e comprendono gli accordi privacy richiesti dal GDPR.
+  L’app esplicita anche Clerk per l’autenticazione ed Esri per le mappe; l’elenco
+  dei contratti dichiarati non prova che ogni fornitore riceva tutti i dati.
+- Paese di hosting: Regno Unito. Per i trasferimenti coperti si applica la
+  decisione UE di adeguatezza ai sensi dell’art. 45 GDPR, rinnovata il
+  19 dicembre 2025. Non si dichiara trattamento esclusivo UE/Regno Unito;
+  per ulteriori trasferimenti sono necessarie le garanzie del capo V.
+- Backup incrementali continui, cifrati in transito e a riposo; eliminazione
+  entro **24 ore dalla cancellazione dei dati**, non dalla creazione della copia.
+  Sono informazioni confermate dal titolare, non risultati di un audit tecnico.
 
-Il titolare deve verificare che contratti, subfornitori, assistenza,
-localizzazione dei servizi e backup corrispondano alla dichiarazione.
-L’aggiornamento dell’informativa non verifica né modifica la localizzazione
-dei fornitori e non introduce un processo automatico di cancellazione dopo
-5 anni. L’applicazione operativa del termine resta da curare dal titolare.
-Nessuna certificazione GDPR è implicita nell’implementazione tecnica.
+Riferimento ufficiale verificato per il Regno Unito:
+https://commission.europa.eu/document/download/b36eedab-43b8-46eb-ac30-a8d1e6e69f51_en?filename=Renewal%20UK%20adequacy%20GDPR.pdf
+
+Responsabilità operative da mantenere:
+- Il titolare deve eseguire la cancellazione/anonimizzazione alla scadenza unica
+  quinquennale. Questo aggiornamento non introduce cancellazioni automatiche.
+- Conservare gli accordi applicabili, verificare i subfornitori e gestire copie
+  e ripristini senza reintrodurre dati cancellati. Il testo non modifica i
+  sistemi di backup o le loro impostazioni.
+- Riesaminare l’informativa se cambiano localizzazione, servizi, cookie,
+  garanzie o tempi di conservazione.
+
+Il testo pubblico e gli avvisi sono disponibili in italiano, inglese e spagnolo.
+L’aggiornamento non cambia autorizzazioni, isolamento dei rilievi, localizzazione
+dei servizi o politiche operative di backup. Nessuna certificazione GDPR è
+implicita nell’implementazione tecnica.
 
 L’indirizzo per assistenza password e quello per la privacy sono contatti
 applicativi. Non è stato configurato un mittente aziendale per le email:
@@ -92,3 +114,9 @@ pubblicazione, il database e la prima autorizzazione amministrativa sono
 inizializzati nell’ambiente di destinazione; l’account deve essere attivato
 anche lì tramite il proprio invito. Non copiare identità o chiavi di produzione
 nel database di sviluppo.
+
+La disponibilità di contratti con Aruba, Supabase e Netlify non equivale a
+una migrazione o all’attivazione tecnica di tali servizi. Nei chiarimenti
+precedenti Aruba era indicato per il dominio e Supabase/Netlify come intenzioni
+future. Mantenere distinti gli accordi dichiarati e la configurazione effettiva;
+questo aggiornamento non esegue migrazioni.

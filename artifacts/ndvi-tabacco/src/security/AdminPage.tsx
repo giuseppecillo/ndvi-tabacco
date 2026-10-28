@@ -7,6 +7,7 @@ import {
   type Account, type PrivacyRequest, type UpdateManagedPrivacyRequestBodyStatus,
 } from "@workspace/api-client-react";
 import { Btn, Card, ErrorNote, Eyebrow, OkNote, Skeleton, TopBar, fmtDate } from "./ui";
+import { ModuleHeading } from "./ModuleHeading";
 import { REQ_LABEL, STATUS_LABEL } from "./AccountPage";
 import { SubscriptionSummary } from "./SubscriptionSummary";
 
@@ -171,10 +172,10 @@ function Audit() {
   return (
     <Card>
       <h2 className="nc-display text-xl font-semibold">Registro di sicurezza</h2>
-      <div className="mt-3 max-h-[28rem] overflow-auto">
+      <div className="nc-scroll-x mt-3 max-h-[28rem] overflow-auto">
         {q.isPending ? <Skeleton /> : q.isError ? <ErrorNote error={q.error} onRetry={() => void q.refetch()} /> :
           q.data.length === 0 ? <p className="text-sm text-[var(--nc-muted)]">Nessun evento registrato.</p> :
-            <table className="nc-mono w-full text-xs">
+            <table className="nc-mono w-full min-w-[480px] text-xs">
               <thead className="text-left text-[var(--nc-muted)]"><tr><th className="py-2">Data</th><th>Azione</th><th>Oggetto</th></tr></thead>
               <tbody>{q.data.map(ev => (
                 <tr key={ev.id} className="border-t border-[var(--nc-line)]"><td className="py-2 pr-3 whitespace-nowrap">{fmtDate(ev.createdAt)}</td><td className="pr-3">{ev.action}</td><td className="break-all text-[var(--nc-muted)]">{ev.targetId ?? "-"}</td></tr>
@@ -191,8 +192,7 @@ export function AdminPage({ account }: { account: Account }) {
       <TopBar account={account} />
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-10">
         <div className="nc-rise">
-          <Eyebrow>Amministrazione</Eyebrow>
-          <h1 className="nc-display mt-2 text-4xl font-semibold text-[var(--nc-leaf)]">Chi può vedere i campi</h1>
+          <ModuleHeading title="Amministrazione"><Eyebrow>Chi può vedere i campi</Eyebrow></ModuleHeading>
           <p className="mt-2 max-w-2xl text-[var(--nc-muted)]">Gestisci gli accessi. Come amministratore vedi nello strumento solo i tuoi rilievi, non quelli degli altri utenti.</p>
         </div>
         <InviteForm />

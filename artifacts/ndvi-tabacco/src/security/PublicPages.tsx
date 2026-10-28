@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { Link } from "wouter";
 import { useGetAccessSetup, useSendAdministratorActivation } from "@workspace/api-client-react";
-import { Brand, Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, TECHNICAL_SUPPORT_CONTACT, taurusLogo } from "./ui";
+import { Brand, Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, TECHNICAL_SUPPORT_CONTACT, TechnicalSupport, taurusLogo } from "./ui";
 import { LanguageSelector } from "../i18n/LanguageSelector";
+import { ModuleHeading } from "./ModuleHeading";
 
 function PublicHeader() {
   return (
@@ -22,11 +23,11 @@ export function PublicFooter() {
     <footer className="mt-20 border-t border-[var(--nc-line)]">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-[var(--nc-muted)] sm:flex-row sm:justify-between">
         <span>Taurus Agriculture Solution SRL</span>
-        <span className="flex flex-wrap gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
           <Link href="/privacy" className="underline">Informativa privacy e cookie</Link>
           <a href={`mailto:${PRIVACY_CONTACT}`} className="underline">{PRIVACY_CONTACT}</a>
-          <a href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`} className="break-all underline">Supporto tecnico: {TECHNICAL_SUPPORT_CONTACT}</a>
-        </span>
+          <TechnicalSupport />
+        </div>
       </div>
     </footer>
   );
@@ -138,15 +139,19 @@ export function PrivacyPage() {
       <PublicHeader />
       <main className="mx-auto max-w-4xl px-4 pb-10">
         <div role="note" className="nc-rise mt-6 rounded-2xl border-2 border-[var(--nc-wheat)] bg-[var(--nc-wheat-soft)] p-5">
-          <p className="nc-mono text-xs uppercase tracking-[0.18em] text-[#8a5a12]">Informativa aggiornata</p>
+          <p className="nc-mono text-xs uppercase tracking-[0.18em] text-[#8a5a12]">Informazioni confermate dal titolare</p>
           <p className="nc-display mt-1 text-2xl font-semibold">Informazioni sul trattamento dei dati</p>
-          <p className="mt-2 text-sm">Le informazioni su sede legale, conservazione, accordi con i responsabili e trasferimenti sono state fornite dal titolare del trattamento. Il titolare è responsabile della loro corrispondenza ai contratti e alle configurazioni effettive dei servizi utilizzati. Questo testo non costituisce certificazione di conformità.</p>
+          <p className="mt-2 text-sm">Questa informativa riporta le informazioni confermate da Taurus Agriculture Solution SRL: gestione del servizio, accordi privacy con i fornitori, hosting nel Regno Unito ed eliminazione dei backup entro 24 ore dalla cancellazione. Non costituisce una certificazione di conformità né una verifica tecnica indipendente dei servizi.</p>
         </div>
-        <h1 className="nc-display nc-rise nc-d1 mt-10 text-4xl font-semibold text-[var(--nc-leaf)] md:text-5xl">Informativa privacy e cookie</h1>
+        <ModuleHeading title="Informativa privacy e cookie" className="mt-8" />
         <p className="mt-3 text-[var(--nc-muted)]">NitroCrop NDVI, ai sensi degli artt. 13-14 del Regolamento UE 2016/679.</p>
+        <p className="mt-2 text-sm text-[var(--nc-muted)]">Versione informativa: <span className="nc-mono">2026-10-28.5</span></p>
         <div className="mt-8">
           <Sec n="01" title="Titolare del trattamento">
-            <p>Taurus Agriculture Solution SRL. Sede legale: <strong>Milano</strong>. Contatto privacy: <a className="underline" href={`mailto:${PRIVACY_CONTACT}`}>{PRIVACY_CONTACT}</a>.</p>
+            <p>Taurus Agriculture Solution SRL ha sviluppato e gestisce il servizio NitroCrop NDVI ed è il titolare del trattamento.</p>
+            <p>Taurus Agriculture Solution SRL. Sede legale: <strong>Viale Giustiniano n. 8, Milano</strong>. Contatto privacy: <a className="underline" href={`mailto:${PRIVACY_CONTACT}`}>{PRIVACY_CONTACT}</a>.</p>
+            <p>Per assistenza password: <a className="underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>. Per supporto tecnico: <a className="underline" href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`}>{TECHNICAL_SUPPORT_CONTACT}</a>.</p>
+            <p>Questi contatti di assistenza non identificano il mittente delle email automatiche: inviti e recuperi password sono inviati dal servizio di autenticazione.</p>
           </Sec>
           <Sec n="02" title="Dati trattati">
             <ul className="list-disc pl-5 space-y-1">
@@ -160,20 +165,19 @@ export function PrivacyPage() {
           <Sec n="03" title="Finalità e basi giuridiche">
             <p>Erogazione del servizio richiesto ed esecuzione del contratto (art. 6.1.b): gestione account e calcoli agronomici.</p>
             <p>Legittimo interesse alla sicurezza del servizio (art. 6.1.f): log di accesso e audit, prevenzione abusi.</p>
+            <p>Adempimento degli obblighi legali previsti dal GDPR (art. 6.1.c): gestione delle richieste di esercizio dei diritti e delle relative risposte.</p>
             <p>Non chiediamo un consenso generalizzato. La casella "Ho letto" al primo accesso registra solo la presa visione della versione corrente di questa informativa e non è un consenso per marketing.</p>
           </Sec>
           <Sec n="04" title="Cookie e archiviazione locale">
-            <p>L’app non aggiunge strumenti di profilazione o marketing: utilizza cookie di autenticazione e sessione e memoria locale per le impostazioni tecniche, separate per account. I servizi esterni possono utilizzare propri meccanismi di sicurezza; la relativa verifica va completata dal titolare.</p>
+            <p>L’app non aggiunge strumenti di profilazione o marketing: utilizza cookie necessari per autenticazione e sessione e memoria locale per le impostazioni tecniche, separate per account. I servizi esterni utilizzano i propri meccanismi di funzionamento e sicurezza secondo le relative condizioni privacy. La presa visione di questa informativa non è un consenso marketing.</p>
           </Sec>
           <Sec n="05" title="Servizi esterni">
-            <p>Attualmente l’app utilizza Clerk per l’autenticazione, Replit per l’hosting dell’applicazione e del database ed Esri/ArcGIS per le immagini delle mappe. Il servizio cartografico riceve dal browser le richieste delle porzioni di mappa visualizzate.</p>
-            <p>Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR.</p>
-            <h3 className="font-semibold">Localizzazione prevista e trasferimenti extra UE</h3>
-            <p>La sede prevista dal titolare per il server dell’applicazione è il Regno Unito. Si tratta di una configurazione futura: questa indicazione non attesta che tutti i servizi attualmente utilizzati siano già configurati in tale Paese né che tutti i trattamenti avvengano lì. La sede legale del titolare resta a Milano, Italia.</p>
-            <p>Il Regno Unito è un Paese esterno all’Unione europea. I trasferimenti verso tale Paese possono basarsi sulla decisione di adeguatezza della Commissione europea ai sensi dell’art. 45 GDPR, nei limiti del suo ambito di applicazione e finché rimane in vigore.</p>
-            <p>La scelta di server nel Regno Unito non esclude ulteriori trattamenti in altri Paesi da parte dei fornitori o dei loro subfornitori. Prima della migrazione o dell’attivazione di nuovi servizi, il titolare verifica e documenta localizzazione effettiva, accessi di assistenza, backup e garanzie per ciascun servizio. Per eventuali trasferimenti non coperti da una decisione di adeguatezza devono essere individuate le garanzie applicabili previste dal Capo V GDPR, incluse, ove appropriate, le clausole contrattuali standard.</p>
-            <p>Questa informativa non dichiara l’assenza di trasferimenti extra UE e non certifica una localizzazione già verificata per tutti i fornitori. Per informazioni sulle destinazioni effettive e sulle garanzie applicabili puoi contattare {PRIVACY_CONTACT}.</p>
-            <p><a className="underline" href="https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/adequacy-decisions_en" target="_blank" rel="noopener noreferrer">Decisioni di adeguatezza della Commissione europea</a></p>
+            <p>Clerk per l’autenticazione; Replit per l’hosting dell’applicazione e del database; Esri per le tessere satellitari/cartografiche. I servizi cartografici ricevono dal browser le richieste delle porzioni di mappa visualizzate.</p>
+            <p>Il titolare indica Aruba, Replit, Supabase e Netlify tra i fornitori contrattualizzati e conferma che i relativi contratti sono correttamente gestiti e controfirmati. Questa conferma non equivale a una verifica indipendente dei contratti.</p>
+            <p>Il titolare conferma che i contratti comprendono gli accordi privacy richiesti dal GDPR. I fornitori trattano i dati necessari ai rispettivi servizi secondo i ruoli e gli accordi applicabili; quando operano come responsabili del trattamento, sono vincolati agli accordi previsti dall’art. 28 GDPR.</p>
+            <p>Il Paese di hosting confermato dal titolare è il Regno Unito, che è fuori dallo Spazio economico europeo. Per i trasferimenti coperti dal suo ambito si applica la decisione di adeguatezza della Commissione europea ai sensi dell’art. 45 GDPR, rinnovata il 19 dicembre 2025. Non si dichiara che tutti i servizi o subfornitori trattino i dati esclusivamente nell’Unione europea o nel Regno Unito.</p>
+            <p>Eventuali ulteriori trasferimenti fuori dallo Spazio economico europeo richiedono le garanzie previste dal capo V GDPR, come una decisione di adeguatezza o clausole contrattuali standard e, ove necessarie, misure supplementari. Puoi chiedere al contatto privacy del titolare informazioni sui destinatari, sui Paesi e una copia delle garanzie applicabili.</p>
+            <p><a className="underline" href="https://commission.europa.eu/document/download/b36eedab-43b8-46eb-ac30-a8d1e6e69f51_en?filename=Renewal%20UK%20adequacy%20GDPR.pdf" target="_blank" rel="noreferrer">Riferimento ufficiale: decisione della Commissione europea sul Regno Unito.</a></p>
           </Sec>
           <Sec n="06" title="Conservazione">
             <p>Il periodo di conservazione dichiarato dal titolare è di 5 anni per ciascuna delle seguenti categorie di dati:</p>
@@ -184,7 +188,9 @@ export function PrivacyPage() {
               <li>Log di autenticazione, sessione, sicurezza e azioni amministrative: <strong>5 anni</strong>.</li>
               <li>Richieste privacy e relative risposte: <strong>5 anni</strong>.</li>
             </ul>
-            <p>Alla scadenza del periodo il titolare provvede alla cancellazione o all’anonimizzazione dei dati. La cancellazione dell’account elimina anche i rilievi dai sistemi attivi. Il titolare cura l’applicazione del termine di 5 anni anche alle copie di backup e ai dati tecnici affidati ai fornitori, verificandone le condizioni contrattuali e le modalità di cancellazione.</p>
+            <p>Per tutte le categorie, i cinque anni decorrono dalla creazione dell’account da parte dell’amministratore. La scadenza è unica anche per i dati aggiunti successivamente: non decorre dalla data di ciascun rilievo o richiesta.</p>
+            <p>La politica indicata dal titolare prevede la cancellazione o l’anonimizzazione alla scadenza. La scadenza quinquennale non è automatizzata nell’app: l’eliminazione o l’anonimizzazione deve essere eseguita dal titolare. La cancellazione dell’account elimina anche i rilievi dai sistemi attivi, fatti salvi eventuali obblighi di conservazione previsti dalla legge.</p>
+            <p>Secondo la politica confermata dal titolare, i backup sono incrementali continui, cifrati in transito e a riposo, e vengono eliminati entro 24 ore dalla cancellazione dei dati cui si riferiscono. La gestione delle copie e degli eventuali ripristini spetta al titolare e ai fornitori. Queste informazioni descrivono la politica dichiarata e non attestano una verifica tecnica indipendente o una modifica dei sistemi di backup.</p>
           </Sec>
           <Sec n="07" title="I tuoi diritti">
             <p>Puoi chiedere accesso, esportazione, rettifica, limitazione, opposizione e cancellazione. Dalla pagina "Il mio account" scarichi i tuoi dati in formato JSON e invii richieste tracciate. Puoi anche scrivere a {PRIVACY_CONTACT}.</p>

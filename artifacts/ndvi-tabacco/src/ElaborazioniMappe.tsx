@@ -125,7 +125,7 @@ function MapView({ result }: { result: PolyIdwResult }) {
 
   return (
     <div className="relative rounded-xl overflow-hidden border border-stone-200 shadow">
-      <div ref={containerRef} className="w-full" style={{ height: 440 }} />
+      <div ref={containerRef} className="nc-map-canvas w-full" />
 
       {/* GIS info tooltip (bottom-left) */}
       {hover ? (
@@ -477,8 +477,8 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
               <p className="text-xs text-stone-400 mb-2">
                 📍 {dbControls.length} osservazioni GPS disponibili — tutti i punti vengono usati per l'interpolazione IDW sul poligono selezionato.
               </p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
+              <div className="nc-scroll-x overflow-x-auto">
+                <table className="w-full min-w-[520px] text-xs border-collapse">
                   <thead>
                     <tr className="bg-green-800 text-white">
                       <th className="px-2 py-1.5 text-left rounded-tl-lg">ID</th>
@@ -540,7 +540,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
               </div>
             )}
             {shpPoints.length > 0 && (
-              <div className="overflow-x-auto max-h-40 overflow-y-auto border border-stone-100 rounded-lg">
+              <div className="nc-scroll-x overflow-x-auto max-h-40 overflow-y-auto border border-stone-100 rounded-lg">
                 <table className="w-full text-xs border-collapse">
                   <thead className="sticky top-0 bg-green-800 text-white">
                     <tr>
@@ -670,7 +670,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
                   Superficie calcolata: <strong>{currentResult.nitrogenSummary.areaHa.toFixed(2)} ha</strong>.
                 </p>
               </div>
-              <div className="overflow-x-auto">
+              <div className="nc-scroll-x overflow-x-auto">
                 <table className="w-full min-w-[580px] text-sm">
                   <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
                     <tr>

@@ -5,7 +5,8 @@ import {
   exportMyData, getListMyPrivacyRequestsQueryKey, useCreatePrivacyRequest, useListMyPrivacyRequests,
   type Account, type CreatePrivacyRequestBodyType,
 } from "@workspace/api-client-react";
-import { Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, TECHNICAL_SUPPORT_CONTACT, Skeleton, TopBar, errText, fmtDate } from "./ui";
+import { Btn, Card, ErrorNote, Eyebrow, OkNote, PRIVACY_CONTACT, SUPPORT_CONTACT, TechnicalSupport, Skeleton, TopBar, errText, fmtDate } from "./ui";
+import { ModuleHeading } from "./ModuleHeading";
 import { SubscriptionSummary } from "./SubscriptionSummary";
 
 export const REQ_LABEL: Record<string, string> = {
@@ -45,8 +46,8 @@ export function AccountPage({ account }: { account: Account }) {
       <TopBar account={account} />
       <div className="mx-auto max-w-5xl px-4 pt-5"><SubscriptionSummary account={account} /></div>
       <main className="mx-auto max-w-5xl px-4 py-10">
-        <Eyebrow>Profilo e diritti sui dati</Eyebrow>
-        <h1 className="nc-display mt-2 text-4xl font-semibold text-[var(--nc-leaf)]">{account.name || account.email}</h1>
+        <ModuleHeading title="Il mio account"><Eyebrow>Profilo e diritti sui dati</Eyebrow></ModuleHeading>
+        <p className="mt-3 break-words text-lg font-semibold text-[var(--nc-leaf)]">{account.name || account.email}</p>
         <div className="mt-8 grid gap-6 md:grid-cols-[1fr_1.4fr]">
           <div className="space-y-6">
             <Card className="nc-rise">
@@ -62,9 +63,7 @@ export function AccountPage({ account }: { account: Account }) {
                 <a className="break-all underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>.
                 Non inviare mai la tua password via email.
               </p>
-              <p className="mt-3 text-sm text-[var(--nc-muted)]">Supporto tecnico:{" "}
-                <a className="break-all underline" href={`mailto:${TECHNICAL_SUPPORT_CONTACT}`}>{TECHNICAL_SUPPORT_CONTACT}</a>
-              </p>
+              <div className="mt-3"><TechnicalSupport /></div>
             </Card>
             <Card className="nc-rise nc-d1">
               <h2 className="nc-display text-xl font-semibold">Scarica i tuoi dati</h2>
