@@ -138,15 +138,15 @@ export function PrivacyPage() {
       <PublicHeader />
       <main className="mx-auto max-w-4xl px-4 pb-10">
         <div role="note" className="nc-rise mt-6 rounded-2xl border-2 border-[var(--nc-wheat)] bg-[var(--nc-wheat-soft)] p-5">
-          <p className="nc-mono text-xs uppercase tracking-[0.18em] text-[#8a5a12]">Bozza</p>
-          <p className="nc-display mt-1 text-2xl font-semibold">Informativa da completare e validare prima della pubblicazione</p>
-          <p className="mt-2 text-sm">Il titolare deve ancora definire: sede legale, tempi di conservazione concreti per ciascuna categoria di dati, accordi con i responsabili del trattamento (art. 28 GDPR) ed eventuali trasferimenti extra UE con relative garanzie. Questo testo non costituisce certificazione di conformità.</p>
+          <p className="nc-mono text-xs uppercase tracking-[0.18em] text-[#8a5a12]">Informativa aggiornata</p>
+          <p className="nc-display mt-1 text-2xl font-semibold">Informazioni sul trattamento dei dati</p>
+          <p className="mt-2 text-sm">Le informazioni su sede legale, conservazione, accordi con i responsabili e trasferimenti sono state fornite dal titolare del trattamento. Il titolare è responsabile della loro corrispondenza ai contratti e alle configurazioni effettive dei servizi utilizzati. Questo testo non costituisce certificazione di conformità.</p>
         </div>
         <h1 className="nc-display nc-rise nc-d1 mt-10 text-4xl font-semibold text-[var(--nc-leaf)] md:text-5xl">Informativa privacy e cookie</h1>
         <p className="mt-3 text-[var(--nc-muted)]">NitroCrop NDVI, ai sensi degli artt. 13-14 del Regolamento UE 2016/679.</p>
         <div className="mt-8">
           <Sec n="01" title="Titolare del trattamento">
-            <p>Taurus Agriculture Solution SRL. Sede legale: <strong>da completare</strong>. Contatto privacy: <a className="underline" href={`mailto:${PRIVACY_CONTACT}`}>{PRIVACY_CONTACT}</a>.</p>
+            <p>Taurus Agriculture Solution SRL. Sede legale: <strong>Milano</strong>. Contatto privacy: <a className="underline" href={`mailto:${PRIVACY_CONTACT}`}>{PRIVACY_CONTACT}</a>.</p>
           </Sec>
           <Sec n="02" title="Dati trattati">
             <ul className="list-disc pl-5 space-y-1">
@@ -154,6 +154,7 @@ export function PrivacyPage() {
               <li>Dati di cliente inseriti nei rilievi (ad esempio azienda, appezzamento, coltura).</li>
               <li>Osservazioni di campo: coordinate GPS, valori NDVI, date e parametri agronomici. La posizione viene acquisita solo se autorizzata nel browser; puoi salvare anche senza GPS.</li>
               <li>Log di autenticazione, sessione e sicurezza (accessi, azioni amministrative).</li>
+              <li>Richieste privacy e relative risposte.</li>
             </ul>
           </Sec>
           <Sec n="03" title="Finalità e basi giuridiche">
@@ -165,10 +166,20 @@ export function PrivacyPage() {
             <p>L’app non aggiunge strumenti di profilazione o marketing: utilizza cookie di autenticazione e sessione e memoria locale per le impostazioni tecniche, separate per account. I servizi esterni possono utilizzare propri meccanismi di sicurezza; la relativa verifica va completata dal titolare.</p>
           </Sec>
           <Sec n="05" title="Servizi esterni">
-            <p>Clerk per l'autenticazione; Replit per l'hosting dell'applicazione e del database; fornitori di tessere satellitari/cartografiche, che ricevono dal browser le richieste delle porzioni di mappa visualizzate. Accordi di nomina e trasferimenti extra UE: <strong>da completare</strong>.</p>
+            <p>Clerk per l'autenticazione; Replit per l'hosting dell'applicazione e del database; fornitori di tessere satellitari/cartografiche, che ricevono dal browser le richieste delle porzioni di mappa visualizzate.</p>
+            <p>Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR.</p>
+            <p>Secondo quanto dichiarato dal titolare, non sono previsti trasferimenti di dati personali al di fuori dell’Unione europea. Il titolare verifica che contratti, subfornitori, assistenza e configurazioni tecniche dei servizi esterni rispettino questa indicazione.</p>
           </Sec>
           <Sec n="06" title="Conservazione">
-            <p>Tempi di conservazione per ciascuna categoria: <strong>da definire a cura del titolare</strong>. La cancellazione dell’account elimina anche i rilievi dai sistemi attivi. Gli eventuali backup e i dati tecnici dei fornitori seguono le loro politiche di conservazione, che il titolare deve verificare e documentare.</p>
+            <p>Il periodo di conservazione dichiarato dal titolare è di 5 anni per ciascuna delle seguenti categorie di dati:</p>
+            <ul className="list-disc space-y-2 pl-5">
+              <li>Dati di account (nome e indirizzo email): <strong>5 anni</strong>.</li>
+              <li>Dati di cliente, azienda, appezzamento e coltura: <strong>5 anni</strong>.</li>
+              <li>Rilievi di campo, coordinate GPS, valori NDVI, date e parametri agronomici: <strong>5 anni</strong>.</li>
+              <li>Log di autenticazione, sessione, sicurezza e azioni amministrative: <strong>5 anni</strong>.</li>
+              <li>Richieste privacy e relative risposte: <strong>5 anni</strong>.</li>
+            </ul>
+            <p>Alla scadenza del periodo il titolare provvede alla cancellazione o all’anonimizzazione dei dati. La cancellazione dell’account elimina anche i rilievi dai sistemi attivi. Il titolare cura l’applicazione del termine di 5 anni anche alle copie di backup e ai dati tecnici affidati ai fornitori, verificandone le condizioni contrattuali e le modalità di cancellazione.</p>
           </Sec>
           <Sec n="07" title="I tuoi diritti">
             <p>Puoi chiedere accesso, esportazione, rettifica, limitazione, opposizione e cancellazione. Dalla pagina "Il mio account" scarichi i tuoi dati in formato JSON e invii richieste tracciate. Puoi anche scrivere a {PRIVACY_CONTACT}.</p>

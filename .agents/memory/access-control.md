@@ -32,3 +32,9 @@ Un modulo Clerk incorporato nella home pubblica non deve usare `/` come prefisso
 **Why:** quel prefisso può interpretare anche `/privacy` come passaggio di accesso e rimandare al login, rendendo l’informativa inaccessibile.
 
 **How to apply:** isolare i passaggi del modulo incorporato dal router delle pagine pubbliche; preservare invece il routing per percorso nelle pagine dedicate `/sign-in` e `/sign-up`. Verificare la navigazione reale alla privacy oltre al semplice caricamento del modulo.
+
+Per l’informativa l’utente ha dichiarato sede legale a Milano, conservazione di 5 anni per ciascuna categoria, accordi con i responsabili ai sensi dell’art. 28 GDPR e nessun trasferimento extra UE.
+
+**Why:** sono informazioni fornite dal titolare, non esiti di una verifica tecnica o contrattuale dei fornitori.
+
+**How to apply:** mantenere distinti la politica dichiarata, la verifica di contratti/subfornitori e l’applicazione operativa della conservazione. Non attestare localizzazione UE o cancellazione automatica solo perché sono descritte nell’informativa.

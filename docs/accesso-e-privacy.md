@@ -58,10 +58,19 @@ Si tratta di gestione manuale degli accessi: nessun pagamento o rinnovo automati
 
 ## Prima della pubblicazione
 
-L’informativa è esplicitamente una bozza. Il titolare deve completare sede legale,
-tempi di conservazione, accordi con i responsabili del trattamento e verifica di
-eventuali trasferimenti, servizi esterni e backup. Nessuna certificazione GDPR
-è implicita nell’implementazione tecnica.
+L’informativa riporta le informazioni dichiarate dal titolare: sede legale a
+Milano, conservazione di 5 anni per ogni categoria (account, dati cliente,
+rilievi/GPS/NDVI e parametri agronomici, log di sicurezza, richieste privacy),
+accordi con i responsabili ai sensi dell’art. 28 GDPR e nessun trasferimento
+previsto fuori dall’Unione europea. Le stesse informazioni sono disponibili
+in italiano, inglese e spagnolo.
+
+Il titolare deve verificare che contratti, subfornitori, assistenza,
+localizzazione dei servizi e backup corrispondano alla dichiarazione.
+L’aggiornamento dell’informativa non verifica né modifica la localizzazione
+dei fornitori e non introduce un processo automatico di cancellazione dopo
+5 anni. L’applicazione operativa del termine resta da curare dal titolare.
+Nessuna certificazione GDPR è implicita nell’implementazione tecnica.
 
 L’indirizzo per assistenza password e quello per la privacy sono contatti
 applicativi. Non è stato configurato un mittente aziendale per le email:

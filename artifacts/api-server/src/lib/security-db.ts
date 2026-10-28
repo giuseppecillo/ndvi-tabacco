@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import pool from "./db";
 
-export const PRIVACY_VERSION = "2026-10-28";
+export const PRIVACY_VERSION = "2026-10-28.3";
 export const bootstrapEmail = () => (process.env.ADMIN_BOOTSTRAP_EMAIL ?? "").trim().toLowerCase();
 
 /**

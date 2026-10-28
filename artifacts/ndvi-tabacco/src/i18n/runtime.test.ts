@@ -42,6 +42,23 @@ test("Dynamic subscriptions and guidance preserve their exact numbers", () => {
   assert.equal(translateDisplay(125.4), 125.4);
 });
 
+test("Updated privacy terms are available in English and Spanish", () => {
+  for (const language of ["en", "es"] as const) {
+    setLanguage(language);
+    for (const text of [
+      "Informativa aggiornata", "Informazioni sul trattamento dei dati", "Milano", "5 anni",
+      "Dati di account (nome e indirizzo email):",
+      "Dati di cliente, azienda, appezzamento e coltura:",
+      "Rilievi di campo, coordinate GPS, valori NDVI, date e parametri agronomici:",
+      "Log di autenticazione, sessione, sicurezza e azioni amministrative:",
+      "Richieste privacy e relative risposte:",
+      "Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR.",
+      "Secondo quanto dichiarato dal titolare, non sono previsti trasferimenti di dati personali al di fuori dell’Unione europea. Il titolare verifica che contratti, subfornitori, assistenza e configurazioni tecniche dei servizi esterni rispettino questa indicazione.",
+    ]) assert.notEqual(t(text), text, `${language}: ${text}`);
+    assert.match(t("Il titolare dichiara che i rapporti con i responsabili del trattamento sono regolati da accordi ai sensi dell’art. 28 GDPR."), /28/);
+  }
+});
+
 test("The display compiler does not translate form values, data keys or free text fields", () => {
   const plugin = localizeUi();
   const transform = plugin.transform as (code: string, id: string) => { code: string };
