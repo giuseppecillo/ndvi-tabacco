@@ -117,9 +117,11 @@ test("The public privacy version matches the API acknowledgment version", () => 
   assert.ok(version);
   assert.ok(page.includes(`>${version}</span>`));
   assert.ok(!page.includes("Bozza — verifiche da completare"));
-  assert.ok(page.includes("Regno Unito"));
+  assert.ok(!page.includes('title="Servizi esterni"'));
+  assert.ok(!page.includes("gestione del servizio, accordi privacy con i fornitori"));
+  assert.ok(page.includes("Questa informativa riporta le informazioni confermate da Taurus Agriculture Solution SRL."));
   assert.ok(page.includes("entro 24 ore dalla cancellazione"));
-  assert.ok(page.includes("Non costituisce una certificazione"));
+  assert.ok(!page.includes("Non costituisce una certificazione di conformità né una verifica tecnica indipendente dei servizi."));
   assert.ok(page.includes("La presa visione di questa informativa non è un consenso marketing."));
   assert.ok(!page.includes("Il titolare dichiara che i rapporti con i responsabili"));
   assert.ok(!page.includes("non sono previsti trasferimenti"));
