@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { fromArrayBuffer as readGeoTiff } from "geotiff";
 import JSZip from "jszip";
+import shpjs from "shpjs";
 import {
   FASI_GRANO,
   FINESTRE_DAS_LOCALI_TEMPLATE,
@@ -208,6 +210,41 @@ describe("riepilogo azoto della mappa IDW", () => {
 });
 
 describe("export agronomici IDW", () => {
+  it("apre lo ZIP Shapefile con un parser GIS indipendente", async () => {
+    const result = idwExportFixture();
+    const summary = result.nitrogenSummary;
+    assert.ok(summary);
+
+    const { blob } = await captureDownload(() => downloadShapefile(result));
+    const parsed = await shpjs(await blob.arrayBuffer());
+    const collection = Array.isArray(parsed) ? parsed[0] : parsed;
+
+    assert.equal(collection.type, "FeatureCollection");
+    assert.equal(collection.features.length, result.grid.length);
+    for (const [index, feature] of collection.features.entries()) {
+      assert.equal(feature.geometry.type, "Point");
+      assert.ok(
+        Math.abs(feature.geometry.coordinates[0] - result.grid[index].lng) < EPSILON,
+        "parsed longitude must match the exported grid point",
+      );
+      assert.ok(
+        Math.abs(feature.geometry.coordinates[1] - result.grid[index].lat) < EPSILON,
+        "parsed latitude must match the exported grid point",
+      );
+      assert.equal(feature.properties.POLYGON, result.polygon.name);
+      assert.equal(feature.properties.LAT, Number(result.grid[index].lat.toFixed(8)));
+      assert.equal(feature.properties.LNG, Number(result.grid[index].lng.toFixed(8)));
+      assert.equal(feature.properties.DOSE_IDW, Number(result.grid[index].dose.toFixed(4)));
+      assert.equal(feature.properties.AREA_HA, Number(summary.areaHa.toFixed(2)));
+      assert.equal(feature.properties.N_PLAN_HA, Number(summary.plannedPerHa.toFixed(1)));
+      assert.equal(feature.properties.N_IDW_HA, Number(summary.indicatedPerHa.toFixed(1)));
+      assert.equal(feature.properties.N_SAVE_HA, Number(summary.savedPerHa.toFixed(1)));
+      assert.equal(feature.properties.N_PLAN_KG, Number(summary.plannedTotalKg.toFixed(1)));
+      assert.equal(feature.properties.N_IDW_KG, Number(summary.indicatedTotalKg.toFixed(1)));
+      assert.equal(feature.properties.N_SAVE_KG, Number(summary.savedTotalKg.toFixed(1)));
+    }
+  });
+
   it("produce uno Shapefile completo con DBF e CSV coerenti con il riepilogo", async () => {
     const result = idwExportFixture();
     const summary = result.nitrogenSummary;
@@ -288,6 +325,42 @@ describe("export agronomici IDW", () => {
       `Indicazione IDW: ${summary.indicatedPerHa.toFixed(1)} kg N/ha; ${summary.indicatedTotalKg.toFixed(1)} kg N totali`,
       `Risparmio stimato: ${summary.savedPerHa.toFixed(1)} kg N/ha; ${summary.savedTotalKg.toFixed(1)} kg N totali`,
     ]);
+  });
+
+  it("apre il GeoTIFF con un parser GIS indipendente", async () => {
+    const result = idwExportFixture();
+    const summary = result.nitrogenSummary;
+    assert.ok(summary);
+
+    const { blob } = await captureDownload(() => downloadGeoTiff(result));
+    const tiff = await readGeoTiff(await blob.arrayBuffer());
+    const image = await tiff.getImage();
+    const geoKeys = image.getGeoKeys();
+    const expectedDescription = [
+      "Mappa IDW - dose di azoto (kg N/ha)",
+      `Superficie: ${summary.areaHa.toFixed(2)} ha`,
+      `Piano N: ${summary.plannedPerHa.toFixed(1)} kg N/ha; ${summary.plannedTotalKg.toFixed(1)} kg N totali`,
+      `Indicazione IDW: ${summary.indicatedPerHa.toFixed(1)} kg N/ha; ${summary.indicatedTotalKg.toFixed(1)} kg N totali`,
+      `Risparmio stimato: ${summary.savedPerHa.toFixed(1)} kg N/ha; ${summary.savedTotalKg.toFixed(1)} kg N totali`,
+    ].join("\n");
+
+    assert.equal(image.getWidth(), Math.ceil(
+      (result.bbox[2] - result.bbox[0]) / result.cellSizeDeg.lon,
+    ));
+    assert.equal(image.getHeight(), Math.ceil(
+      (result.bbox[3] - result.bbox[1]) / result.cellSizeDeg.lat,
+    ));
+    assert.equal(geoKeys.GeographicTypeGeoKey, 4326);
+    assert.equal(image.getGDALNoData(), -9999);
+    assert.equal(
+      String(await image.getFileDirectory().loadValue("ImageDescription")).replace(/\0$/, ""),
+      expectedDescription,
+    );
+
+    const raster = await image.readRasters({ interleave: true });
+    assert.equal(raster.length, image.getWidth() * image.getHeight());
+    assert.ok(Array.from(raster).some((value) => value === -9999));
+    assert.ok(Array.from(raster).some((value) => value !== -9999));
   });
 });
 const BURLEY_REFERENCE = {
