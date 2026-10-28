@@ -129,6 +129,7 @@ export function TopBar({ account }: { account?: Account | null }) {
         <Brand />
         <nav className="flex flex-wrap items-center gap-1">
           {account && account.status === "active" && account.privacyAcknowledged && <Link href="/user-portal" className={link}>Rilievo e Mappe</Link>}
+          {account && account.status === "active" && account.privacyAcknowledged && <Link href="/instructions" className={link}>Istruzioni</Link>}
           {account && <Link href="/account" className={link}>Il mio account</Link>}
           {account?.role === "admin" && account.status === "active" && <Link href="/admin" className={link}>Amministrazione</Link>}
           <Link href="/privacy" className={link}>Privacy</Link>
