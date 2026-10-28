@@ -264,6 +264,11 @@ return (
           textAlign: "left",
           lineHeight: "0.8465vw",
           fontSize: "1.6938vw",
+          // Authored line height is half the label size, so the label sank
+          // into the first body line; lift it to the INDICAZIONE baseline
+          // without moving the body paragraphs that follow.
+          position: "relative",
+          top: "-2.5vw",
           marginTop: "0",
           marginBottom: "0"
         }}><span style={{

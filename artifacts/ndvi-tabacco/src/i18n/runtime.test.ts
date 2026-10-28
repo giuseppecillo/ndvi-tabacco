@@ -7,6 +7,18 @@ import { privacy } from "./privacy";
 
 afterEach(() => setLanguage("it"));
 
+test("Sign-in keeps technical support in the shared footer without repeating it below the form", () => {
+  const root = readFileSync(new URL("../security/SecurityRoot.tsx", import.meta.url), "utf8");
+  const signIn = root.slice(root.indexOf("function SignInPage("), root.indexOf('const INVITE_KEY'));
+  assert.ok(!signIn.includes("<TechnicalSupport"));
+  assert.equal((signIn.match(/<PublicFooter/g) ?? []).length, 1);
+  assert.equal((signIn.match(/mailto:\$\{SUPPORT_CONTACT\}/g) ?? []).length, 1);
+  const pages = readFileSync(new URL("../security/PublicPages.tsx", import.meta.url), "utf8");
+  const footer = pages.slice(pages.indexOf("export function PublicFooter"), pages.indexOf("export function Activation"));
+  assert.equal((footer.match(/<TechnicalSupport/g) ?? []).length, 1);
+  assert.equal((footer.match(/mailto:\$\{PRIVACY_CONTACT\}/g) ?? []).length, 1);
+});
+
 test("The mobile menu overlays the page without shrinking modules or their headings", () => {
   const css = readFileSync(new URL("../security/security.css", import.meta.url), "utf8");
   const desktop = css.match(/@media \(min-width: 1024px\) \{([^}]+\}[^}]*\})/)?.[0] ?? "";

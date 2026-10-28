@@ -331,9 +331,10 @@ return (
         overflowWrap: "normal"
       }}><p style={{
           textAlign: "left",
-          lineHeight: "20vw",
+          // Authored 20vw line box centred the figure above the card top edge.
+          lineHeight: "9.4vw",
           fontSize: "7.9993vw",
-          marginTop: "0",
+          marginTop: "8.4vw",
           marginBottom: "0"
         }}><span style={{
             fontSize: t.font("7.9993vw", "5"),
