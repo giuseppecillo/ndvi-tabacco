@@ -16,6 +16,7 @@ import {
   calcolaQuotaNGrano,
   faseGranoConfermataDaBbch,
   faseGranoDaBbch,
+  fasiGranoPerVarieta,
   granoKgHaDaSemiMq,
   granoSemiMqDaKgHa,
   ndviOttimaleGrano,
@@ -510,6 +511,7 @@ const BURLEY_REFERENCE = {
   kgSemiDefault: 0.002,
 };
 const GRANO_CONVERSION_FIXTURES = [
+  { variety: "RGT NATUR", semiMq: [440, 440], kgHa: [220, 220] },
   { variety: "Redidenari", semiMq: [360, 410], kgHa: [200, 230] },
   { variety: "Telemaco", semiMq: [360, 410], kgHa: [190, 220] },
   { variety: "President", semiMq: [300, 350], kgHa: [165, 220] },
@@ -524,6 +526,47 @@ const GRANO_CONVERSION_FIXTURES = [
   { variety: "Quadrato", semiMq: [400, 450], kgHa: [220, 260] },
   { variety: "Giulio", semiMq: [370, 400], kgHa: [190, 220] },
 ] as const;
+
+describe("RGT NATUR: user-supplied seed, protein and nitrogen plan", () => {
+  it("starts at 220 kg/ha, 4.4 million seeds/ha, density factor 1 and 60 q/ha", () => {
+    const variety = GRANO_DURO_DB["RGT NATUR"];
+    assert.equal(variety.resaDefault, 60);
+    assert.equal(variety.proteineObiettivo, 14);
+    assert.equal(variety.pesoMilleSemiG, 50);
+    for (const [value, unit] of [[220, "kg/ha"], [440, "semi/m²"], [4_400_000, "semi/ha"]] as const) {
+      const density = calcolaDensitaGrano(value, unit, variety);
+      assert.equal(density.semiHaEquivalenti, 4_400_000);
+      assert.equal(density.fattoreAzoto, 1);
+      assert.equal(density.fuoriRange, false);
+    }
+  });
+  it("uses 120/150/180 kg N/ha for 40/50/60 q and the dedicated 30/90/60 split", () => {
+    const phases = fasiGranoPerVarieta("RGT NATUR");
+    for (const [yieldQ, expected, split] of [[40, 120, [20, 60, 40]], [50, 150, [25, 75, 50]], [60, 180, [30, 90, 60]]] as const) {
+      const total = calcolaFabbisognoNGrano(yieldQ, 1).corretto;
+      assert.equal(total, expected);
+      assert.deepEqual(phases.map(phase => calcolaQuotaNGrano(total, phase)), split);
+    }
+    assert.equal(faseGranoConfermataDaBbch("41–49", false, "RGT NATUR"), null);
+    assert.equal(faseGranoDaBbch("20–29", "RGT NATUR"), null);
+    assert.equal(faseGranoDaBbch("41–49"), null);
+  });
+  it("uses each confirmed phase quota with the NDVI deficit, zero at target and the residual cap", () => {
+    for (const [bbch, das, quota] of [["00–09", 10, 30], ["30–39", 150, 90], ["41–49", 190, 60]] as const) {
+      const phase = faseGranoConfermataDaBbch(bbch, true, "RGT NATUR");
+      assert.ok(phase);
+      const reference = ndviOttimaleGrano(das);
+      const plan = (mean: number, applied = 0) => calcolaPianoNGrano({
+        fabbisognoN: 180, azotoGiaDistribuito: applied, fase: phase, das, lettureNdvi: Array(5).fill(mean),
+      });
+      assert.equal(plan(reference / 2).quotaBase, quota);
+      assert.equal(plan(reference / 2).quotaProposta, quota / 2);
+      assert.equal(plan(reference).quotaProposta, 0);
+      assert.equal(plan(Math.min(1, reference + 0.1)).quotaProposta, 0);
+      assert.equal(plan(reference / 2, 175).quotaProposta, 5);
+    }
+  });
+});
 
 function assertApproximately(actual: number, expected: number, message: string): void {
   assert.ok(Math.abs(actual - expected) < EPSILON, `${message}: expected ${expected}, received ${actual}`);

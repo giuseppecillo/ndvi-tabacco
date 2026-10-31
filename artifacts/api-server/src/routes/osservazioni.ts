@@ -12,6 +12,11 @@ const FASI_N_GRANO: Record<string, { label: string; min: number; max: number }> 
   "30–32": { label: "Inizio levata", min: 40, max: 60 },
   "37–39": { label: "Foglia a bandiera", min: 20, max: 30 },
 };
+const FASI_N_RGT_NATUR: Record<string, { label: string; min: number; max: number }> = {
+  "00–09": { label: "Semina / emergenza", min: 30, max: 30 },
+  "30–39": { label: "Levata", min: 90, max: 90 },
+  "41–49": { label: "Botticella", min: 60, max: 60 },
+};
 
 const CURVA_NDVI_GRANO = [
   { das: 0, ottimale: 0.20 },
@@ -137,7 +142,8 @@ export function erroreOsservazioneTabacco(o: Record<string, unknown>): string | 
 }
 
 export function erroreOsservazioneGrano(o: Record<string, unknown>): string | null {
-  const fase = typeof o.bbch === "string" ? FASI_N_GRANO[o.bbch] : undefined;
+  const fasi = o.varieta === "RGT NATUR" ? FASI_N_RGT_NATUR : FASI_N_GRANO;
+  const fase = typeof o.bbch === "string" ? fasi[o.bbch] : undefined;
   if (o.faseFonte !== "BBCH confermato in campo" || !fase) {
     return "Per il grano duro serve un BBCH della fase azotata confermato in campo.";
   }
@@ -167,6 +173,21 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
   if (das < 0 || azotoTotale < 0 || azotoGiaDistribuito < 0 || dose < 0 || quotaAzoto < 0 || ottimale < 0 || ottimale > 1) {
     return "I valori del piano azoto grano non sono validi.";
   }
+  if (o.varieta === "RGT NATUR") {
+    const densita = numero(o.densitaValore);
+    const resa = numero(o.resa);
+    const semiMq = densita === null ? NaN : o.densitaUnita === "kg/ha" ? densita * 2
+      : o.densitaUnita === "semi/m²" ? densita
+      : o.densitaUnita === "semi/ha" ? densita / 10_000 : NaN;
+    if (!Number.isFinite(semiMq) || semiMq <= 0 || resa === null || resa <= 0) {
+      return "Resa e densità di RGT NATUR non sono valide.";
+    }
+    const fattore = Math.max(0.90, Math.min(1.10, 0.75 + (semiMq / 440) * 0.25));
+    const totaleAtteso = Math.round(Math.round(resa * 3) * fattore);
+    if (Math.abs(azotoTotale - totaleAtteso) > 0.01) {
+      return "Il fabbisogno RGT NATUR non corrisponde alla resa e alla densità.";
+    }
+  }
 
   const mediaCalcolata = (letture as number[]).reduce((somma, valore) => somma + valore, 0) / letture.length;
   if (Math.abs(media - mediaCalcolata) > 0.0001 || Math.abs(discostamento - (ottimale - media)) > 0.0001) {
@@ -181,7 +202,7 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
   }
 
   const residuo = Math.max(0, Math.round(azotoTotale - azotoGiaDistribuito));
-  const sommaQuoteRiferimento = Object.values(FASI_N_GRANO)
+  const sommaQuoteRiferimento = Object.values(fasi)
     .reduce((somma, voce) => somma + (voce.min + voce.max) / 2, 0);
   const quotaBase = Math.round(azotoTotale * ((fase.min + fase.max) / 2) / sommaQuoteRiferimento);
   const deficitNdvi = Math.max(0, ottimale - media);

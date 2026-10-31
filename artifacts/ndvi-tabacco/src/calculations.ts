@@ -17,6 +17,9 @@ export type GranoVarietaDati = {
   doseSemeKgHaMax: number;
   doseSemeKgHaDefault: number;
   pesoMilleSemiG: number;
+  resaDefault?: number;
+  proteineObiettivo?: number;
+  fasiAzoto?: FaseGrano[];
 };
 
 // Dati dalla tabella varietale di riferimento De Matteis 2023–2024.
@@ -58,15 +61,29 @@ export const GRANO_DURO_DB: Record<string, GranoVarietaDati> = {
   Nazareno: varietaGrano("Nazareno", 350, 400, 170, 170),
   Quadrato: varietaGrano("Quadrato", 400, 450, 220, 260),
   Giulio: varietaGrano("Giulio", 370, 400, 190, 220),
+  // Parametri forniti dal titolare, non dalla tabella De Matteis.
+  // 220 kg/ha e 440 semi/m² implicano un PMG di conversione di 50 g.
+  "RGT NATUR": {
+    ...varietaGrano("RGT NATUR", 440, 440, 220, 220),
+    resaDefault: 60,
+    proteineObiettivo: 14,
+    fasiAzoto: [
+      { label: "Semina / emergenza", bbch: "00–09", azotoMin: 30, azotoMax: 30, quotaSulTotale: 1 / 6 },
+      { label: "Levata", bbch: "30–39", azotoMin: 90, azotoMax: 90, quotaSulTotale: 1 / 2 },
+      { label: "Botticella", bbch: "41–49", azotoMin: 60, azotoMax: 60, quotaSulTotale: 1 / 3 },
+    ],
+  },
 };
 
-export type FaseGranoLabel = "Semina / emergenza" | "Accestimento" | "Inizio levata" | "Foglia a bandiera";
+export type FaseGranoLabel = "Semina / emergenza" | "Accestimento" | "Inizio levata" | "Foglia a bandiera" | "Levata" | "Botticella";
 
 export type FaseGrano = {
   label: FaseGranoLabel;
   bbch: string;
   azotoMin: number;
   azotoMax: number;
+  // Ripartizione del piano varietale, distinta dagli intervalli disciplinari.
+  quotaSulTotale?: number;
 };
 
 export const FASI_GRANO: FaseGrano[] = [
@@ -176,12 +193,16 @@ export function calcolaDensitaGrano(
   };
 }
 
-export function faseGranoDaBbch(bbch: string): FaseGrano | null {
-  return FASI_GRANO.find((fase) => fase.bbch === bbch) ?? null;
+export function fasiGranoPerVarieta(varieta?: string): FaseGrano[] {
+  return (varieta ? GRANO_DURO_DB[varieta]?.fasiAzoto : undefined) ?? FASI_GRANO;
 }
 
-export function faseGranoConfermataDaBbch(bbch: string, confermataInCampo: boolean): FaseGrano | null {
-  return confermataInCampo ? faseGranoDaBbch(bbch) : null;
+export function faseGranoDaBbch(bbch: string, varieta?: string): FaseGrano | null {
+  return fasiGranoPerVarieta(varieta).find((fase) => fase.bbch === bbch) ?? null;
+}
+
+export function faseGranoConfermataDaBbch(bbch: string, confermataInCampo: boolean, varieta?: string): FaseGrano | null {
+  return confermataInCampo ? faseGranoDaBbch(bbch, varieta) : null;
 }
 
 export function stimaFaseGranoDaDas(giorni: number, finestre: FinestraDasLocale[]): FaseGrano | null {
@@ -207,6 +228,9 @@ export function calcolaQuotaNGrano(
   fabbisognoN: number,
   fase: FaseGrano,
 ): number {
+  if (fase.quotaSulTotale !== undefined) {
+    return Math.max(0, Math.round(fabbisognoN * fase.quotaSulTotale));
+  }
   const sommaRiferimenti = FASI_GRANO.reduce((sum, item) => sum + (item.azotoMin + item.azotoMax) / 2, 0);
   const quotaRiferimento = (fase.azotoMin + fase.azotoMax) / 2;
   const quotaScalata = Math.round(fabbisognoN * quotaRiferimento / sommaRiferimenti);
@@ -273,8 +297,15 @@ export function calcolaPianoNGrano(input: {
     : 0;
   const profiloDAS = profiloFenologicoGranoDaDas(input.das);
   const profiloBbch = input.fase ? profiloFenologicoGranoDaBbch(input.fase.bbch) : null;
-  const ndviFaseCoerente = !profiloBbch
-    || (ndviOttimale >= profiloBbch.ndviMin - 0.02 && ndviOttimale <= profiloBbch.ndviMax + 0.02);
+  // I nuovi BBCH riusano gli intervalli vegetativi del modello generale:
+  // non costituiscono una calibrazione NDVI varietale o un calendario NATUR.
+  const intervallo = input.fase?.bbch === "30–39"
+    ? { ndviMin: 0.65, ndviMax: 0.85 }
+    : input.fase?.bbch === "41–49"
+    ? { ndviMin: 0.73, ndviMax: 0.85 }
+    : profiloBbch;
+  const ndviFaseCoerente = !intervallo
+    || (ndviOttimale >= intervallo.ndviMin - 0.02 && ndviOttimale <= intervallo.ndviMax + 0.02);
   const quotaBase = input.fase ? calcolaQuotaNGrano(input.fabbisognoN, input.fase) : 0;
   const residuoPiano = Math.max(0, Math.round(input.fabbisognoN - input.azotoGiaDistribuito));
   // Il deficit NDVI attiva solo la quota proporzionale che serve a colmarlo:

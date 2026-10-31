@@ -7,6 +7,21 @@ import { privacy } from "./privacy";
 
 afterEach(() => setLanguage("it"));
 
+test("RGT NATUR plan details and new phase allocations are translated", () => {
+  for (const language of ["en", "es"] as const) {
+    setLanguage(language);
+    for (const text of [
+      "RGT NATUR · piano varietale", "Levata", "Botticella",
+      "Riferimento: 220 kg seme/ha = 440 semi/m²; resa 60 q/ha; proteine obiettivo 14%; fabbisogno 180 kg N/ha.",
+      "Pre-semina / semina: 30 kg N/ha · Levata: 90 kg N/ha · Botticella: 60 kg N/ha. Le quote sono proporzionate al fabbisogno calcolato.",
+      "Parametri forniti dal titolare, non una garanzia di resa o proteine. Conferma il BBCH in campo: non sono impostate finestre DAS varietali.",
+      "Quota del piano varietale: 90 kg N/ha.",
+    ]) assert.notEqual(t(text), text, `${language}: ${text}`);
+    assert.ok(t("Quota del piano varietale: 90 kg N/ha.").includes("90"));
+    assert.equal(t("RGT NATUR"), "RGT NATUR");
+  }
+});
+
 test("Sign-in keeps a single technical support contact directly after password help", () => {
   const root = readFileSync(new URL("../security/SecurityRoot.tsx", import.meta.url), "utf8");
   const signIn = root.slice(root.indexOf("function SignInPage("), root.indexOf('const INVITE_KEY'));

@@ -22,6 +22,33 @@ const pianoGranoValido = (): Record<string, unknown> => ({
   quotaAzoto: 12,
 });
 
+test("RGT NATUR validates its own phase quotas and rejects tampered plans", () => {
+  for (const [bbch, phase, reference, quota] of [
+    ["00–09", "Semina / emergenza", 0.27, 30],
+    ["30–39", "Levata", 0.65 + 14 / 29 * 0.07, 90],
+    ["41–49", "Botticella", 0.85, 60],
+  ] as const) {
+    const das = bbch === "00–09" ? 10 : bbch === "30–39" ? 150 : 190;
+    const mean = reference / 2;
+    const plan = {
+      ...pianoGranoValido(), varieta: "RGT NATUR", resa: 60, densitaValore: 220, densitaUnita: "kg/ha",
+      giorni: das, bbch, faseFenologica: phase, azotoTotale: 180, azotoGiaDistribuito: 0,
+      n1: mean, n2: mean, n3: mean, n4: mean, n5: mean, media: mean,
+      ottimale: reference, discostamento: reference - mean, dose: quota / 2, quotaAzoto: quota / 2,
+    };
+    assert.equal(erroreOsservazioneGrano(plan), null);
+    assert.ok(erroreOsservazioneGrano({ ...plan, azotoTotale: 300 }));
+    assert.ok(erroreOsservazioneGrano({ ...plan, dose: quota, quotaAzoto: quota }));
+    assert.ok(erroreOsservazioneGrano({ ...plan, bbch: "20–29" }));
+    assert.ok(erroreOsservazioneGrano({ ...plan, densitaUnita: "piante/ha" }));
+    assert.equal(erroreOsservazioneGrano({
+      ...plan, n1: reference, n2: reference, n3: reference, n4: reference, n5: reference,
+      media: reference, discostamento: 0, dose: 0, quotaAzoto: 0,
+    }), null);
+    assert.equal(erroreOsservazioneGrano({ ...plan, azotoGiaDistribuito: 175, dose: 5, quotaAzoto: 5 }), null);
+  }
+});
+
 const pianoTabaccoValido = (): Record<string, unknown> => ({
   coltura: "tabacco",
   giorni: 42,

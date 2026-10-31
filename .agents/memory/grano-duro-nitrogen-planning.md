@@ -26,3 +26,9 @@ description: Agronomic guardrails for the grano duro seed-density conversion and
 **Why:** The user requires that an NDVI meeting or exceeding the target never trigger an N input; a below-target point needs a transparent, proportional link from its NDVI deficit to N units instead of a fixed phase minimum.
 
 **How to apply:** Keep client and API calculations identical, show the deficit, its percentage, the phase quota, and the residual-plan cap in the result. Never reintroduce a phase minimum that turns a zero or negative deficit into a positive dose.
+
+**RGT NATUR presentation:** The user explicitly requested: “non scrivere che la curva NDVI specifica per RGT non è disponibile e usiamo quella del grano duro generica”.
+
+**Why:** The user asked to remove that explanation from the variety card.
+
+**How to apply:** Do not reintroduce that note in Italian, English or Spanish. This is a wording requirement, not evidence of a separately calibrated or certified varietal NDVI curve.

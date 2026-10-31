@@ -19,7 +19,7 @@ import {
   calcolaQuotaNGrano,
   ETA_GIORNI_EQUIVALENTI,
   FINESTRE_DAS_LOCALI_TEMPLATE,
-  FASI_GRANO,
+  fasiGranoPerVarieta,
   faseGranoConfermataDaBbch,
   faseGranoDaBbch,
   GRANO_DURO_DB,
@@ -381,6 +381,8 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   );
   const isGranoDuro = coltura === "grano duro";
   const datiGrano = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
+  const fasiGrano = fasiGranoPerVarieta(varieta);
+  const pianoVarietaleGrano = !!datiGrano.fasiAzoto;
   const datiBaseVarieta = VARIETA_DB[varieta] ?? VARIETA_DB["Burley (Non Cimato)"];
   const riferimentoAziendale = parametriAziendali[varieta] ?? {
     densitaPianteHa: datiBaseVarieta.densitaPianteDefault,
@@ -429,10 +431,12 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   useEffect(() => {
     if (isGranoDuro) {
       const dati = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
-      setResa(50);
-      setAzotoTot(150);
+      setResa(dati.resaDefault ?? 50);
+      setAzotoTot((dati.resaDefault ?? 50) * 3);
       setDensitaUnita("kg/ha");
       setDensitaValore(dati.doseSemeKgHaDefault);
+      setBbchGrano("");
+      setBbchGranoConfermato(false);
       return;
     }
     const dati = VARIETA_DB[varieta];
@@ -525,9 +529,9 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   const giorni = giorniAuto ?? giorniManuale;
   const autoCalcolato = giorniAuto !== null;
 
-  const faseStimataDas = stimaFaseGranoDaDas(giorni, finestreDasGrano);
-  const faseGranoSelezionata = faseGranoDaBbch(bbchGrano);
-  const faseGrano = faseGranoConfermataDaBbch(bbchGrano, bbchGranoConfermato);
+  const faseStimataDas = pianoVarietaleGrano ? null : stimaFaseGranoDaDas(giorni, finestreDasGrano);
+  const faseGranoSelezionata = faseGranoDaBbch(bbchGrano, varieta);
+  const faseGrano = faseGranoConfermataDaBbch(bbchGrano, bbchGranoConfermato, varieta);
   const fabbisognoGrano = calcolaFabbisognoNGrano(resa, densitaGrano.fattoreAzoto);
   const pianoNGrano = calcolaPianoNGrano({
     fabbisognoN: fabbisognoGrano.corretto,
@@ -879,6 +883,14 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                   {datiVarieta.categoria} · azoto consigliato {datiVarieta.azotoMin}–{datiVarieta.azotoMax} kg/ha · resa max {datiVarieta.resaMax} t/ha
                 </p>
               )}
+              {isGranoDuro && pianoVarietaleGrano && (
+                <div className="mt-2 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-950 space-y-2">
+                  <p className="font-bold">RGT NATUR · piano varietale</p>
+                  <p>Riferimento: 220 kg seme/ha = 440 semi/m²; resa 60 q/ha; proteine obiettivo 14%; fabbisogno 180 kg N/ha.</p>
+                  <p>Pre-semina / semina: 30 kg N/ha · Levata: 90 kg N/ha · Botticella: 60 kg N/ha. Le quote sono proporzionate al fabbisogno calcolato.</p>
+                  <p>Parametri forniti dal titolare, non una garanzia di resa o proteine. Conferma il BBCH in campo: non sono impostate finestre DAS varietali.</p>
+                </div>
+              )}
             </div>
             <div className="col-span-2 flex flex-col gap-1">
               <label className="text-sm font-semibold text-stone-700">{isGranoDuro ? "Densità di semina" : "Piante / semi per ettaro"}</label>
@@ -1014,10 +1026,10 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                   Il fabbisogno base segue un riferimento tecnico di 3 kg N per quintale atteso. La densità modifica questo valore solo in modo limitato:
                   coefficiente da ×0,90 a ×1,10, calcolato rispetto al riferimento tecnico interno della varietà.
                 </p>
-                <p>
+                {!pianoVarietaleGrano && <p>
                   Il PMG di riferimento ({datiGrano.pesoMilleSemiG.toFixed(1)} g) serve solo per convertire kg/ha e semi/m²:
                   la tabella di riferimento non dichiara un PMG, quindi la dose inserita viene verificata direttamente nel proprio intervallo kg/ha.
-                </p>
+                </p>}
                 <p className="font-medium">
                   Restano necessarie le valutazioni tecniche su analisi del suolo, coltura precedente, piogge e azoto residuo: l’app non applica correzioni automatiche per questi fattori.
                 </p>
@@ -1056,7 +1068,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                     className={`${inputCls} ${errors.bbch ? "border-red-400 focus:ring-red-400" : ""}`}
                   >
                     <option value="">Seleziona il BBCH rilevato…</option>
-                    {FASI_GRANO.map((fase) => (
+                    {fasiGrano.map((fase) => (
                       <option key={fase.bbch} value={fase.bbch}>{fase.bbch} · {fase.label}</option>
                     ))}
                   </select>
@@ -1134,7 +1146,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
               </details>
             </div>}
 
-            {isGranoDuro && <div className="col-span-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
+            {isGranoDuro && !pianoVarietaleGrano && <div className="col-span-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
               <details>
                 <summary className="cursor-pointer text-sm font-bold text-stone-700">
                   Configura le finestre DAS locali per proporre il BBCH
@@ -1362,7 +1374,9 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                 {faseGrano ? <>
                   <p className="font-semibold text-green-900">Indicazione N del punto dalla media NDVI: {risultatiGrano.quotaProposta} kg N/ha</p>
                   <p>
-                    Intervallo di consiglio per {faseGrano.bbch} · {faseGrano.label}: {faseGrano.azotoMin}–{faseGrano.azotoMax} kg N/ha.
+                    {pianoVarietaleGrano
+                      ? <>Quota del piano varietale: {risultatiGrano.quotaBase} kg N/ha.</>
+                      : <>Intervallo di consiglio per {faseGrano.bbch} · {faseGrano.label}: {faseGrano.azotoMin}–{faseGrano.azotoMax} kg N/ha.</>}
                     {risultatiGrano.deficitNdvi > 0 ? (
                       <> Deficit NDVI: {risultatiGrano.ndviOttimale.toFixed(3)} − {risultatiGrano.media.toFixed(3)} = {risultatiGrano.deficitNdvi.toFixed(3)} ({(risultatiGrano.deficitRelativo * 100).toFixed(1)}%). La quota N ottimale della fase è {risultatiGrano.quotaBase} kg N/ha: {risultatiGrano.quotaBase} × {(risultatiGrano.deficitRelativo * 100).toFixed(1)}% = {risultatiGrano.quotaDaDeficitNdvi} kg N/ha, limitati ai {risultatiGrano.residuoPiano} kg N/ha residui.</>
                     ) : (
@@ -1390,24 +1404,26 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                     Variabilità NDVI elevata: ricampiona le zone disomogenee prima di distribuire una dose uniforme.
                   </p>
                 )}
-                {(risultatiGrano.fabbisognoN < 127 || risultatiGrano.fabbisognoN > 176) && (
+                {!pianoVarietaleGrano && (risultatiGrano.fabbisognoN < 127 || risultatiGrano.fabbisognoN > 176) && (
                   <p className="font-medium text-amber-800">
                     Il totale calcolato è fuori dalla somma degli intervalli di riferimento (127–176 kg N/ha): conferma il frazionamento con il tecnico aziendale.
                   </p>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                {FASI_GRANO.map((fase) => {
+                {fasiGrano.map((fase) => {
                   const attiva = fase.label === faseGrano?.label;
                   return <div key={fase.label} className={`rounded-lg border p-2 ${attiva ? "border-green-600 bg-green-100 text-green-950 font-semibold" : "border-stone-200 bg-white text-stone-600"}`}>
-                    {fase.bbch} · {fase.label} · {fase.azotoMin}–{fase.azotoMax} kg N/ha
+                    {fase.bbch} · {fase.label} · {fase.quotaSulTotale !== undefined
+                      ? calcolaQuotaNGrano(risultatiGrano.fabbisognoN, fase)
+                      : `${fase.azotoMin}–${fase.azotoMax}`} kg N/ha
                   </div>;
                 })}
               </div>
               <details className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs text-stone-700">
                 <summary className="cursor-pointer font-semibold">Metodo e limiti del riferimento NDVI</summary>
                 <div className="mt-2 space-y-2">
-                  <p>La curva NDVI è una baseline fenologica per semina autunnale, non una soglia universale. L’indicazione del punto usa la media delle cinque letture per modulare la quota BBCH solo entro ±15%, senza superare il residuo del piano.</p>
+                  <p>La curva NDVI è una baseline fenologica per semina autunnale, non una soglia universale. Sotto il riferimento, la quota BBCH è moltiplicata per il deficit NDVI relativo e limitata al residuo del piano; con NDVI uguale o superiore al riferimento la dose è zero.</p>
                   <p>Riferimenti: Akmal et al., <em>Sustainability</em> 2021 (NDVI e SPAD nel frumento duro); Denora et al., <em>PLOS ONE</em> 2022 (zone di gestione e N a dose variabile nel frumento duro); Nino et al., <em>Remote Sensing Applications</em> 2024 (stato azotato da Sentinel-2 in Italia centrale).</p>
                   <p className="font-medium">A copertura elevata l'NDVI può saturare; non distingue autonomamente carenza di N da stress idrico, suolo, patogeni o altre cause. Conferma sempre con osservazione e valutazione tecnica.</p>
                 </div>
