@@ -4,8 +4,25 @@ import { readFileSync } from "node:fs";
 import { getLanguage, getLocale, setLanguage, t, translateDisplay } from "./runtime";
 import { localizeUi } from "../../localize-ui";
 import { privacy } from "./privacy";
+import { POLYGON_FORMAT_ERROR, POLYGON_IMPORT_ERROR } from "../utils/polygonImport";
 
 afterEach(() => setLanguage("it"));
+
+test("polygon import counts, progress and failures translate without changing filenames", () => {
+  for (const [language, single, plural] of [
+    ["en", "1 polygon detected", "3 polygons detected"],
+    ["es", "1 polígono detectado", "3 polígonos detectados"],
+  ] as const) {
+    setLanguage(language);
+    assert.equal(t("1 poligono rilevato"), single);
+    assert.equal(t("3 poligoni rilevati"), plural);
+    for (const text of [POLYGON_IMPORT_ERROR, POLYGON_FORMAT_ERROR, "Caricamento dei poligoni in corso…"]) {
+      assert.notEqual(t(text), text);
+    }
+    assert.equal(t("synthetic-polygons.zip"), "synthetic-polygons.zip");
+    assert.equal(t("KG_HA"), "KG_HA");
+  }
+});
 
 test("RGT NATUR plan details and new phase allocations are translated", () => {
   for (const language of ["en", "es"] as const) {

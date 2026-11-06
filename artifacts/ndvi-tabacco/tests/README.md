@@ -40,3 +40,45 @@ write endpoints are used. Leaflet basemap image requests are independent of
 
 Existing algorithm, export parsing and catalogue regression tests:
 `pnpm --filter @workspace/ndvi-tabacco test`.
+
+## KMZ / Shapefile import verification
+
+`fixtures/idw-imports.mjs` generates tiny, entirely invented binary fixtures in
+memory: root and nested-KML KMZ, a clockwise WGS84 polygon Shapefile ZIP, and a
+four-point Shapefile ZIP with `DOSE=60` and `KG_HA=30`. It does not reuse the
+application export writer. Neither fixture creation nor test execution uses
+credentials, APIs or a database.
+
+Check the fixture structure with an independent Shapefile reader:
+`node --test tests/import-fixtures.test.mjs` (from this artifact directory).
+
+With an existing Playwright `page`, call
+`runIdwImportBrowserPass(page, { baseURL, downloadDir })` from
+`idw-import-browser-pass.mjs`. The single journey covers desktop (1280 px) and
+phone (390 px), all three languages and:
+
+- equivalent 100-cell geometry/doses for KML, both KMZ variants and polygon ZIP;
+- localized polygon count, point-field feedback and invalid-KMZ errors;
+- automatic `DOSE` selection (60), explicit `KG_HA` selection (30), and parsed
+  exported grid equivalence to the synthetic observation baseline;
+- unavailable savings (not zero), translated explanations and aria-labels for
+  external points without a complete N plan;
+- stale geometry/results cleared after invalid imports and recovery on a new ZIP.
+
+The browser helper additionally aborts every `/api/**` request. Save downloaded
+evidence under ignored `generated-artifacts/`, not in the source fixture folder.
+
+### Verification performed
+
+The isolated browser journey was checked at 1280 px and 390 px. KML, root KMZ,
+nested KMZ and polygon ZIP produced equivalent 100-cell IDW grids (UTM zone 33).
+The maximum coordinate difference was 1.42e-14 degrees; dose rounding noise was
+at most 7.11e-15 kg/ha. The registry baseline showed 50% savings. External point
+fields produced 60 (`DOSE`) and 30 (`KG_HA`) kg/ha with unavailable savings.
+Italian, English and Spanish import/unavailable feedback, invalid-KMZ clearing,
+ZIP recovery and the phone layout were verified.
+
+The remote runner could not execute the Node helper or independently parse
+downloaded exports. It instead compared the actual browser parser/IDW output
+through `geoUtils.ts`; Node fixture tests independently parsed the input ZIPs.
+This is an import verification, not a new claim about downloaded-export fidelity.

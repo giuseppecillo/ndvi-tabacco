@@ -489,7 +489,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
         {polygons.length > 0 && (
           <div className="mt-3 space-y-1.5">
             <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">
-              {polygons.length} poligono{polygons.length !== 1 ? "i" : ""} rilevato{polygons.length !== 1 ? "i" : ""}
+              {t(`${polygons.length} ${polygons.length === 1 ? "poligono rilevato" : "poligoni rilevati"}`)}
             </p>
             {polygons.map((p, i) => (
               <button

@@ -3,6 +3,11 @@ import type { Translation } from "./runtime";
 export const maps: readonly Translation[] = [
   ["Elaborazioni e Mappe", "Processing and maps", "Procesamiento y mapas"],
   ["Importa Poligoni", "Import polygons", "Importar polígonos"],
+  ["{0} poligono rilevato", "{0} polygon detected", "{0} polígono detectado"],
+  ["{0} poligoni rilevati", "{0} polygons detected", "{0} polígonos detectados"],
+  ["Caricamento dei poligoni in corso…", "Loading polygons…", "Cargando polígonos…"],
+  ["Impossibile caricare i poligoni. Il file è vuoto, danneggiato o non contiene poligoni validi. Carica un nuovo file per procedere.", "Unable to load polygons. The file is empty, damaged or contains no valid polygons. Upload a new file to continue.", "No se pueden cargar los polígonos. El archivo está vacío, dañado o no contiene polígonos válidos. Carga un nuevo archivo para continuar."],
+  ["Formato non supportato. Usa .kml, .kmz o .zip (Shapefile).", "Unsupported format. Use .kml, .kmz or .zip (Shapefile).", "Formato no compatible. Usa .kml, .kmz o .zip (Shapefile)."],
   ["📊 Da Registro NDVI", "📊 From NDVI log", "📊 Desde el registro NDVI"],
   ["📁 Da Shapefile esterno", "📁 From external Shapefile", "📁 Desde un Shapefile externo"],
   ["📂 Sfoglia", "📂 Browse", "📂 Examinar"],

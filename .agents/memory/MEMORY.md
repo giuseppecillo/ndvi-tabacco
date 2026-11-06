@@ -16,3 +16,4 @@
 - [Lingue e supporto](localization.md) — Italiano, inglese e spagnolo per accesso e app; tradurre la visualizzazione, mai gli identificatori agronomici o i dati dei clienti.
 - [Navigazione dei moduli](navigation.md) — Pulsante NitroCrop NDVI per elenco verticale a sinistra e ritorno a Rilievo e dati; intestazione giallo-arancio.
 - [Fedeltà degli import PowerPoint](pptx-import-fidelity.md) — Un import riuscito può omettere riempimenti SVG: confrontare con il file originale prima di considerare completa la grafica.
+- [Fixture browser isolate](isolated-browser-fixtures.md) — Se il runner non importa helper Node locali, trasferire payload statici sintetici senza rimuovere i blocchi API.
