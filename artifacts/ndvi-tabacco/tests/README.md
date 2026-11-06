@@ -83,6 +83,45 @@ downloaded exports. It instead compared the actual browser parser/IDW output
 through `geoUtils.ts`; Node fixture tests independently parsed the input ZIPs.
 This is an import verification, not a new claim about downloaded-export fidelity.
 
+## Multi-layer Shapefile archives
+
+Polygon import intentionally includes **all Polygon/MultiPolygon layers** and
+shows the original layer name and feature ID beside each field name. Two fields
+with the same name or ID in different layers remain separate selectable fields.
+Non-polygon geometries are excluded, as stated in the localized import message.
+
+Point import intentionally uses **one layer at a time**. A multi-point-layer
+archive requires an explicit selection; a single compatible layer is selected
+automatically. Switching layers replaces (never appends) control points and
+clears computed results. Overlapping coordinates/IDs across layers therefore
+cannot accidentally double their IDW weight. Fields are detected separately per
+layer and must be numeric for all its points; absent/blank doses are not zero.
+This does not deduplicate records within a source layer.
+
+`fixtures/idw-imports.mjs:createMultiLayerFixtures()` creates real ZIPs with
+two polygon layers, two point layers (same IDs/coordinates, different rates and
+schemas), mixed layers and each incompatible-first ordering. No production
+data, writer, credentials or database is used. ZIP bytes are generated in
+memory, rather than committed as opaque binaries.
+
+Run the regression suite with the normal artifact `test` command or just:
+`pnpm --filter @workspace/ndvi-tabacco exec tsx --test tests/multilayer.test.mjs`.
+For UI reproduction, call `runMultiLayerBrowserPass(page, { baseURL })` from
+`multilayer-browser-pass.mjs` with a Playwright page and the existing dev preview.
+It targets the same isolated `/tests/idw.html?module=maps` harness and aborts
+`/api/**`; covers desktop/mobile, all three languages, layer selection, unchanged
+names/IDs, field switching, four-not-eight points, stale-result clearing,
+mixed geometries, corrupt-file clearing and recovery.
+
+Verified in the isolated browser harness: both polygon layers and IDs, required
+point-layer selection, four rows (not eight), 60/90 kg/ha layer-specific rates,
+result clearing on layer change, mixed-layer compatibility, IT/EN/ES policies
+and corrupt-file errors, rejection of incompatible-only archives and recovery.
+Desktop was checked at 1280px and the narrow layout at 390px without horizontal
+overflow. The runner used request-context synthetic JSON payloads because local
+Node helper imports were unavailable; API abort routing stayed enabled. These
+checks do not claim an authenticated-account or database verification.
+
 ## Interior exclusions (holes)
 
 `pnpm --filter @workspace/ndvi-tabacco test` includes `holes.test.mjs`, using only

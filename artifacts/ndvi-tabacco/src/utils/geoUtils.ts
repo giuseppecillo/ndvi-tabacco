@@ -18,17 +18,21 @@
 
 import proj4 from "proj4";
 import JSZip from "jszip";
+import { readShpLayers } from "./shapefileImport";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface KmlPolygon {
   name: string;
+  sourceLayer?: string;
+  sourceId?: string | number;
   ring: [number, number][]; // [lng, lat] – closed ring in WGS84
   holes?: [number, number][][]; // excluded interior rings; absent in legacy polygons
 }
 
 export interface ControlPoint {
   obsId: string;
+  sourceLayer?: string;
   cliente: string;
   appezzamento: string;
   lng: number; // WGS84
@@ -162,25 +166,15 @@ export async function parseKmz(buffer: ArrayBuffer): Promise<KmlPolygon[]> {
  * The polygon name is read from common attribute field names (Name, NOME,
  * DESCRIZIONE, APPEZZ, FIELD1, …); falls back to "Poligono N".
  */
-interface GeoJSONFeatureCollection {
-  type: "FeatureCollection";
-  features: Array<{
-    geometry: { type: string; coordinates: unknown } | null;
-    properties: Record<string, unknown> | null;
-  }>;
-}
-
 export async function parseShpPolygons(buffer: ArrayBuffer): Promise<KmlPolygon[]> {
-  const shpjs = (await import("shpjs")).default;
-  const raw   = await (shpjs as (buf: ArrayBuffer) => Promise<GeoJSONFeatureCollection | GeoJSONFeatureCollection[]>)(buffer);
-  const fc: GeoJSONFeatureCollection = Array.isArray(raw) ? raw[0] : raw;
+  const layers = await readShpLayers(buffer);
 
   const nameKeys = ["Name","name","NOME","nome","DESCRIZIONE","descrizione",
                     "APPEZZ","appezzamento","LABEL","label","FIELD1"];
 
   const polygons: KmlPolygon[] = [];
 
-  fc.features.forEach((feat, fi) => {
+  layers.forEach(layer => layer.features.forEach((feat, fi) => {
     const props = feat.properties ?? {};
     const rawName = nameKeys.reduce<string | null>(
       (acc, k) => acc ?? (props[k] != null ? String(props[k]) : null), null
@@ -192,7 +186,10 @@ export async function parseShpPolygons(buffer: ArrayBuffer): Promise<KmlPolygon[
         !Number.isFinite(lng) || !Number.isFinite(lat) || Math.abs(lng) > 180 || Math.abs(lat) > 90))) {
         throw new Error("Invalid Shapefile polygon ring");
       }
-      polygons.push({ name: `${rawName}${suffix}`, ring, ...(holes.length ? { holes } : {}) });
+      polygons.push({ name: `${rawName}${suffix}`, sourceLayer: layer.name,
+        sourceId: feat.id ?? (props.ID as string | number | undefined) ??
+          (props.id as string | number | undefined) ?? fi + 1,
+        ring, ...(holes.length ? { holes } : {}) });
     };
 
     const geom = feat.geometry;
@@ -206,7 +203,7 @@ export async function parseShpPolygons(buffer: ArrayBuffer): Promise<KmlPolygon[
         addPolygon(poly, (geom.coordinates as unknown[]).length > 1 ? ` (${pi + 1})` : "");
       });
     }
-  });
+  }));
 
   if (!polygons.length) throw new Error("Nessun poligono trovato nello Shapefile.");
   return polygons;

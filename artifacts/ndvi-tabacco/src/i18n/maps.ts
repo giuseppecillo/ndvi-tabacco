@@ -1,6 +1,13 @@
 import type { Translation } from "./runtime";
 
 export const maps: readonly Translation[] = [
+  ["Livello di punti", "Point layer", "Capa de puntos"],
+  ["Seleziona un livello di punti", "Select a point layer", "Selecciona una capa de puntos"],
+  ["Caricamento dei punti in corso…", "Loading points…", "Cargando puntos…"],
+  ["Seleziona un solo livello di punti: i livelli non vengono sommati. Le geometrie non puntuali sono escluse.", "Select one point layer only: layers are not combined. Non-point geometries are excluded.", "Selecciona una sola capa de puntos: las capas no se suman. Se excluyen las geometrías que no sean puntos."],
+  ["Sono importati tutti i livelli poligonali. Le geometrie non poligonali sono escluse.", "All polygon layers are imported. Non-polygon geometries are excluded.", "Se importan todas las capas de polígonos. Se excluyen las geometrías no poligonales."],
+  ["Impossibile caricare i punti. Il file è danneggiato o non contiene punti validi.", "Unable to load points. The file is damaged or contains no valid points.", "No se pueden cargar los puntos. El archivo está dañado o no contiene puntos válidos."],
+  ["Il campo Dose deve contenere un numero valido per ogni punto del livello.", "The rate field must contain a valid number for every point in the layer.", "El campo de dosis debe contener un número válido para cada punto de la capa."],
   ["Elaborazioni e Mappe", "Processing and maps", "Procesamiento y mapas"],
   ["Importa Poligoni", "Import polygons", "Importar polígonos"],
   ["{0} poligono rilevato", "{0} polygon detected", "{0} polígono detectado"],

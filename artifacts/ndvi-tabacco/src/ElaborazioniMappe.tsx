@@ -17,14 +17,14 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-// @ts-ignore – shpjs has no bundled types in all versions
-import shp from "shpjs";
 import { Observation } from "./App";
 import {
   KmlPolygon, ControlPoint, PolyIdwResult, IdwGridPoint, findDoseCell,
   computeIdwGrid, downloadShapefile, downloadGeoTiff,
 } from "./utils/geoUtils";
 import { canSpatialize, createPolygonImporter, emptyPolygonImport } from "./utils/polygonImport";
+import { readShpPointLayers, pointLayerControls, SHP_POINT_ERROR, SHP_POINT_POLICY,
+  SHP_POLYGON_POLICY, SHP_DOSE_ERROR, type ShpPointLayer } from "./utils/shapefileImport";
 import { NitrogenSavings } from "./components/NitrogenSavings";
 import { t, useLanguage } from "./i18n/runtime";
 
@@ -271,12 +271,8 @@ interface Props { osservazioni: Observation[] }
 
 type PointSource = "db" | "shp";
 
-interface ShpRawFeature {
-  geometry: { type: string; coordinates: number[] };
-  properties: Record<string, unknown>;
-}
-
 export function ElaborazioniMappe({ osservazioni }: Props) {
+  useLanguage();
   // KML state
   const [polygonImport, setPolygonImport] = useState(emptyPolygonImport);
   const { polygons, filename: kmlName, selectedIndex: selPolyIdx } = polygonImport;
@@ -286,11 +282,19 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
 
   // Control-point source
   const [pointSource,   setPointSource]   = useState<PointSource>("db");
-  const [shpPoints,     setShpPoints]     = useState<ControlPoint[]>([]);
   const [shpFileName,   setShpFileName]   = useState("");
-  const [shpFields,     setShpFields]     = useState<string[]>([]);
   const [doseField,     setDoseField]     = useState("");
-  const [shpRaw,        setShpRaw]        = useState<ShpRawFeature[]>([]);
+  const [shpLayers, setShpLayers] = useState<ShpPointLayer[]>([]);
+  const [shpLayerKey, setShpLayerKey] = useState("");
+  const [shpError, setShpError] = useState("");
+  const [shpLoading, setShpLoading] = useState(false);
+  const shpVersion = useRef(0);
+  const selectedShpLayer = shpLayers.find(layer => layer.key === shpLayerKey);
+  const shpFields = selectedShpLayer?.numericFields ?? [];
+  const shpPoints = useMemo<ControlPoint[]>(() =>
+    selectedShpLayer && shpFields.includes(doseField)
+      ? pointLayerControls(selectedShpLayer, doseField) : [],
+  [selectedShpLayer, doseField]);
 
   // IDW params
   const [power,         setPower]         = useState(2);
@@ -305,6 +309,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
     setComputing(false);
   }), []);
   useEffect(() => () => {
+    shpVersion.current++;
     polygonImporter.invalidate();
     clearTimeout(computationTimer.current);
   }, [polygonImporter]);
@@ -347,64 +352,42 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
 
   // ── Shapefile upload ────────────────────────────────────────────────────────
 
-  const handleShp = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const clearPointResults = () => {
+    clearTimeout(computationTimer.current);
+    setComputing(false);
+    setResults(new Map());
+  };
+  const selectShpLayer = (key: string, layers = shpLayers) => {
+    clearPointResults();
+    setShpLayerKey(key);
+    const fields = layers.find(layer => layer.key === key)?.numericFields ?? [];
+    setDoseField(fields.find(f => /dose|kgha|kg_ha|azoto|value|valore/i.test(f)) ?? fields[0] ?? "");
+  };
+  const handleShp = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
+    const attempt = ++shpVersion.current;
+    clearPointResults();
     setShpFileName(file.name);
-    setShpPoints([]);
-    setShpFields([]);
+    setShpLayers([]);
+    setShpLayerKey("");
     setDoseField("");
-    const reader = new FileReader();
-    reader.onload = async ev => {
-      try {
-        const buf = ev.target?.result as ArrayBuffer;
-        const parseShapefile = shp as (input: ArrayBuffer) => Promise<{
-          features: ShpRawFeature[];
-        } | { features: ShpRawFeature[] }[]>;
-        const raw = await parseShapefile(buf);
-        const fc  = Array.isArray(raw) ? raw[0] : raw;
-        const pts: ShpRawFeature[] = fc.features.filter(
-          (f: ShpRawFeature) => f.geometry?.type === "Point"
-        );
-        if (!pts.length) { alert("Nessun punto trovato nel file."); return; }
-        setShpRaw(pts);
-        // Detect numeric fields
-        const sample = pts[0].properties;
-        const numFields = Object.keys(sample).filter(
-          k => typeof sample[k] === "number" || !isNaN(Number(sample[k]))
-        );
-        setShpFields(numFields);
-        // Auto-select dose field
-        const auto = numFields.find(f =>
-          /dose|kgha|kg_ha|azoto|value|valore/i.test(f)
-        ) ?? numFields[0] ?? "";
-        setDoseField(auto);
-      } catch {
-        alert("Errore nel caricamento dello Shapefile. Verifica il formato.");
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  }, []);
-
-  // Rebuild shpPoints when doseField changes
-  useEffect(() => {
-    if (!doseField || !shpRaw.length) { setShpPoints([]); return; }
-    setShpPoints(
-      shpRaw
-        .filter(f => {
-          const coords = f.geometry.coordinates;
-          return typeof coords[0] === "number" && typeof coords[1] === "number";
-        })
-        .map((f, i) => ({
-          obsId:        String(f.properties["ID"] ?? f.properties["id"] ?? i + 1),
-          cliente:      String(f.properties["CLIENTE"] ?? f.properties["cliente"] ?? ""),
-          appezzamento: String(f.properties["APPEZZ"] ?? f.properties["appezzamento"] ?? ""),
-          lng:          f.geometry.coordinates[0],
-          lat:          f.geometry.coordinates[1],
-          dose:         Number(f.properties[doseField] ?? 0),
-        }))
-    );
-  }, [doseField, shpRaw]);
+    setShpError("");
+    setShpLoading(true);
+    try {
+      const layers = await readShpPointLayers(await file.arrayBuffer());
+      if (!layers.length) throw new Error(SHP_POINT_ERROR);
+      if (attempt !== shpVersion.current) return;
+      setShpLayers(layers);
+      // Multiple levels require an explicit choice: no accidental double weighting.
+      if (layers.length === 1) selectShpLayer(layers[0].key, layers);
+    } catch {
+      if (attempt === shpVersion.current) setShpError(SHP_POINT_ERROR);
+    } finally {
+      if (attempt === shpVersion.current) setShpLoading(false);
+    }
+  };
 
   // ── IDW computation ─────────────────────────────────────────────────────────
 
@@ -501,6 +484,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
 
         {polygons.length > 0 && (
           <div className="mt-3 space-y-1.5">
+            {polygons.some(p => p.sourceLayer) && <p role="status" className="text-xs text-stone-600">{t(SHP_POLYGON_POLICY)}</p>}
             <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">
               {t(`${polygons.length} ${polygons.length === 1 ? "poligono rilevato" : "poligoni rilevati"}`)}
             </p>
@@ -514,7 +498,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
                     : "bg-stone-50 text-stone-700 border-stone-200 hover:bg-green-50"
                 }`}
               >
-                <span className="font-medium truncate">{p.name}</span>
+                <span className="font-medium truncate">{p.name}{p.sourceLayer != null && <small className="block">{p.sourceLayer} · ID {p.sourceId}</small>}</span>
                 <span className={`text-xs ml-2 shrink-0 ${selPolyIdx === i ? "text-green-200" : "text-stone-400"}`}>
                   {gpsObs.length} oss. GPS
                 </span>
@@ -536,7 +520,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
           {(["db", "shp"] as const).map(src => (
             <button
               key={src}
-              onClick={() => setPointSource(src)}
+              onClick={() => { if (src !== pointSource) clearPointResults(); setPointSource(src); }}
               className={`flex-1 text-sm font-semibold py-2 rounded-lg border transition-colors ${
                 pointSource === src
                   ? "bg-green-800 text-white border-green-700"
@@ -606,12 +590,27 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
               <input type="file" accept=".zip" className="hidden" onChange={handleShp} />
             </label>
 
+            {shpLoading && <p role="status">{t("Caricamento dei punti in corso…")}</p>}
+            {shpError && <p role="alert" className="text-sm text-red-800">{t(shpError)}</p>}
+            {shpLayers.length > 0 && <>
+              <p role="status" className="text-xs text-stone-600">{t(SHP_POINT_POLICY)}</p>
+              <label className="block text-sm">
+                {t("Livello di punti")}
+                <select aria-label={t("Livello di punti")} value={shpLayerKey}
+                  onChange={e => selectShpLayer(e.target.value)}
+                  className="block w-full border rounded-lg px-3 py-2 bg-white">
+                  <option value="">{t("Seleziona un livello di punti")}</option>
+                  {shpLayers.map(layer => <option key={layer.key} value={layer.key}>{layer.name} ({layer.features.length})</option>)}
+                </select>
+              </label>
+            </>}
+            {selectedShpLayer && !shpFields.length && <p role="alert">{t(SHP_DOSE_ERROR)}</p>}
             {shpFields.length > 0 && (
               <div className="flex items-center gap-3">
                 <label className="text-sm font-medium text-stone-700 shrink-0">Campo Dose (kg/ha):</label>
                 <select
                   value={doseField}
-                  onChange={e => setDoseField(e.target.value)}
+                  onChange={e => { clearPointResults(); setDoseField(e.target.value); }}
                   className="flex-1 border border-stone-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-400"
                 >
                   {shpFields.map(f => <option key={f} value={f}>{f}</option>)}

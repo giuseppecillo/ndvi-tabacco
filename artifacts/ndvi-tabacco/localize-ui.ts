@@ -17,7 +17,7 @@ export function localizeUi(): Plugin {
       const file = ts.createSourceFile(id, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
       const edits: { start: number; end: number; value: string }[] = [];
       const displayAttributes = new Set(["title", "placeholder", "aria-label", "alt", "label", "body", "name"]);
-      const userFields = new Set(["cliente", "appezzamento", "name", "email", "message", "response", "id"]);
+      const userFields = new Set(["cliente", "appezzamento", "name", "sourceLayer", "sourceId", "email", "message", "response", "id"]);
       const wrap = (node: ts.Node, fn = "__ncDisplay") => {
         edits.push({ start: node.getStart(file), end: node.getStart(file), value: `${fn}(` });
         edits.push({ start: node.end, end: node.end, value: ")" });

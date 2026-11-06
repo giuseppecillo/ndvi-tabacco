@@ -116,6 +116,46 @@ export async function createImportFixtures() {
   };
 }
 
+/** Real ZIPs with independent ESRI records, not mocked shpjs responses. */
+export async function createMultiLayerFixtures() {
+  const fixtures = await createImportFixtures();
+  const polygons = await JSZip.loadAsync(fixtures.polygon.buffer);
+  const points = await JSZip.loadAsync(fixtures.points.buffer);
+  async function archive(entries) {
+    const zip = new JSZip();
+    for (const [source, oldName, newName, dose] of entries) {
+      for (const ext of ["shp", "shx", "dbf", "prj"]) {
+        let data = await source.file(`${oldName}.${ext}`).async("nodebuffer");
+        if (ext === "dbf" && dose != null) {
+          // Same locations and IDs, different source/dose: layers must never merge.
+          data = dbf([["ID", "N", 8], ["KG_HA", "N", 10], ["APPEZZ", "C", 24]],
+            coordinates.map((_, i) => ({ ID: i + 1, KG_HA: dose, APPEZZ: "Campo B" })));
+        }
+        if (ext === "dbf" && oldName === "field") {
+          data = dbf([["NOME", "C", 32], ["ID", "N", 8]],
+            [{ NOME: polygonName, ID: newName === "campi_A" ? 101 : 202 }]);
+        }
+        zip.file(`${newName}.${ext}`, data);
+      }
+    }
+    return zip.generateAsync({ type: "nodebuffer" });
+  }
+  const a = [polygons, "field", "campi_A"];
+  const b = [polygons, "field", "campi_B"];
+  const p = [points, "points", "rilievi_A"];
+  const q = [points, "points", "rilievi_B", 90];
+  const payload = (name, buffer) => ({ name, mimeType: "application/zip", buffer });
+  return {
+    polygons: payload("two-polygons.zip", await archive([a, b])),
+    points: payload("two-points.zip", await archive([p, q])),
+    // Incompatible first layer catches regressions to raw[0] for both importers.
+    mixed: payload("mixed.zip", await archive([p, a, b, q])),
+    pointsFirst: payload("points-first.zip", await archive([p, a])),
+    polygonsFirst: payload("polygons-first.zip", await archive([a, p])),
+    corrupt: payload("corrupt.zip", Buffer.from("not a ZIP")),
+  };
+}
+
 /** Independent ESRI polygon record: outer clockwise, holes counterclockwise.
  * A second outer part produces a real MultiPolygon in shpjs, in the same layer.
  */
