@@ -100,6 +100,24 @@ export const METADATA_QUERIES = Object.freeze({
 export interface CatalogClient {
   query(sql: string): Promise<{ rows: Record<string, unknown>[] }>;
 }
+export const SESSION_DIAGNOSTIC_QUERY = `SELECT pg_catalog.current_database() AS database,
+  current_user::text AS current_user, session_user::text AS session_user,
+  pg_catalog.current_setting('transaction_read_only') AS transaction_read_only,
+  pg_catalog.current_setting('default_transaction_read_only') AS default_transaction_read_only`;
+
+/** Separate diagnostic path: exactly one SELECT, never resumes the inventory. */
+export async function readSessionDiagnostic(client: CatalogClient) {
+  await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+  try {
+    const { rows } = await client.query(SESSION_DIAGNOSTIC_QUERY);
+    const keys = ["database", "current_user", "session_user", "transaction_read_only", "default_transaction_read_only"];
+    if (rows.length !== 1 || keys.some(key => typeof rows[0][key] !== "string")) {
+      throw new InventoryBlocked("SESSION_DIAGNOSTIC_INCOMPLETE");
+    }
+    return Object.fromEntries(keys.map(key => [key, rows[0][key]]));
+  } finally { await client.query("ROLLBACK"); }
+}
+
 export async function readMetadata(client: CatalogClient) {
   const result: Record<string, Record<string, unknown>[]> = {};
   await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");

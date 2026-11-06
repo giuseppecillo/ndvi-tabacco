@@ -41,9 +41,33 @@ allentare il controllo, attendendo conferma prima di una nuova connessione.
 Nessuna modifica a TEMP/large objects, ruoli, RLS, schema o dati. Nessun Secret
 è contenuto in questi file.
 
+### Diagnosi successiva, separatamente autorizzata
+
+Eseguita una sola SELECT diagnostica sullo stesso endpoint, dentro transazione
+READ ONLY e con TLS/certificato/hostname verificati:
+
+| Valore | Risultato |
+|---|---|
+| database | postgres |
+| current_user | postgres |
+| session_user | postgres |
+| transaction_read_only | on |
+| default_transaction_read_only | off |
+
+Il motivo del blocco è il default read-only `off`, non l'identità della sessione.
+La transazione esplicita della diagnosi era in sola lettura (`on`).
+Questo non dimostra perché le opzioni di avvio non risultino applicate al
+default, né rende readonly le altre sessioni amministrative.
+
+Al termine eseguito ROLLBACK e chiusa la connessione. Nessuna prosecuzione
+dell'inventario, nessuna modifica del guard o delle impostazioni server.
+La modalità diagnostica è separata e non sblocca quella di inventario.
+Un eventuale adeguamento del solo runner richiederà presentazione e approvazione,
+mantenendo obbligatoria la verifica del read-only della transazione effettiva.
+
 ## Controlli verificati prima della connessione
 
-57 test offline superati, senza socket o letture di credenziali reali:
+59 test offline superati, senza socket o letture di credenziali reali:
 destinazioni Replit/Neon/locali rifiutate; host esatto e project reference
 separatamente confermati; username del pooler vincolato; solo porta 5432 e
 database postgres; rifiuto di opzioni URI aggiuntive o TLS non verificato.

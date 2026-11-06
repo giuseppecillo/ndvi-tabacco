@@ -6,7 +6,7 @@ import {
   assertCleanEnvironment, safeFailure, redactReport,
   validatePublicCa,
 } from "./guard";
-import { METADATA_QUERIES, readMetadata, type CatalogClient } from "./catalog";
+import { METADATA_QUERIES, readMetadata, readSessionDiagnostic, SESSION_DIAGNOSTIC_QUERY, type CatalogClient } from "./catalog";
 
 // Entirely synthetic inputs. Never import pg at runtime or open a socket.
 const ref = "abcdefghijklmnopqrst";
@@ -130,6 +130,24 @@ const identity = {
   database: "postgres", current_user: "postgres", session_user: "postgres",
   transaction_read_only: "on", default_transaction_read_only: "on",
 };
+test("session diagnosis executes only one SELECT and stops, including on an unexpected default", async () => {
+  const calls: string[] = [];
+  const client: CatalogClient = { async query(sql) {
+    calls.push(sql);
+    return { rows: sql === SESSION_DIAGNOSTIC_QUERY ? [{ ...identity, default_transaction_read_only: "off" }] : [] };
+  } };
+  const session = await readSessionDiagnostic(client);
+  assert.equal(session.default_transaction_read_only, "off");
+  assert.equal(Object.keys(session).length, 5);
+  assert.deepEqual(calls, ["BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY", SESSION_DIAGNOSTIC_QUERY, "ROLLBACK"]);
+});
+test("incomplete diagnostic results fail closed and rollback", async () => {
+  const calls: string[] = [];
+  await assert.rejects(readSessionDiagnostic({ async query(sql) {
+    calls.push(sql); return { rows: [] };
+  } }), /SESSION_DIAGNOSTIC_INCOMPLETE/);
+  assert.equal(calls.at(-1), "ROLLBACK");
+});
 function mock(options: { badIdentity?: Record<string, unknown>; failAt?: string; overflow?: boolean } = {}) {
   const calls: string[] = [];
   const client: CatalogClient = {
