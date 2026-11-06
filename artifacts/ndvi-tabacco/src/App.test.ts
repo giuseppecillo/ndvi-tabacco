@@ -344,6 +344,85 @@ describe("riepilogo azoto della mappa IDW", () => {
 });
 
 describe("export agronomici IDW", () => {
+  const southernFixture = () => computeIdwGrid({
+    name: "Campo sud sintetico",
+    ring: [[151, -33.001], [151.0012, -33.001], [151.0012, -33.0001], [151, -33.0001]],
+  }, [
+    { obsId: "south-1", cliente: "Sintetico", appezzamento: "Sud", lng: 151.0003, lat: -33.0008, dose: 20 },
+    { obsId: "south-2", cliente: "Sintetico", appezzamento: "Sud", lng: 151.0009, lat: -33.0003, dose: 40 },
+  ], 10, 2);
+
+  it("genera una griglia WGS84 nell'emisfero sud usando UTM 56 sud", () => {
+    const result = southernFixture();
+    assert.equal(result.utmZone, 56);
+    assert.equal(result.utmSouth, true);
+    assert.ok(result.grid.length > 80 && result.grid.length < 140);
+    for (const point of result.grid) {
+      assert.ok(point.lng >= 151 && point.lng <= 151.0012);
+      assert.ok(point.lat >= -33.001 && point.lat <= -33.0001);
+      assert.ok(Number.isFinite(point.dose) && point.dose >= 20 && point.dose <= 40);
+    }
+  });
+
+  it("riapre lo Shapefile dell'emisfero sud con coordinate e dosi corrette", async () => {
+    const result = southernFixture();
+    const { blob } = await captureDownload(() => downloadShapefile(result));
+    const buffer = await blob.arrayBuffer();
+    const zip = await JSZip.loadAsync(buffer);
+    const prj = Object.values(zip.files).find(entry => entry.name.endsWith(".prj"));
+    assert.ok(prj);
+    const wkt = await prj.async("string");
+    assert.match(wkt, /^GEOGCS\["GCS_WGS_1984"/);
+    assert.doesNotMatch(wkt, /PROJCS|UTM/);
+    const parsed = await shpjs(buffer);
+    const collection = Array.isArray(parsed) ? parsed[0] : parsed;
+    assert.equal(collection.features.length, result.grid.length);
+    for (const [index, feature] of collection.features.entries()) {
+      const expected = result.grid[index];
+      assert.equal(feature.geometry.type, "Point");
+      assert.ok(Math.abs(feature.geometry.coordinates[0] - expected.lng) < EPSILON);
+      assert.ok(Math.abs(feature.geometry.coordinates[1] - expected.lat) < EPSILON);
+      assert.ok(feature.geometry.coordinates[1] < 0);
+      assert.equal(feature.properties.POLYGON, result.polygon.name);
+      assert.equal(feature.properties.DOSE_IDW, Number(expected.dose.toFixed(4)));
+      assert.equal(feature.properties.LAT, Number(expected.lat.toFixed(8)));
+      assert.equal(feature.properties.LNG, Number(expected.lng.toFixed(8)));
+    }
+  });
+
+  it("riapre il GeoTIFF dell'emisfero sud con CRS, orientamento e celle corretti", async () => {
+    const result = southernFixture();
+    const { blob } = await captureDownload(() => downloadGeoTiff(result));
+    const tiff = await readGeoTiff(await blob.arrayBuffer());
+    const image = await tiff.getImage();
+    const [west, south, east, north] = result.bbox;
+    const { lon, lat } = result.cellSizeDeg;
+    const cols = Math.ceil((east - west) / lon);
+    const rows = Math.ceil((north - south) / lat);
+    assert.ok(cols > 0 && rows > 0);
+    assert.equal(image.getWidth(), cols);
+    assert.equal(image.getHeight(), rows);
+    assert.equal(image.getGeoKeys().GeographicTypeGeoKey, 4326);
+    assert.equal(image.getGeoKeys().GTModelTypeGeoKey, 2);
+    assert.equal(image.getGeoKeys().GTRasterTypeGeoKey, 1);
+    assert.deepEqual(image.getOrigin(), [west, north, 0]);
+    assert.deepEqual(image.getResolution(), [lon, -lat, 0]);
+    assert.ok(north < 0 && south < north);
+    const expected = new Float32Array(cols * rows).fill(-9999);
+    for (const point of result.grid) {
+      const col = Math.floor((point.lng - west) / lon);
+      const row = Math.floor((north - point.lat) / lat);
+      assert.ok(col >= 0 && col < cols && row >= 0 && row < rows);
+      const index = row * cols + col;
+      expected[index] = Math.max(expected[index], Math.fround(point.dose));
+    }
+    const raster = await image.readRasters({ interleave: true });
+    assert.equal(image.getGDALNoData(), -9999);
+    assert.deepEqual(Array.from(raster), Array.from(expected));
+    assert.ok(Array.from(raster).some(value => value === -9999));
+    assert.ok(Array.from(raster).some(value => value >= 20 && value <= 40));
+  });
+
   it("apre lo ZIP Shapefile con un parser GIS indipendente", async () => {
     const result = idwExportFixture();
     const summary = result.nitrogenSummary;
