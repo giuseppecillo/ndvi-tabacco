@@ -4,10 +4,11 @@
  * The CLI accepts ONLY nonsecret target identifiers; the DSN stays in Secrets.
  */
 import { spawnSync } from "node:child_process";
+import { readFileSync, statSync } from "node:fs";
 import type { TLSSocket } from "node:tls";
 import {
   assertCleanEnvironment, cleanInventoryEnvironment, inventoryConfig,
-  DRIVER_FAILURES, InventoryBlocked, redactReport, safeFailure, type ApprovedTarget,
+  APPROVED_CA_SHA256, DRIVER_FAILURES, InventoryBlocked, redactReport, safeFailure, type ApprovedTarget,
 } from "./guard";
 import { readMetadata } from "./catalog";
 
@@ -18,7 +19,8 @@ async function worker() {
     host: process.env.SUPABASE_QA_EXPECTED_HOST ?? "",
   };
   const secret = process.env.SUPABASE_QA_ADMIN_URL ?? "";
-  const config = inventoryConfig(secret, target);
+  const ca = process.env.SUPABASE_QA_CA_PEM;
+  const config = inventoryConfig(secret, target, ca);
   // Load the driver only AFTER clean-env/target validation in the child.
   const { Client } = await import("pg");
   const client = new Client(config);
@@ -29,6 +31,9 @@ async function worker() {
     const metadata = await readMetadata(client);
     console.log(redactReport({
       status: "metadata_read_complete", target, capturedAt: new Date().toISOString(),
+      tls: { certificateVerified: true, hostnameVerified: true,
+        trust: ca ? "user-supplied-official-supabase-ca" : "system-ca",
+        ...(ca ? { caSha256: APPROVED_CA_SHA256 } : {}) },
       limits: [
         "No application rows or SQL definitions/bodies read.",
         "Schema hints are not authoritative proof of current Data API exposure.",
@@ -41,12 +46,19 @@ async function worker() {
 
 function parent() {
   const args = process.argv.slice(2);
-  if (args.length !== 5 || args[0] !== "--project-ref" || args[2] !== "--host" ||
-      args[4] !== "--metadata-only") throw new InventoryBlocked("EXPLICIT_TARGET_ARGUMENTS_REQUIRED");
+  if (![5, 7].includes(args.length) || args[0] !== "--project-ref" || args[2] !== "--host" ||
+      args[4] !== "--metadata-only" || (args.length === 7 && args[5] !== "--ca-file")) {
+    throw new InventoryBlocked("EXPLICIT_TARGET_ARGUMENTS_REQUIRED");
+  }
   const target = { projectRef: args[1], host: args[3] };
   // Read ONLY this secret; never enumerate/copy the parent process environment.
   const secret = process.env.SUPABASE_QA_ADMIN_URL ?? "";
-  const env = cleanInventoryEnvironment(secret, target);
+  let ca: string | undefined;
+  if (args.length === 7) {
+    if (statSync(args[6]).size > 16_384) throw new InventoryBlocked("PUBLIC_CA_INVALID");
+    ca = readFileSync(args[6], "utf8");
+  }
+  const env = cleanInventoryEnvironment(secret, target, ca);
   const child = spawnSync(process.execPath, [process.argv[1], "--worker"], {
     env, encoding: "utf8", timeout: 120_000, maxBuffer: 8 * 1024 * 1024,
     stdio: ["ignore", "pipe", "pipe"],
@@ -60,6 +72,7 @@ function parent() {
       "INHERITED_ENVIRONMENT_FORBIDDEN", "METADATA_APPROVAL_REQUIRED",
       "SERVER_IDENTITY_OR_READONLY_MISMATCH", "TLS_VERIFICATION_REQUIRED",
       "METADATA_LIMIT_EXCEEDED", "CONNECTION_OR_QUERY_FAILED",
+      "PUBLIC_CA_INVALID", "PUBLIC_CA_NOT_APPROVED",
       ...Object.values(DRIVER_FAILURES),
     ]);
     throw new InventoryBlocked(permitted.has(report.reason ?? "") ? report.reason! : "INVENTORY_BLOCKED");

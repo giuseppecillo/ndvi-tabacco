@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   inventoryConfig, validateTarget, cleanInventoryEnvironment,
   assertCleanEnvironment, safeFailure, redactReport,
+  validatePublicCa,
 } from "./guard";
 import { METADATA_QUERIES, readMetadata, type CatalogClient } from "./catalog";
 
@@ -12,6 +13,25 @@ const ref = "abcdefghijklmnopqrst";
 const target = { projectRef: ref, host: `db.${ref}.supabase.co` };
 const secret = `postgresql://postgres:synthetic-secret-long@${target.host}:5432/postgres`;
 const clean = () => cleanInventoryEnvironment(secret, target);
+const publicCa = readFileSync("lib/db/migration-preparation/inventory/fixtures/supabase-root-2021.pem", "utf8");
+
+test("approved public CA is scoped to this pg connection, not global trust", () => {
+  assert.equal(validatePublicCa(publicCa), publicCa);
+  const config = inventoryConfig(secret, target, publicCa);
+  assert.deepEqual(config.ssl, { rejectUnauthorized: true, servername: target.host, ca: publicCa });
+  const env = cleanInventoryEnvironment(secret, target, publicCa);
+  assert.equal(Object.keys(env).length, 5);
+  assert.doesNotThrow(() => assertCleanEnvironment(env));
+  assert.equal(env.NODE_EXTRA_CA_CERTS, undefined);
+  assert.equal(env.SSL_CERT_FILE, undefined);
+});
+test("invalid, additional, altered and private certificates rejected before connecting", () => {
+  for (const invalid of ["not a certificate", publicCa + publicCa,
+    publicCa + "\n-----BEGIN PRIVATE KEY-----\nsynthetic\n-----END PRIVATE KEY-----",
+    publicCa.replace("MIIDxD", "AAAAAA")]) {
+    assert.throws(() => inventoryConfig(secret, target, invalid));
+  }
+});
 
 test("approved direct destination is explicit with verified TLS and readonly options", () => {
   const config = inventoryConfig(secret, target);

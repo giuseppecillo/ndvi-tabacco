@@ -13,31 +13,43 @@ Destinazione dichiarata e confermata dal titolare:
 - Porta attesa: 5432; database atteso: postgres.
 - Username del pooler atteso: `postgres.bhnaarbzpmcniesxyldx`.
 
-**Stato dopo il primo tentativo autorizzato: bloccato dalla verifica TLS.**
+**Stato attuale: inventario bloccato al controllo iniziale della sessione.**
+
+Primo tentativo, senza CA specifica:
 Il runner ha restituito `TLS_TRUST_FAILED` durante la connessione al solo endpoint
 confermato. Nessuna sessione PostgreSQL autenticata e nessuna query di inventario
 eseguita. Non è stato tentato un altro host né disabilitata la verifica TLS.
-Il codice pubblico di errore non distingue, da solo, CA non riconosciuta,
-catena non verificabile, scadenza o nome del certificato non valido: non
-attribuire la causa precisa senza ulteriori elementi.
 
-Non sono ancora noti
-versione, oggetti, privilegi effettivi, supporto delle opzioni di connessione
-o esposizione Data API del progetto. Nessun Secret è contenuto in questi file.
+Successivamente il titolare ha fornito la CA pubblica ufficiale Supabase.
+Verificati formato PEM, assenza di chiavi private, attributo CA, validità
+2021–2031 e firma; handshake separato senza credenziali sullo stesso endpoint:
+TLS 1.3, verifica della catena e dell'hostname OK. La CA è usata soltanto
+nella configurazione del runner, vincolata all'impronta pubblica approvata.
+Nessun trust store globale o Enforce SSL modificato.
 
-Per proseguire occorre autorizzare una procedura di verifica del certificato e,
-se appropriato all'endpoint, fornire la CA pubblica ufficiale Supabase. Non
-servono chiavi private, nuove password o modifiche alle impostazioni server.
-Nessuna modifica ai grants di TEMP/large objects, ruoli, RLS, schema o dati.
+Tentativo con CA: connessione autenticata e TLS verificato riusciti, poi
+`SERVER_IDENTITY_OR_READONLY_MISMATCH` al primo SELECT fisso di identità/stato
+read-only, dentro BEGIN ... READ ONLY. Il programma ha eseguito ROLLBACK e
+chiuso la connessione, senza passare alle restanti sezioni dell'inventario.
+Il messaggio filtrato non indica quale valore non coincida: non attribuire
+il problema a un ruolo o a un'opzione specifici senza una lettura diagnostica.
+
+Inventario non completato; nessun risultato sui grants, oggetti, versione o
+Data API certificabile da questo output. Per proseguire proporre una sola
+lettura diagnostica dei campi di sessione, con gli stessi vincoli e senza
+allentare il controllo, attendendo conferma prima di una nuova connessione.
+Nessuna modifica a TEMP/large objects, ruoli, RLS, schema o dati. Nessun Secret
+è contenuto in questi file.
 
 ## Controlli verificati prima della connessione
 
-55 test offline superati, senza socket o letture di credenziali reali:
+57 test offline superati, senza socket o letture di credenziali reali:
 destinazioni Replit/Neon/locali rifiutate; host esatto e project reference
 separatamente confermati; username del pooler vincolato; solo porta 5432 e
 database postgres; rifiuto di opzioni URI aggiuntive o TLS non verificato.
 
-Il processo figlio riceve soltanto quattro variabili QA, senza copia
+Il processo figlio riceve soltanto quattro variabili QA (cinque con la CA
+pubblica opzionale), senza copia
 dell'ambiente dell'app. Rifiuta ogni variabile ereditata extra, incluse
 DATABASE_URL, PG*, Clerk, NODE_OPTIONS, HOME e PATH. Il processo padre legge
 soltanto SUPABASE_QA_ADMIN_URL e non carica il driver PostgreSQL.
@@ -86,7 +98,7 @@ L'invocazione manuale seguente userà il solo Secret QA nel processo isolato,
 mai una URL come argomento. **Non è stata eseguita durante la preparazione.**
 
 ```sh
-node /tmp/nitrocrop-inventory.cjs --project-ref bhnaarbzpmcniesxyldx --host aws-0-eu-west-1.pooler.supabase.com --metadata-only
+node /tmp/nitrocrop-inventory.cjs --project-ref bhnaarbzpmcniesxyldx --host aws-0-eu-west-1.pooler.supabase.com --metadata-only --ca-file lib/db/migration-preparation/inventory/fixtures/supabase-root-2021.pem
 ```
 
 Non collegare il comando a workflow, avvio, build, pubblicazione, cron o
