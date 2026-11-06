@@ -62,7 +62,9 @@ export function inventoryConfig(secret: string, target: ApprovedTarget, ca?: str
     ssl: { rejectUnauthorized: true, servername: target.host, ...(ca ? { ca: validatePublicCa(ca) } : {}) },
     application_name: "nitrocrop-qa-metadata-only",
     connectionTimeoutMillis: 10_000, query_timeout: 12_000,
-    options: "-c default_transaction_read_only=on -c statement_timeout=8000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=15000 -c search_path=pg_catalog",
+    // Never request a session-default change. Effective READ ONLY is established
+    // and checked explicitly inside each authorized inventory transaction.
+    options: "-c statement_timeout=8000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=15000 -c search_path=pg_catalog",
   };
 }
 

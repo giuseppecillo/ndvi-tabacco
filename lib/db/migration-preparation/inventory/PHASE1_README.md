@@ -13,7 +13,10 @@ Destinazione dichiarata e confermata dal titolare:
 - Porta attesa: 5432; database atteso: postgres.
 - Username del pooler atteso: `postgres.bhnaarbzpmcniesxyldx`.
 
-**Stato attuale: inventario bloccato al controllo iniziale della sessione.**
+**Stato attuale: adeguamento QA verificato offline; inventario NON ripreso.**
+Il titolare ha autorizzato l'adeguamento del solo programma, chiedendo una nuova
+autorizzazione prima dell'inventario completo. Rapporto delle modifiche:
+[READONLY_ADJUSTMENT.md](READONLY_ADJUSTMENT.md).
 
 Primo tentativo, senza CA specifica:
 Il runner ha restituito `TLS_TRUST_FAILED` durante la connessione al solo endpoint
@@ -35,9 +38,8 @@ Il messaggio filtrato non indica quale valore non coincida: non attribuire
 il problema a un ruolo o a un'opzione specifici senza una lettura diagnostica.
 
 Inventario non completato; nessun risultato sui grants, oggetti, versione o
-Data API certificabile da questo output. Per proseguire proporre una sola
-lettura diagnostica dei campi di sessione, con gli stessi vincoli e senza
-allentare il controllo, attendendo conferma prima di una nuova connessione.
+Data API certificabile da questo output. È stata successivamente autorizzata
+la sola diagnosi descritta sotto.
 Nessuna modifica a TEMP/large objects, ruoli, RLS, schema o dati. Nessun Secret
 è contenuto in questi file.
 
@@ -59,15 +61,14 @@ La transazione esplicita della diagnosi era in sola lettura (`on`).
 Questo non dimostra perché le opzioni di avvio non risultino applicate al
 default, né rende readonly le altre sessioni amministrative.
 
-Al termine eseguito ROLLBACK e chiusa la connessione. Nessuna prosecuzione
-dell'inventario, nessuna modifica del guard o delle impostazioni server.
-La modalità diagnostica è separata e non sblocca quella di inventario.
-Un eventuale adeguamento del solo runner richiederà presentazione e approvazione,
-mantenendo obbligatoria la verifica del read-only della transazione effettiva.
+Al termine della diagnosi sono stati eseguiti ROLLBACK e chiusura della
+connessione, senza proseguire con l'inventario. L'adeguamento successivamente
+autorizzato cambia soltanto il runner e i suoi test: nessuna modifica server.
+L'inventario resta in attesa di autorizzazione; la diagnosi non lo avvia.
 
 ## Controlli verificati prima della connessione
 
-59 test offline superati, senza socket o letture di credenziali reali:
+85 test offline superati, senza socket o letture di credenziali reali:
 destinazioni Replit/Neon/locali rifiutate; host esatto e project reference
 separatamente confermati; username del pooler vincolato; solo porta 5432 e
 database postgres; rifiuto di opzioni URI aggiuntive o TLS non verificato.
@@ -80,8 +81,12 @@ soltanto SUPABASE_QA_ADMIN_URL e non carica il driver PostgreSQL.
 Il driver viene caricato nel figlio soltanto dopo validazione e ambiente pulito.
 Nessun import dei pool, dell'avvio API o degli script Drizzle.
 
-Query fisse solo su pg_catalog, transazione REPEATABLE READ READ ONLY, controllo
-dell'identità postgres e dei due valori read-only su server, chiusura con ROLLBACK.
+Query fisse solo su pg_catalog, transazione REPEATABLE READ READ ONLY e verifica
+transaction_read_only='on' PRIMA di ogni SELECT di metadati; controllo
+dell'identità postgres, chiusura con ROLLBACK e chiusura connessione in finally.
+default_transaction_read_only è soltanto un dato diagnostico: non viene
+richiesto, impostato o usato come requisito. Query fuori dall'elenco fisso
+autorizzato sono rifiutate anche se iniziano con SELECT.
 Limiti di tempo e numero di righe; errori/risultati incompleti bloccano il
 collaudo, senza fallback o altre connessioni. TLS deve essere verificato.
 Driver error, stack, URL, password e stderr del processo non vengono stampati.
@@ -110,7 +115,7 @@ Il nome QA non impedisce ad altri processi dello stesso progetto di leggere un
 Secret disponibile al workspace: non è una credenziale da lasciare nello
 sviluppo ordinario dopo il collaudo. Concordarne rimozione al termine.
 
-## Esecuzione manuale, solo dopo inserimento sicuro
+## Esecuzione manuale, soltanto dopo NUOVA autorizzazione
 
 Compilare dalla radice (non apre connessioni):
 
@@ -119,7 +124,8 @@ pnpm --filter @workspace/api-server exec esbuild ../../lib/db/migration-preparat
 ```
 
 L'invocazione manuale seguente userà il solo Secret QA nel processo isolato,
-mai una URL come argomento. **Non è stata eseguita durante la preparazione.**
+mai una URL come argomento. **La versione adeguata non è stata eseguita:**
+prima serve la nuova autorizzazione richiesta dal titolare.
 
 ```sh
 node /tmp/nitrocrop-inventory.cjs --project-ref bhnaarbzpmcniesxyldx --host aws-0-eu-west-1.pooler.supabase.com --metadata-only --ca-file lib/db/migration-preparation/inventory/fixtures/supabase-root-2021.pem

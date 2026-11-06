@@ -10,7 +10,7 @@ import {
   assertCleanEnvironment, cleanInventoryEnvironment, inventoryConfig,
   APPROVED_CA_SHA256, DRIVER_FAILURES, InventoryBlocked, redactReport, safeFailure, type ApprovedTarget,
 } from "./guard";
-import { readMetadata, readSessionDiagnostic } from "./catalog";
+import { readMetadata, readSessionDiagnostic, withCatalogConnection } from "./catalog";
 
 async function worker(diagnosticOnly = false) {
   assertCleanEnvironment(process.env);
@@ -24,21 +24,20 @@ async function worker(diagnosticOnly = false) {
   // Load the driver only AFTER clean-env/target validation in the child.
   const { Client } = await import("pg");
   const client = new Client(config);
-  try {
-    await client.connect();
+  const report = await withCatalogConnection(client, () => {
     const stream = (client as unknown as { connection: { stream: TLSSocket } }).connection.stream;
     if (!stream.encrypted || !stream.authorized) throw new InventoryBlocked("TLS_VERIFICATION_REQUIRED");
+  }, async () => {
     if (diagnosticOnly) {
       const session = await readSessionDiagnostic(client);
-      console.log(redactReport({
+      return {
         status: "session_diagnostic_complete", target,
         tls: { certificateVerified: true, hostnameVerified: true },
         session, inventoryContinued: false,
-      }, secret));
-      return;
+      };
     }
     const metadata = await readMetadata(client);
-    console.log(redactReport({
+    return {
       status: "metadata_read_complete", target, capturedAt: new Date().toISOString(),
       tls: { certificateVerified: true, hostnameVerified: true,
         trust: ca ? "user-supplied-official-supabase-ca" : "system-ca",
@@ -49,8 +48,10 @@ async function worker(diagnosticOnly = false) {
         "No write/DDL/permission tests authorized or executed.",
       ],
       metadata,
-    }, secret));
-  } finally { await client.end(); }
+    };
+  });
+  // Emit success only AFTER rollback and connection closure succeeded.
+  console.log(redactReport(report, secret));
 }
 
 function parent() {
@@ -85,6 +86,8 @@ function parent() {
       "METADATA_LIMIT_EXCEEDED", "CONNECTION_OR_QUERY_FAILED",
       "PUBLIC_CA_INVALID", "PUBLIC_CA_NOT_APPROVED",
       "SESSION_DIAGNOSTIC_INCOMPLETE",
+      "UNAUTHORIZED_CATALOG_QUERY", "TRANSACTION_NOT_READ_ONLY",
+      "ROLLBACK_FAILED", "CONNECTION_CLOSE_FAILED",
       ...Object.values(DRIVER_FAILURES),
     ]);
     throw new InventoryBlocked(permitted.has(report.reason ?? "") ? report.reason! : "INVENTORY_BLOCKED");

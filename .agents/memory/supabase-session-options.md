@@ -14,6 +14,8 @@ il default non misura a sua volta lo stato della transazione corrente.
 
 **How to apply:** misurare separatamente entrambi i valori. Per un inventario
 autorizzato in lettura usare transazioni esplicite e verificare lo stato
-effettivo, senza dedurre che il ruolo amministrativo sia readonly. Non cambiare
-ruoli, server, metodo di connessione o criteri di blocco senza consenso.
+effettivo prima di ogni SELECT, senza dedurre che il ruolo amministrativo sia
+readonly. Il default resta un'informazione diagnostica: non forzarlo sul
+provider per superare un controllo QA. Non cambiare ruoli, server, metodo di
+connessione o criteri di blocco senza consenso.
 Non estendere questa osservazione automaticamente ad altri ruoli o endpoint.

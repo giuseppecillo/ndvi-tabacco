@@ -105,37 +105,84 @@ export const SESSION_DIAGNOSTIC_QUERY = `SELECT pg_catalog.current_database() AS
   pg_catalog.current_setting('transaction_read_only') AS transaction_read_only,
   pg_catalog.current_setting('default_transaction_read_only') AS default_transaction_read_only`;
 
-/** Separate diagnostic path: exactly one SELECT, never resumes the inventory. */
-export async function readSessionDiagnostic(client: CatalogClient) {
-  await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+export const BEGIN_READ_ONLY = "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY";
+export const READ_ONLY_PROBE = "SELECT pg_catalog.current_setting('transaction_read_only') AS transaction_read_only";
+const authorizedSelects = new Set<string>([...Object.values(METADATA_QUERIES), SESSION_DIAGNOSTIC_QUERY]);
+type CatalogSelect = (sql: string) => ReturnType<CatalogClient["query"]>;
+
+/**
+ * Only transaction-control commands and the fixed safe SELECT allowlist.
+ * Probe BEFORE EACH metadata SELECT, including the first one. No reliance on
+ * default_transaction_read_only or on startup options surviving a pooler.
+ */
+export async function withReadOnlyCatalog<T>(
+  client: CatalogClient,
+  read: (select: CatalogSelect) => Promise<T>,
+): Promise<T> {
   try {
-    const { rows } = await client.query(SESSION_DIAGNOSTIC_QUERY);
+    await client.query(BEGIN_READ_ONLY);
+    const select: CatalogSelect = async sql => {
+      if (!authorizedSelects.has(sql)) throw new InventoryBlocked("UNAUTHORIZED_CATALOG_QUERY");
+      const { rows } = await client.query(READ_ONLY_PROBE);
+      if (rows.length !== 1 || rows[0].transaction_read_only !== "on") {
+        throw new InventoryBlocked("TRANSACTION_NOT_READ_ONLY");
+      }
+      return client.query(sql);
+    };
+    return await read(select);
+  } finally {
+    // Also after BEGIN failure: attempt cleanup, never COMMIT or retry.
+    try { await client.query("ROLLBACK"); }
+    catch { throw new InventoryBlocked("ROLLBACK_FAILED"); }
+  }
+}
+
+export interface CatalogConnection extends CatalogClient {
+  connect(): Promise<unknown>;
+  end(): Promise<unknown>;
+}
+/** Transport validation and connection closure are mandatory on every path. */
+export async function withCatalogConnection<T>(
+  client: CatalogConnection,
+  verifyTransport: () => void,
+  read: () => Promise<T>,
+): Promise<T> {
+  try {
+    await client.connect();
+    verifyTransport();
+    return await read();
+  } finally {
+    try { await client.end(); }
+    catch { throw new InventoryBlocked("CONNECTION_CLOSE_FAILED"); }
+  }
+}
+
+/** Diagnostic mode never resumes the inventory; it uses the same RO barrier. */
+export async function readSessionDiagnostic(client: CatalogClient) {
+  return withReadOnlyCatalog(client, async select => {
+    const { rows } = await select(SESSION_DIAGNOSTIC_QUERY);
     const keys = ["database", "current_user", "session_user", "transaction_read_only", "default_transaction_read_only"];
     if (rows.length !== 1 || keys.some(key => typeof rows[0][key] !== "string")) {
       throw new InventoryBlocked("SESSION_DIAGNOSTIC_INCOMPLETE");
     }
+    if (rows[0].transaction_read_only !== "on") throw new InventoryBlocked("TRANSACTION_NOT_READ_ONLY");
     return Object.fromEntries(keys.map(key => [key, rows[0][key]]));
-  } finally { await client.query("ROLLBACK"); }
+  });
 }
 
 export async function readMetadata(client: CatalogClient) {
-  const result: Record<string, Record<string, unknown>[]> = {};
-  await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
-  try {
+  return withReadOnlyCatalog(client, async select => {
+    const result: Record<string, Record<string, unknown>[]> = {};
     for (const [name, sql] of Object.entries(METADATA_QUERIES)) {
-      const { rows } = await client.query(sql);
+      const { rows } = await select(sql);
       if (rows.length > 5000) throw new InventoryBlocked("METADATA_LIMIT_EXCEEDED");
       result[name] = rows;
       if (name === "identity" && (rows.length !== 1 ||
           rows[0].database !== "postgres" || rows[0].current_user !== "postgres" ||
-          rows[0].session_user !== "postgres" || rows[0].transaction_read_only !== "on" ||
-          rows[0].default_transaction_read_only !== "on")) {
+          rows[0].session_user !== "postgres" || rows[0].transaction_read_only !== "on")) {
         throw new InventoryBlocked("SERVER_IDENTITY_OR_READONLY_MISMATCH");
       }
     }
     return result;
-  } finally {
-    // Also on success: no COMMIT, no DDL/DML, no temp objects.
-    await client.query("ROLLBACK");
-  }
+  });
 }
