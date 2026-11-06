@@ -2,35 +2,13 @@ import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
 import { requireAccount, requirePrivacyAck, requireSubscription } from "../middlewares/access";
+import {
+  faseGranoDaBbch, calcolaDoseNGrano, calcolaFabbisognoNGrano,
+  fattoreAzotoGrano, ndviOttimaleGrano,
+} from "@workspace/grain-calculations";
 
 const router = Router();
 router.use("/osservazioni", requireAccount, requireSubscription, requirePrivacyAck);
-
-const FASI_N_GRANO: Record<string, { label: string; min: number; max: number }> = {
-  "00–09": { label: "Semina / emergenza", min: 27, max: 36 },
-  "20–29": { label: "Accestimento", min: 40, max: 50 },
-  "30–32": { label: "Inizio levata", min: 40, max: 60 },
-  "37–39": { label: "Foglia a bandiera", min: 20, max: 30 },
-};
-const FASI_N_RGT_NATUR: Record<string, { label: string; min: number; max: number }> = {
-  "00–09": { label: "Semina / emergenza", min: 30, max: 30 },
-  "30–39": { label: "Levata", min: 90, max: 90 },
-  "41–49": { label: "Botticella", min: 60, max: 60 },
-};
-
-const CURVA_NDVI_GRANO = [
-  { das: 0, ottimale: 0.20 },
-  { das: 20, ottimale: 0.34 },
-  { das: 50, ottimale: 0.40 },
-  { das: 135, ottimale: 0.55 },
-  { das: 136, ottimale: 0.65 },
-  { das: 165, ottimale: 0.72 },
-  { das: 166, ottimale: 0.73 },
-  { das: 190, ottimale: 0.85 },
-  { das: 205, ottimale: 0.80 },
-  { das: 220, ottimale: 0.72 },
-  { das: 250, ottimale: 0.42 },
-];
 
 const CURVA_NDVI_TABACCO = [
   { giorni: 0, ottimale: 0.28 },
@@ -55,22 +33,6 @@ const numero = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
-
-function ndviRiferimentoGrano(das: number): number {
-  const primo = CURVA_NDVI_GRANO[0];
-  const ultimo = CURVA_NDVI_GRANO[CURVA_NDVI_GRANO.length - 1];
-  if (das <= primo.das) return primo.ottimale;
-  if (das >= ultimo.das) return ultimo.ottimale;
-  for (let index = 1; index < CURVA_NDVI_GRANO.length; index++) {
-    const destro = CURVA_NDVI_GRANO[index];
-    if (das <= destro.das) {
-      const sinistro = CURVA_NDVI_GRANO[index - 1];
-      const progresso = (das - sinistro.das) / (destro.das - sinistro.das);
-      return sinistro.ottimale + (destro.ottimale - sinistro.ottimale) * progresso;
-    }
-  }
-  return ultimo.ottimale;
-}
 
 function ndviRiferimentoTabacco(giorni: number, etaPiantina: string): number {
   const giorniFenologici = Math.max(0, giorni + (ETA_PIANTINA[etaPiantina] ?? 0));
@@ -142,8 +104,9 @@ export function erroreOsservazioneTabacco(o: Record<string, unknown>): string | 
 }
 
 export function erroreOsservazioneGrano(o: Record<string, unknown>): string | null {
-  const fasi = o.varieta === "RGT NATUR" ? FASI_N_RGT_NATUR : FASI_N_GRANO;
-  const fase = typeof o.bbch === "string" ? fasi[o.bbch] : undefined;
+  const fase = typeof o.bbch === "string"
+    ? faseGranoDaBbch(o.bbch, typeof o.varieta === "string" ? o.varieta : undefined)
+    : null;
   if (o.faseFonte !== "BBCH confermato in campo" || !fase) {
     return "Per il grano duro serve un BBCH della fase azotata confermato in campo.";
   }
@@ -182,8 +145,8 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
     if (!Number.isFinite(semiMq) || semiMq <= 0 || resa === null || resa <= 0) {
       return "Resa e densità di RGT NATUR non sono valide.";
     }
-    const fattore = Math.max(0.90, Math.min(1.10, 0.75 + (semiMq / 440) * 0.25));
-    const totaleAtteso = Math.round(Math.round(resa * 3) * fattore);
+    const fattore = fattoreAzotoGrano(semiMq / 440);
+    const totaleAtteso = calcolaFabbisognoNGrano(resa, fattore).corretto;
     if (Math.abs(azotoTotale - totaleAtteso) > 0.01) {
       return "Il fabbisogno RGT NATUR non corrisponde alla resa e alla densità.";
     }
@@ -193,7 +156,7 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
   if (Math.abs(media - mediaCalcolata) > 0.0001 || Math.abs(discostamento - (ottimale - media)) > 0.0001) {
     return "Media o scostamento NDVI non coerenti con le letture inviate.";
   }
-  const riferimentoAtteso = ndviRiferimentoGrano(das);
+  const riferimentoAtteso = ndviOttimaleGrano(das);
   if (Math.abs(ottimale - riferimentoAtteso) > 0.0001) {
     return "Il riferimento NDVI non corrisponde al calendario fenologico del grano.";
   }
@@ -201,19 +164,10 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
     return "Dose e quota azotata del grano devono coincidere.";
   }
 
-  const residuo = Math.max(0, Math.round(azotoTotale - azotoGiaDistribuito));
-  const sommaQuoteRiferimento = Object.values(fasi)
-    .reduce((somma, voce) => somma + (voce.min + voce.max) / 2, 0);
-  const quotaScalata = Math.round(azotoTotale * ((fase.min + fase.max) / 2) / sommaQuoteRiferimento);
-  // Come nel client, i limiti disciplinari valgono per la quota base delle
-  // varietà standard, non per la dose da deficit NDVI. NATUR resta proporzionale.
-  const quotaBase = o.varieta === "RGT NATUR"
-    ? quotaScalata
-    : Math.max(fase.min, Math.min(fase.max, quotaScalata));
-  const deficitNdvi = Math.max(0, ottimale - media);
-  const deficitRelativo = ottimale > 0 ? Math.min(1, deficitNdvi / ottimale) : 0;
-  const quotaDaDeficitNdvi = deficitNdvi > 0 ? Math.round(quotaBase * deficitRelativo) : 0;
-  const quotaAttesa = Math.min(residuo, quotaDaDeficitNdvi);
+  const { residuoPiano: residuo, quotaBase, quotaProposta: quotaAttesa } = calcolaDoseNGrano({
+    fabbisognoN: azotoTotale, azotoGiaDistribuito, fase,
+    media, ndviOttimale: ottimale, valoriValidi: true,
+  });
   if (Math.abs(dose - quotaAttesa) > 0.01) {
     return "La dose non corrisponde alla quota ricalcolata da BBCH, NDVI e azoto residuo.";
   }

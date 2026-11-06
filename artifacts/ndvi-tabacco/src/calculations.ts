@@ -1,3 +1,13 @@
+import {
+  FASI_GRANO, FASI_RGT_NATUR, faseGranoDaBbch, calcolaDoseNGrano,
+  fattoreAzotoGrano, ndviOttimaleGrano, type FaseGrano, type FaseGranoLabel,
+} from "@workspace/grain-calculations";
+export {
+  FASI_GRANO, faseGranoDaBbch, fasiGranoPerVarieta,
+  calcolaFabbisognoNGrano, calcolaQuotaNGrano, ndviOttimaleGrano,
+  type FaseGrano, type FaseGranoLabel,
+} from "@workspace/grain-calculations";
+
 export type EtaPiantina = "standard" | "avanzata" | "extra";
 export type Coltura = "tabacco" | "grano duro";
 export type DensitaUnita = "piante/ha" | "semi/ha" | "semi/m²" | "kg/ha";
@@ -67,31 +77,9 @@ export const GRANO_DURO_DB: Record<string, GranoVarietaDati> = {
     ...varietaGrano("RGT NATUR", 440, 440, 220, 220),
     resaDefault: 60,
     proteineObiettivo: 14,
-    fasiAzoto: [
-      { label: "Semina / emergenza", bbch: "00–09", azotoMin: 30, azotoMax: 30, quotaSulTotale: 1 / 6 },
-      { label: "Levata", bbch: "30–39", azotoMin: 90, azotoMax: 90, quotaSulTotale: 1 / 2 },
-      { label: "Botticella", bbch: "41–49", azotoMin: 60, azotoMax: 60, quotaSulTotale: 1 / 3 },
-    ],
+    fasiAzoto: FASI_RGT_NATUR,
   },
 };
-
-export type FaseGranoLabel = "Semina / emergenza" | "Accestimento" | "Inizio levata" | "Foglia a bandiera" | "Levata" | "Botticella";
-
-export type FaseGrano = {
-  label: FaseGranoLabel;
-  bbch: string;
-  azotoMin: number;
-  azotoMax: number;
-  // Ripartizione del piano varietale, distinta dagli intervalli disciplinari.
-  quotaSulTotale?: number;
-};
-
-export const FASI_GRANO: FaseGrano[] = [
-  { label: "Semina / emergenza", bbch: "00–09", azotoMin: 27, azotoMax: 36 },
-  { label: "Accestimento", bbch: "20–29", azotoMin: 40, azotoMax: 50 },
-  { label: "Inizio levata", bbch: "30–32", azotoMin: 40, azotoMax: 60 },
-  { label: "Foglia a bandiera", bbch: "37–39", azotoMin: 20, azotoMax: 30 },
-];
 
 export type FinestraDasLocale = {
   fase: FaseGranoLabel;
@@ -176,7 +164,7 @@ export function calcolaDensitaGrano(
   const rapportoDensita = dati.densitaSemiMqDefault > 0
     ? semiMqEquivalenti / dati.densitaSemiMqDefault
     : 1;
-  const fattoreAzoto = Math.max(0.90, Math.min(1.10, 0.75 + rapportoDensita * 0.25));
+  const fattoreAzoto = fattoreAzotoGrano(rapportoDensita);
   const densitaDaVerificare = unita === "semi/m²" ? valore : semiMqEquivalenti;
   const doseDaVerificare = unita === "kg/ha" ? valore : doseKgHaEquivalente;
   const fuoriRangeDensita = densitaDaVerificare < dati.densitaSemiMqMin || densitaDaVerificare > dati.densitaSemiMqMax;
@@ -191,14 +179,6 @@ export function calcolaDensitaGrano(
     fuoriRangeDose,
     fuoriRange: unita === "kg/ha" ? fuoriRangeDose : fuoriRangeDensita,
   };
-}
-
-export function fasiGranoPerVarieta(varieta?: string): FaseGrano[] {
-  return (varieta ? GRANO_DURO_DB[varieta]?.fasiAzoto : undefined) ?? FASI_GRANO;
-}
-
-export function faseGranoDaBbch(bbch: string, varieta?: string): FaseGrano | null {
-  return fasiGranoPerVarieta(varieta).find((fase) => fase.bbch === bbch) ?? null;
 }
 
 export function faseGranoConfermataDaBbch(bbch: string, confermataInCampo: boolean, varieta?: string): FaseGrano | null {
@@ -216,56 +196,6 @@ export function stimaFaseGranoDaDas(giorni: number, finestre: FinestraDasLocale[
 // esplicito, non una finestra DAS dichiarata da una fonte generale.
 export function faseGranoDaDas(giorni: number, finestre = FINESTRE_DAS_LOCALI_TEMPLATE): FaseGrano | null {
   return stimaFaseGranoDaDas(giorni, finestre);
-}
-
-export function calcolaFabbisognoNGrano(resaQHa: number, fattoreDensita: number): { base: number; corretto: number } {
-  // Consiglio di riferimento: 40 q = 120, 50 q = 150, 60 q = 180 kg N/ha.
-  const base = Math.max(0, Math.round(resaQHa * 3));
-  return { base, corretto: Math.round(base * fattoreDensita) };
-}
-
-export function calcolaQuotaNGrano(
-  fabbisognoN: number,
-  fase: FaseGrano,
-): number {
-  if (fase.quotaSulTotale !== undefined) {
-    return Math.max(0, Math.round(fabbisognoN * fase.quotaSulTotale));
-  }
-  const sommaRiferimenti = FASI_GRANO.reduce((sum, item) => sum + (item.azotoMin + item.azotoMax) / 2, 0);
-  const quotaRiferimento = (fase.azotoMin + fase.azotoMax) / 2;
-  const quotaScalata = Math.round(fabbisognoN * quotaRiferimento / sommaRiferimenti);
-  return Math.max(fase.azotoMin, Math.min(fase.azotoMax, quotaScalata));
-}
-
-const NDVI_GRANO_CURVA: Array<{ das: number; ottimale: number }> = [
-  { das: 0, ottimale: 0.20 },
-  { das: 20, ottimale: 0.34 },
-  { das: 50, ottimale: 0.40 },
-  { das: 135, ottimale: 0.55 },
-  { das: 136, ottimale: 0.65 },
-  { das: 165, ottimale: 0.72 },
-  { das: 166, ottimale: 0.73 },
-  { das: 190, ottimale: 0.85 },
-  { das: 205, ottimale: 0.80 },
-  { das: 220, ottimale: 0.72 },
-  { das: 250, ottimale: 0.42 },
-];
-
-export function ndviOttimaleGrano(das: number): number {
-  const first = NDVI_GRANO_CURVA[0];
-  const last = NDVI_GRANO_CURVA[NDVI_GRANO_CURVA.length - 1];
-  if (das <= first.das) return first.ottimale;
-  if (das >= last.das) return last.ottimale;
-
-  for (let i = 1; i < NDVI_GRANO_CURVA.length; i++) {
-    const right = NDVI_GRANO_CURVA[i];
-    if (das <= right.das) {
-      const left = NDVI_GRANO_CURVA[i - 1];
-      const progress = (das - left.das) / (right.das - left.das);
-      return left.ottimale + (right.ottimale - left.ottimale) * progress;
-    }
-  }
-  return last.ottimale;
 }
 
 export function calcolaPianoNGrano(input: {
@@ -290,11 +220,9 @@ export function calcolaPianoNGrano(input: {
 } {
   const stats = statisticheNdvi(input.lettureNdvi);
   const ndviOttimale = ndviOttimaleGrano(input.das);
-  const scostamentoNdvi = ndviOttimale - stats.media;
-  const deficitNdvi = Math.max(0, scostamentoNdvi);
-  const deficitRelativo = ndviOttimale > 0
-    ? Math.min(1, deficitNdvi / ndviOttimale)
-    : 0;
+  const dose = calcolaDoseNGrano({
+    ...input, media: stats.media, ndviOttimale, valoriValidi: stats.valoriValidi,
+  });
   const profiloDAS = profiloFenologicoGranoDaDas(input.das);
   const profiloBbch = input.fase ? profiloFenologicoGranoDaBbch(input.fase.bbch) : null;
   // I nuovi BBCH riusano gli intervalli vegetativi del modello generale:
@@ -306,30 +234,14 @@ export function calcolaPianoNGrano(input: {
     : profiloBbch;
   const ndviFaseCoerente = !intervallo
     || (ndviOttimale >= intervallo.ndviMin - 0.02 && ndviOttimale <= intervallo.ndviMax + 0.02);
-  const quotaBase = input.fase ? calcolaQuotaNGrano(input.fabbisognoN, input.fase) : 0;
-  const residuoPiano = Math.max(0, Math.round(input.fabbisognoN - input.azotoGiaDistribuito));
-  // Il deficit NDVI attiva solo la quota proporzionale che serve a colmarlo:
-  // quando la media è uguale o superiore al riferimento, non viene indicato N.
-  const quotaDaDeficitNdvi = stats.valoriValidi && input.fase && deficitNdvi > 0
-    ? Math.round(quotaBase * deficitRelativo)
-    : 0;
-  const quotaProposta = stats.valoriValidi && input.fase
-    ? Math.min(residuoPiano, quotaDaDeficitNdvi)
-    : 0;
   return {
     ...stats,
     ndviOttimale,
-    scostamentoNdvi,
-    deficitNdvi,
-    deficitRelativo,
-    quotaBase,
-    quotaDaDeficitNdvi,
-    residuoPiano,
-    quotaProposta,
+    ...dose,
     profiloDAS,
     profiloBbch,
     ndviFaseCoerente,
-    verificaCampo: !stats.valoriValidi || stats.coefficienteVariazione > 15 || deficitRelativo > 0.12,
+    verificaCampo: !stats.valoriValidi || stats.coefficienteVariazione > 15 || dose.deficitRelativo > 0.12,
   };
 }
 

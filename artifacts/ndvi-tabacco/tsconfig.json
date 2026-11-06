@@ -18,6 +18,9 @@
   },
   "references": [
     {
+      "path": "../../lib/grain-calculations"
+    },
+    {
       "path": "../../lib/api-client-react"
     }
   ]

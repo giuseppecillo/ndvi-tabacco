@@ -188,6 +188,9 @@ importers:
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
+      '@workspace/grain-calculations':
+        specifier: workspace:*
+        version: link:../../lib/grain-calculations
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -580,6 +583,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      '@workspace/grain-calculations':
+        specifier: workspace:*
+        version: link:../../lib/grain-calculations
       '@xmldom/xmldom':
         specifier: ^0.9.12
         version: 0.9.12
@@ -779,6 +785,8 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+
+  lib/grain-calculations: {}
 
   scripts:
     devDependencies:
