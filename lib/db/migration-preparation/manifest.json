@@ -1,0 +1,20 @@
+{
+  "status": "inactive-draft",
+  "automaticExecution": false,
+  "migrations": [
+    {
+      "version": "0001",
+      "file": "0001_empty_target_baseline.sql",
+      "sha256": "4cd2430adccb436274a20e993cc2a1c666defef16270722294629b3d1714c1fd",
+      "requires": "Empty external application target; schema comparison and separate approval",
+      "strategy": "baseline-and-data-import-only"
+    },
+    {
+      "version": "0002",
+      "file": "0002_legacy_display_ids.sql",
+      "sha256": "77cd31bab08dee4317e8f22bad7c9eb5ec4b0b517968c4af3d1a3a00e2c7a0d8",
+      "requires": "Separate data repair approval after comparison; not automatic after restore",
+      "strategy": "optional-reviewed-data-repair"
+    }
+  ]
+}
