@@ -3,8 +3,7 @@ import { useSearch } from "wouter";
 import { ModuleHeading } from "./security/ModuleHeading";
 import { getLocale, t, useLanguage } from "./i18n/runtime";
 const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { buildObservationPdf } from "./utils/observationPdf";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { ObservationDistributionChart } from "./ObservationDistributionChart";
 import { ObservationList } from "./components/ObservationList";
@@ -684,91 +683,15 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   }, []);
 
   const esportaPDF = useCallback(() => {
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-
     // Logo (convert img URL → base64 via canvas)
     const img = new Image();
-    img.src = taurusLogo;
     const drawDoc = () => {
-      const logoW = 28, logoH = 28;
-      try { doc.addImage(img, "PNG", 10, 8, logoW, logoH); } catch (_) { /* skip if fails */ }
-
-      // Header
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.setTextColor(22, 101, 52); // green-800
-      doc.text("NitroCrop NDVI", 42, 18);
-      doc.setFontSize(11);
-      doc.setTextColor(40, 40, 40);
-      doc.text(t("Registro osservazioni NDVI"), 42, 26);
-      doc.setFontSize(8);
-      doc.setTextColor(100, 100, 100);
-      doc.text(t(`Esportato il: ${new Date().toLocaleDateString(getLocale())}  —  ${osservazioni.length} osservazion${osservazioni.length === 1 ? "e" : "i"}`), 42, 33);
-
-      // Separator line
-      doc.setDrawColor(22, 101, 52);
-      doc.setLineWidth(0.5);
-      doc.line(10, 39, 287, 39);
-
-      autoTable(doc, {
-        startY: 43,
-        head: [[
-          "ID", "Rilev.", "Trapianto", "Cliente", "Appezz.", "Gg",
-          "M1", "M2", "M3", "M4", "M5",
-          "Media", "Ottimale", "Diff.", "Dose / N punto\n(kg/ha)", "Lat", "Lng",
-        ].map(t)],
-        body: osservazioni.map((o) => [
-          o.id,
-          o.data,
-          o.dataTrapianto || "—",
-          o.cliente,
-          o.appezzamento,
-          o.giorni,
-          o.n1.toFixed(2), o.n2.toFixed(2), o.n3.toFixed(2), o.n4.toFixed(2), o.n5.toFixed(2),
-          o.media.toFixed(3),
-          o.ottimale.toFixed(3),
-          o.discostamento.toFixed(3),
-          o.dose.toFixed(1),
-          o.lat != null ? o.lat.toFixed(6) : "—",
-          o.lng != null ? o.lng.toFixed(6) : "—",
-        ]),
-        styles: { fontSize: 7.5, cellPadding: 2, halign: "center" },
-        headStyles: { fillColor: [22, 101, 52], textColor: 255, fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [242, 247, 243] },
-        columnStyles: {
-          0:  { fontStyle: "bold", textColor: [22, 101, 52] },
-          3:  { halign: "left" },
-          4:  { halign: "left" },
-          15: { fontStyle: "bold" },
-        },
-        didParseCell: (data) => {
-          // Highlight dose > 0 in red
-          if (data.section === "body" && data.column.index === 15) {
-            const val = parseFloat(String(data.cell.raw));
-            if (val > 0) data.cell.styles.textColor = [185, 28, 28];
-            else data.cell.styles.textColor = [22, 101, 52];
-          }
-        },
-        margin: { left: 10, right: 10 },
-      });
-
-      // Footer
-      const pageCount = (doc as any).internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(7);
-        doc.setTextColor(150);
-        doc.text(
-          t(`Pagina ${i} di ${pageCount}  —  NitroCrop NDVI · Taurus Agriculture Solution`),
-          148.5, 205, { align: "center" }
-        );
-      }
-
+      const doc = buildObservationPdf(osservazioni, { logo: img });
       doc.save(`NitroCrop_NDVI_${new Date().toISOString().slice(0, 10)}.pdf`);
     };
-
-    if (img.complete) { drawDoc(); }
-    else { img.onload = drawDoc; img.onerror = drawDoc; }
+    img.onload = drawDoc;
+    img.onerror = drawDoc;
+    img.src = taurusLogo;
   }, [osservazioni]);
 
   const doseColor =
