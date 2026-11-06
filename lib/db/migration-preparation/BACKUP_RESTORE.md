@@ -1,8 +1,10 @@
 # Backup, ripristino e confronto — procedura NON eseguita
 
-Questa procedura richiede autorizzazioni distinte. Nessun dump è stato creato,
-nessun database letto o modificato. Non inserire backup o dati personali in Git,
-negli allegati della chat o nei log.
+Questa procedura richiede autorizzazioni distinte. Nessun dump è stato creato
+e nessun contenuto applicativo è stato letto o modificato. La sola ispezione dei
+metadati è stata successivamente autorizzata ed è descritta in
+[SCHEMA_VALIDATION.md](SCHEMA_VALIDATION.md). Non inserire backup o dati personali
+in Git, negli allegati della chat o nei log.
 
 ## 1. Preparazione e autorizzazioni
 

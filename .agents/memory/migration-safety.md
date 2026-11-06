@@ -14,3 +14,9 @@ Per la migrazione del solo database Clerk deve rimanere invariato, con tutti gli
 **Why:** il titolare ha ristretto esplicitamente l'ambito alla preparazione del database e confermato di non attivare modifiche che possano interrompere l'applicazione corrente.
 
 **How to apply:** non creare istanze sostitutive né eliminare quella gestita. Non creare Supabase, cambiare credenziali, eseguire SQL sui database esistenti o modificare la pubblicazione senza ulteriore autorizzazione. Per questa fase eseguire solo controlli statici, typecheck e test senza accesso ai database.
+
+Un confronto logico positivo dello schema non autorizza importazioni per posizione: usare liste di colonne esplicite o un restore revisionato degli oggetti applicativi.
+
+**Why:** la ricostruzione da sorgenti può disporre le colonne in ordine diverso da uno schema evoluto con ALTER TABLE, pur conservando nomi e tipi. Un CSV importato per posizione può corrompere i dati.
+
+**How to apply:** confrontare anche l'ordine, non combinare restore completo e baseline, e non considerare la sola uguaglianza degli schemi prova della corrispondenza dei record.

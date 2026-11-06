@@ -1,5 +1,13 @@
 # Preparazione INATTIVA PostgreSQL → Supabase
 
+## Verifica successiva autorizzata
+
+La lettura dei soli metadati di sviluppo e produzione è stata successivamente
+autorizzata. Risultati, differenze rispetto alle bozze e limiti sono in
+[SCHEMA_VALIDATION.md](SCHEMA_VALIDATION.md). Non sono stati letti record né
+eseguite scritture, backup, restore o attivazioni. Le indicazioni sotto sulla
+preparazione originaria restano riferite a quella fase.
+
 ## Ambito autorizzato
 
 L'app resta sviluppata, eseguita e pubblicata su **Replit**. Clerk resta quello
