@@ -13,9 +13,22 @@ Destinazione dichiarata e confermata dal titolare:
 - Porta attesa: 5432; database atteso: postgres.
 - Username del pooler atteso: `postgres.bhnaarbzpmcniesxyldx`.
 
-**Stato al termine della preparazione: non connesso.** Non sono ancora noti
+**Stato dopo il primo tentativo autorizzato: bloccato dalla verifica TLS.**
+Il runner ha restituito `TLS_TRUST_FAILED` durante la connessione al solo endpoint
+confermato. Nessuna sessione PostgreSQL autenticata e nessuna query di inventario
+eseguita. Non è stato tentato un altro host né disabilitata la verifica TLS.
+Il codice pubblico di errore non distingue, da solo, CA non riconosciuta,
+catena non verificabile, scadenza o nome del certificato non valido: non
+attribuire la causa precisa senza ulteriori elementi.
+
+Non sono ancora noti
 versione, oggetti, privilegi effettivi, supporto delle opzioni di connessione
 o esposizione Data API del progetto. Nessun Secret è contenuto in questi file.
+
+Per proseguire occorre autorizzare una procedura di verifica del certificato e,
+se appropriato all'endpoint, fornire la CA pubblica ufficiale Supabase. Non
+servono chiavi private, nuove password o modifiche alle impostazioni server.
+Nessuna modifica ai grants di TEMP/large objects, ruoli, RLS, schema o dati.
 
 ## Controlli verificati prima della connessione
 
