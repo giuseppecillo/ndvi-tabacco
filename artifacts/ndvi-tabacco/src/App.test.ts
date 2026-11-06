@@ -738,6 +738,62 @@ describe("grano duro BBCH and local DAS estimate", () => {
 });
 
 describe("grano duro nitrogen planning", () => {
+  it("matches the API parity matrix for every standard variety, yield, density and phase", () => {
+    // Independent expected quotas, also asserted in osservazioni.test.ts.
+    const fixtures = [
+      { yield: 40, ratio: 0.5, total: 108, quotas: [27, 40, 40, 20] },
+      { yield: 40, ratio: 1, total: 120, quotas: [27, 40, 40, 20] },
+      { yield: 40, ratio: 2, total: 132, quotas: [27, 40, 44, 22] },
+      { yield: 50, ratio: 0.5, total: 135, quotas: [28, 40, 45, 22] },
+      { yield: 50, ratio: 1, total: 150, quotas: [31, 45, 50, 25] },
+      { yield: 50, ratio: 2, total: 165, quotas: [34, 49, 54, 27] },
+      { yield: 60, ratio: 0.5, total: 162, quotas: [34, 48, 53, 27] },
+      { yield: 60, ratio: 1, total: 180, quotas: [36, 50, 59, 30] },
+      { yield: 60, ratio: 2, total: 198, quotas: [36, 50, 60, 30] },
+    ];
+    for (const [variety, data] of Object.entries(GRANO_DURO_DB)) {
+      if (variety === "RGT NATUR") continue;
+      for (const fixture of fixtures) {
+        const seedsMq = data.densitaSemiMqDefault * fixture.ratio;
+        for (const [value, unit] of [
+          [seedsMq, "semi/m²"],
+          [seedsMq * 10_000, "semi/ha"],
+          [granoKgHaDaSemiMq(seedsMq, data), "kg/ha"],
+        ] as const) {
+          const density = calcolaDensitaGrano(value, unit, data);
+          const total = calcolaFabbisognoNGrano(fixture.yield, density.fattoreAzoto).corretto;
+          assert.equal(total, fixture.total, `${variety}, ${unit}, ${fixture.yield} q/ha`);
+          for (const [index, phase] of FASI_GRANO.entries()) {
+            assert.equal(calcolaQuotaNGrano(total, phase), fixture.quotas[index]);
+            const das = [10, 100, 150, 180][index];
+            const reference = ndviOttimaleGrano(das);
+            for (const relativeNdvi of [0, 0.5, 1, 1.1]) {
+              for (const alreadyApplied of [0, total - 2.4, total - 10.4, total, total + 5]) {
+                const observed = reference * relativeNdvi;
+                const plan = calcolaPianoNGrano({
+                  lettureNdvi: Array(5).fill(observed), das, fase: phase,
+                  fabbisognoN: total, azotoGiaDistribuito: alreadyApplied,
+                });
+                const expectedDose = Math.min(
+                  Math.max(0, Math.round(total - alreadyApplied)),
+                  Math.round(fixture.quotas[index] * Math.max(0, 1 - relativeNdvi)),
+                );
+                assert.equal(plan.quotaProposta, expectedDose, `${variety}, ${phase.bbch}, NDVI ${relativeNdvi}`);
+              }
+            }
+          }
+        }
+      }
+    }
+    const phase = FASI_GRANO[0];
+    const reference = ndviOttimaleGrano(10);
+    assert.equal(calcolaQuotaNGrano(120, phase), 27);
+    assert.equal(calcolaPianoNGrano({
+      lettureNdvi: Array(5).fill(reference / 2), das: 10, fase: phase,
+      fabbisognoN: 120, azotoGiaDistribuito: 0,
+    }).quotaProposta, 14);
+  });
+
   it("maps the yield reference boundaries to 120, 150, and 180 kg N/ha", () => {
     assert.deepEqual(calcolaFabbisognoNGrano(40, 1), { base: 120, corretto: 120 });
     assert.deepEqual(calcolaFabbisognoNGrano(50, 1), { base: 150, corretto: 150 });

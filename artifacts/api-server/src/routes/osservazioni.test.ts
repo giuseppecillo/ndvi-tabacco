@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
-import test from "node:test";
-import { erroreOsservazioneGrano, erroreOsservazioneTabacco } from "./osservazioni";
+import test, { mock } from "node:test";
+import type { Request, Response } from "express";
+import router, { erroreOsservazioneGrano, erroreOsservazioneTabacco } from "./osservazioni";
+import pool from "../lib/db";
 
 const pianoGranoValido = (): Record<string, unknown> => ({
   coltura: "grano duro",
@@ -20,6 +22,96 @@ const pianoGranoValido = (): Record<string, unknown> => ({
   azotoGiaDistribuito: 60,
   dose: 12,
   quotaAzoto: 12,
+});
+
+test("standard grain accepts the frontend parity matrix, including clamped quotas and residual plans", () => {
+  // Same independently specified expectations as App.test.ts; no database calls.
+  const fixtures = [
+    { yield: 40, factor: 0.9, total: 108, quotas: [27, 40, 40, 20] },
+    { yield: 40, factor: 1, total: 120, quotas: [27, 40, 40, 20] },
+    { yield: 40, factor: 1.1, total: 132, quotas: [27, 40, 44, 22] },
+    { yield: 50, factor: 0.9, total: 135, quotas: [28, 40, 45, 22] },
+    { yield: 50, factor: 1, total: 150, quotas: [31, 45, 50, 25] },
+    { yield: 50, factor: 1.1, total: 165, quotas: [34, 49, 54, 27] },
+    { yield: 60, factor: 0.9, total: 162, quotas: [34, 48, 53, 27] },
+    { yield: 60, factor: 1, total: 180, quotas: [36, 50, 59, 30] },
+    { yield: 60, factor: 1.1, total: 198, quotas: [36, 50, 60, 30] },
+  ];
+  const phases = [
+    { bbch: "00–09", label: "Semina / emergenza", das: 10, reference: 0.27 },
+    { bbch: "20–29", label: "Accestimento", das: 100, reference: 0.4 + 50 / 85 * 0.15 },
+    { bbch: "30–32", label: "Inizio levata", das: 150, reference: 0.65 + 14 / 29 * 0.07 },
+    { bbch: "37–39", label: "Foglia a bandiera", das: 180, reference: 0.73 + 14 / 24 * 0.12 },
+  ];
+  for (const fixture of fixtures) {
+    assert.equal(Math.round(fixture.yield * 3 * fixture.factor), fixture.total);
+    for (const [index, phase] of phases.entries()) {
+      for (const relativeNdvi of [0, 0.5, 1, 1.1]) {
+        for (const applied of [0, fixture.total - 2.4, fixture.total - 10.4, fixture.total, fixture.total + 5]) {
+          const mean = phase.reference * relativeNdvi;
+          const dose = Math.min(
+            Math.max(0, Math.round(fixture.total - applied)),
+            Math.round(fixture.quotas[index] * Math.max(0, 1 - relativeNdvi)),
+          );
+          const plan = {
+            ...pianoGranoValido(), varieta: "Redidenari", resa: fixture.yield,
+            giorni: phase.das, bbch: phase.bbch, faseFenologica: phase.label,
+            n1: mean, n2: mean, n3: mean, n4: mean, n5: mean, media: mean,
+            ottimale: phase.reference, discostamento: phase.reference - mean,
+            azotoTotale: fixture.total, azotoGiaDistribuito: applied, dose, quotaAzoto: dose,
+          };
+          assert.equal(erroreOsservazioneGrano(plan), null, JSON.stringify({ fixture, phase, relativeNdvi, applied }));
+          assert.match(erroreOsservazioneGrano({ ...plan, dose: dose + 1, quotaAzoto: dose + 1 }) ?? "", /quota ricalcolata/);
+        }
+      }
+    }
+  }
+});
+
+test("save dispatch validates both coltura and legacy tipoIntervento without connecting to PostgreSQL", async () => {
+  const layer = router.stack.find((item) => item.route?.path === "/osservazioni"
+    && item.route.stack.some((handler) => handler.method === "post"));
+  assert.ok(layer?.route);
+  const save = layer.route.stack[0].handle;
+  const writes: unknown[][] = [];
+  const query = mock.method(pool, "query", async (_sql: string, values: unknown[]) => {
+    writes.push(values);
+    return { rows: [{ createdAt: "2026-01-01T00:00:00.000Z" }] };
+  });
+  try {
+    for (const cropField of ["coltura", "tipoIntervento"] as const) {
+      for (const dose of [14, 13]) {
+        const body: Record<string, unknown> = {
+          ...pianoGranoValido(), id: "qa-standard-parity", varieta: "Telemaco",
+          giorni: 10, bbch: "00–09", faseFenologica: "Semina / emergenza",
+          n1: 0.135, n2: 0.135, n3: 0.135, n4: 0.135, n5: 0.135,
+          media: 0.135, ottimale: 0.27, discostamento: 0.135,
+          azotoTotale: 120, azotoGiaDistribuito: 0, dose, quotaAzoto: dose,
+        };
+        delete body.coltura;
+        body[cropField] = "grano duro";
+        let status = 0;
+        let payload: unknown;
+        const response = {
+          locals: { account: { id: "qa-synthetic-owner" } },
+          status(value: number) { status = value; return this; },
+          json(value: unknown) { payload = value; return this; },
+        } as unknown as Response;
+        const previousWrites = writes.length;
+        await save({ body } as Request, response, () => {});
+        assert.equal(status, dose === 14 ? 201 : 400);
+        assert.equal(writes.length - previousWrites, dose === 14 ? 1 : 0);
+        if (dose === 14) {
+          assert.deepEqual(payload, { ok: true, createdAt: "2026-01-01T00:00:00.000Z" });
+          assert.equal(writes.at(-1)?.[3], "grano duro");
+          assert.equal(writes.at(-1)?.[21], 14);
+          assert.equal(writes.at(-1)?.[30], "qa-synthetic-owner");
+        }
+      }
+    }
+  } finally {
+    query.mock.restore();
+  }
 });
 
 test("RGT NATUR validates its own phase quotas and rejects tampered plans", () => {

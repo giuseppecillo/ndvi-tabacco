@@ -204,7 +204,12 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
   const residuo = Math.max(0, Math.round(azotoTotale - azotoGiaDistribuito));
   const sommaQuoteRiferimento = Object.values(fasi)
     .reduce((somma, voce) => somma + (voce.min + voce.max) / 2, 0);
-  const quotaBase = Math.round(azotoTotale * ((fase.min + fase.max) / 2) / sommaQuoteRiferimento);
+  const quotaScalata = Math.round(azotoTotale * ((fase.min + fase.max) / 2) / sommaQuoteRiferimento);
+  // Come nel client, i limiti disciplinari valgono per la quota base delle
+  // varietà standard, non per la dose da deficit NDVI. NATUR resta proporzionale.
+  const quotaBase = o.varieta === "RGT NATUR"
+    ? quotaScalata
+    : Math.max(fase.min, Math.min(fase.max, quotaScalata));
   const deficitNdvi = Math.max(0, ottimale - media);
   const deficitRelativo = ottimale > 0 ? Math.min(1, deficitNdvi / ottimale) : 0;
   const quotaDaDeficitNdvi = deficitNdvi > 0 ? Math.round(quotaBase * deficitRelativo) : 0;
