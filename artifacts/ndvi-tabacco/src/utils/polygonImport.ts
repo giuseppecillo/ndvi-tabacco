@@ -41,9 +41,9 @@ export function createPolygonImporter(
           ? parsers.kml(await file.text())
           : await parsers[ext](await file.arrayBuffer());
         if (!polygons.length || polygons.some(p =>
-          p.ring.length < 3 || p.ring.some(([lng, lat]) =>
+          [p.ring, ...(p.holes ?? [])].some(ring => ring.length < 3 || ring.some(([lng, lat]) =>
             !Number.isFinite(lng) || !Number.isFinite(lat) ||
-            Math.abs(lng) > 180 || Math.abs(lat) > 90))) throw new Error("invalid geometry");
+            Math.abs(lng) > 180 || Math.abs(lat) > 90)))) throw new Error("invalid geometry");
         if (attempt === version) {
           update({ polygons, filename: file.name, selectedIndex: 0, loading: false, error: null });
         }

@@ -9,6 +9,16 @@ Use the total planned nitrogen (`Kg di azoto totale`) as the comparison basis. C
 
 **How to apply:** Interpolate planned N, already-distributed N, and indicated dose from GPS observations. Calculate polygon area metrically and multiply per-hectare means by hectares. Never count already-distributed N as savings or report a negative saving.
 
+For polygons with explicit interior exclusions, “the full polygon” means its
+cultivated net area, not the gross outer boundary. Excluded land must not
+contribute to doses, nitrogen totals or savings.
+
+**Why:** The user requires internal uncultivated zones (ponds, buildings or
+excluded areas) to be excluded without changing the nitrogen dose model.
+
+**How to apply:** Preserve imported exclusions throughout map calculation,
+inspection and exports; keep per-hectare nitrogen formulas unchanged.
+
 The savings comparison must remain visible after interpolation on phones, tablets and PCs, including when switching to Rilievo e dati and back during the same session. Show kg and percent without requiring sideways scrolling.
 
 **Why:** the user reported the savings table disappearing on smartphones and explicitly requested that it remain available after interpolation.

@@ -10,6 +10,10 @@ export const coordinates = [
   [12.0003, 42.0003], [12.0009, 42.0003],
   [12.0003, 42.0006], [12.0009, 42.0006],
 ];
+export const holeRings = [
+  [[12.00045, 42.00032], [12.00075, 42.00032], [12.00075, 42.00058], [12.00045, 42.00058], [12.00045, 42.00032]],
+  [[12.00008, 42.0001], [12.0002, 42.0001], [12.0002, 42.00022], [12.00008, 42.00022], [12.00008, 42.0001]],
+];
 const prj = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]';
 
 function bounds(points) {
@@ -109,5 +113,41 @@ export async function createImportFixtures() {
     polygon: { name: "synthetic-polygons.zip", mimeType: "application/zip", buffer: polygonZip },
     points: { name: "synthetic-points.zip", mimeType: "application/zip", buffer: pointZip },
     emptyKmz: { name: "missing-kml.kmz", mimeType: "application/vnd.google-earth.kmz", buffer: await new JSZip().file("README.txt", "No geometry").generateAsync({ type: "nodebuffer" }) },
+  };
+}
+
+/** Independent ESRI polygon record: outer clockwise, holes counterclockwise.
+ * A second outer part produces a real MultiPolygon in shpjs, in the same layer.
+ */
+export async function createHoleImportFixtures({ multipart = false } = {}) {
+  const kml = await readFile(new URL("./idw-holes.kml", import.meta.url));
+  const rings = [[...ring].reverse(), ...holeRings];
+  if (multipart) {
+    rings.push([...ring].reverse().map(([x, y]) => [x + 0.003, y]));
+    rings.push(holeRings[0].map(([x, y]) => [x + 0.003, y]));
+  }
+  const points = rings.flat();
+  const record = Buffer.alloc(44 + rings.length * 4 + points.length * 16);
+  record.writeInt32LE(5, 0);
+  bounds(points).forEach((v, i) => record.writeDoubleLE(v, 4 + i * 8));
+  record.writeInt32LE(rings.length, 36);
+  record.writeInt32LE(points.length, 40);
+  let start = 0;
+  rings.forEach((r, i) => {
+    record.writeInt32LE(start, 44 + i * 4);
+    start += r.length;
+  });
+  points.forEach(([x, y], i) => {
+    const offset = 44 + rings.length * 4 + i * 16;
+    record.writeDoubleLE(x, offset);
+    record.writeDoubleLE(y, offset + 8);
+  });
+  const polygon = await zipShape("holes", shapeFiles(5, [record], bounds(points)),
+    [["NOME", "C", 32]], [{ NOME: "Campo sintetico con esclusioni" }]);
+  return {
+    kml: { name: "synthetic-holes.kml", mimeType: "application/vnd.google-earth.kml+xml", buffer: kml },
+    kmz: { name: "synthetic-holes.kmz", mimeType: "application/vnd.google-earth.kmz",
+      buffer: await new JSZip().file("doc.kml", kml).generateAsync({ type: "nodebuffer" }) },
+    polygon: { name: "synthetic-holes.zip", mimeType: "application/zip", buffer: polygon },
   };
 }

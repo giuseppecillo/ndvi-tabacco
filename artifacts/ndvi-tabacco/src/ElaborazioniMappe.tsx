@@ -40,7 +40,7 @@ function doseRgba(dose: number, min: number, max: number, alpha = 0.82): string 
 }
 
 /** Render IDW grid cells to an offscreen canvas and return a PNG data URL. */
-function renderIdwOverlay(result: PolyIdwResult): string {
+export function renderIdwOverlay(result: PolyIdwResult): string {
   const [west, south, east, north] = result.bbox;
   const geoW = east - west  || 0.001;
   const geoH = north - south || 0.001;
@@ -51,6 +51,18 @@ function renderIdwOverlay(result: PolyIdwResult): string {
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, W, H);
+  // Clip the full cell rectangles, not just their centres, to the field with holes.
+  ctx.beginPath();
+  for (const ring of [result.polygon.ring, ...(result.polygon.holes ?? [])]) {
+    ring.forEach(([lng, lat], i) => {
+      const x = ((lng - west) / geoW) * W;
+      const y = ((north - lat) / geoH) * H;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+  }
+  ctx.clip("evenodd");
   const { min, max } = result.stats;
   const cW = Math.max(2, (result.cellSizeDeg.lon / geoW) * W + 1.5);
   const cH = Math.max(2, (result.cellSizeDeg.lat / geoH) * H + 1.5);
@@ -67,7 +79,7 @@ function renderIdwOverlay(result: PolyIdwResult): string {
 
 type MapPick = { lat: number; lng: number; cell?: IdwGridPoint };
 
-function MapView({ result }: { result: PolyIdwResult }) {
+export function MapView({ result }: { result: PolyIdwResult }) {
   const language = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -98,7 +110,8 @@ function MapView({ result }: { result: PolyIdwResult }) {
 
     // Polygon outline
     L.polygon(
-      result.polygon.ring.map(([lng, lat]) => [lat, lng] as [number, number]),
+      [result.polygon.ring, ...(result.polygon.holes ?? [])]
+        .map(ring => ring.map(([lng, lat]) => [lat, lng] as [number, number])),
       { color: "#166534", weight: 2.5, fill: false, dashArray: undefined, interactive: false }
     ).addTo(map);
 

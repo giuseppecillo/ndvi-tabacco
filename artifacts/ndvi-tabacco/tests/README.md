@@ -82,3 +82,26 @@ The remote runner could not execute the Node helper or independently parse
 downloaded exports. It instead compared the actual browser parser/IDW output
 through `geoUtils.ts`; Node fixture tests independently parsed the input ZIPs.
 This is an import verification, not a new claim about downloaded-export fidelity.
+
+## Interior exclusions (holes)
+
+`pnpm --filter @workspace/ndvi-tabacco test` includes `holes.test.mjs`, using only
+the invented `fixtures/idw-holes.kml` and in-memory KMZ/Shapefile archives.
+`@xmldom/xmldom` supplies the XML DOM only inside Node tests.
+
+The suite compares KML, KMZ and Shapefile imports of the same two holes, verifies
+MultiGeometry/MultiPolygon ring ownership, namespaces, open/closed/reversed
+rings, excluded control points and boundary inspection, and compares net metric
+area and nitrogen totals. A varying-dose regression confirms that retained grid
+nodes keep the exact same IDW values. Legacy no-hole imports keep 100 cells.
+SHP/DBF/CSV and Float32 GeoTIFF downloads are reopened with independent readers:
+no exported point is inside a hole; raster pixels whose centres are in holes
+are NODATA. Raster masking remains limited by the existing pixel resolution.
+
+For a native-canvas visual check, open `/tests/idw-holes.html` in the existing
+web workflow. This development-only page renders the actual map and nitrogen
+summary, without authentication, APIs or storage. Before rendering, it checks
+transparent pixels inside both holes (including near edges) and a painted
+cultivated pixel. A failed check throws rather than displaying PASS. Click/tap
+in either outlined hole to confirm the normal no-dose inspection feedback.
+Basemap tiles may load independently, but are not required for these checks.

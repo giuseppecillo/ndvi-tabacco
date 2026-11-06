@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Placemark>
+      <name>Campo sintetico con esclusioni</name>
+      <Polygon>
+        <outerBoundaryIs><LinearRing><coordinates>
+          12,42 12.0012,42 12.0012,42.0009 12,42.0009 12,42
+        </coordinates></LinearRing></outerBoundaryIs>
+        <innerBoundaryIs><LinearRing><coordinates>
+          12.00045,42.00032 12.00075,42.00032 12.00075,42.00058 12.00045,42.00058 12.00045,42.00032
+        </coordinates></LinearRing></innerBoundaryIs>
+        <innerBoundaryIs><LinearRing><coordinates>
+          12.00008,42.0001 12.0002,42.0001 12.0002,42.00022 12.00008,42.00022 12.00008,42.0001
+        </coordinates></LinearRing></innerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

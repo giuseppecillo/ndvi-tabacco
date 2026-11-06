@@ -24,6 +24,7 @@ import JSZip from "jszip";
 export interface KmlPolygon {
   name: string;
   ring: [number, number][]; // [lng, lat] – closed ring in WGS84
+  holes?: [number, number][][]; // excluded interior rings; absent in legacy polygons
 }
 
 export interface ControlPoint {
@@ -72,7 +73,7 @@ export interface PolyIdwResult {
 
 /** Pick an interpolated grid cell, never extrapolate a dose outside the field. */
 export function findDoseCell(result: PolyIdwResult, lng: number, lat: number): IdwGridPoint | undefined {
-  if (!Number.isFinite(lng) || !Number.isFinite(lat) || !pip(lng, lat, result.polygon.ring)) return undefined;
+  if (!Number.isFinite(lng) || !Number.isFinite(lat) || !pointInField(lng, lat, result.polygon)) return undefined;
   const proj = `+proj=utm +zone=${result.utmZone} ${result.utmSouth ? "+south" : ""} +datum=WGS84 +units=m +no_defs`;
   const [x, y] = toUTM(proj, lng, lat);
   let selected: IdwGridPoint | undefined;
@@ -90,19 +91,34 @@ export function findDoseCell(result: PolyIdwResult, lng: number, lat: number): I
 // ── KML parser ───────────────────────────────────────────────────────────────
 
 /**
- * Parses a KML string and returns all Placemark polygons (outer boundary only).
+ * Parses KML polygons, preserving each polygon's outer and inner boundaries.
  * Handles both KML 2.2 and older formats.
  */
 export function parseKml(text: string): KmlPolygon[] {
   const doc = new DOMParser().parseFromString(text, "text/xml");
-  if (doc.querySelector("parsererror")) throw new Error("Invalid KML XML");
+  if (doc.getElementsByTagNameNS("*", "parsererror").length) throw new Error("Invalid KML XML");
   const results: KmlPolygon[] = [];
+  const elements = (parent: Document | Element, name: string): Element[] =>
+    Array.from(parent.getElementsByTagNameNS("*", name));
+  const readRing = (boundary: Element): [number, number][] => {
+    const text = elements(boundary, "coordinates")[0]?.textContent?.trim() ?? "";
+    const ring = text.split(/\s+/).map(token => {
+      const [lng, lat] = token.split(",");
+      return [lng?.trim() ? Number(lng) : NaN, lat?.trim() ? Number(lat) : NaN] as [number, number];
+    });
+    // Never silently drop a malformed hole and turn excluded land into cropland.
+    if (ring.length < 3 || ring.some(([lng, lat]) =>
+      !Number.isFinite(lng) || !Number.isFinite(lat) || Math.abs(lng) > 180 || Math.abs(lat) > 90)) {
+      throw new Error("Invalid KML polygon ring");
+    }
+    return ring;
+  };
 
-  doc.querySelectorAll("Placemark").forEach((pm) => {
+  elements(doc, "Placemark").forEach((pm) => {
     // Standard <name> tag first; fall back to SchemaData SimpleData with Name*/name* attribute
-    const stdName = pm.querySelector("name")?.textContent?.trim();
+    const stdName = elements(pm, "name")[0]?.textContent?.trim();
     const schemaName = (() => {
-      const sds = pm.querySelectorAll("SimpleData");
+      const sds = elements(pm, "SimpleData");
       for (const sd of Array.from(sds)) {
         const attr = sd.getAttribute("name") ?? "";
         if (/^[Nn]ame/i.test(attr) && sd.textContent?.trim()) return sd.textContent.trim();
@@ -111,31 +127,11 @@ export function parseKml(text: string): KmlPolygon[] {
     })();
     const name = stdName || schemaName || "Senza nome";
 
-    // Try outerBoundaryIs first, then fall back to any LinearRing / coordinates
-    const selectors = [
-      "outerBoundaryIs coordinates",
-      "Polygon outerBoundaryIs LinearRing coordinates",
-      "LinearRing coordinates",
-      "coordinates",
-    ];
-
-    for (const sel of selectors) {
-      const el = pm.querySelector(sel);
-      if (!el) continue;
-      const raw = el.textContent?.trim() ?? "";
-      const ring: [number, number][] = [];
-      for (const token of raw.split(/\s+/)) {
-        const parts = token.split(",");
-        if (parts.length >= 2) {
-          const lng = parseFloat(parts[0]);
-          const lat = parseFloat(parts[1]);
-          if (!isNaN(lng) && !isNaN(lat)) ring.push([lng, lat]);
-        }
-      }
-      if (ring.length >= 3) {
-        results.push({ name, ring });
-        break;
-      }
+    for (const poly of elements(pm, "Polygon")) {
+      const outer = elements(poly, "outerBoundaryIs")[0];
+      if (!outer) throw new Error("Missing KML outer boundary");
+      const holes = elements(poly, "innerBoundaryIs").map(readRing);
+      results.push({ name, ring: readRing(outer), ...(holes.length ? { holes } : {}) });
     }
   });
   return results;
@@ -190,9 +186,13 @@ export async function parseShpPolygons(buffer: ArrayBuffer): Promise<KmlPolygon[
       (acc, k) => acc ?? (props[k] != null ? String(props[k]) : null), null
     ) ?? `Poligono ${fi + 1}`;
 
-    const addRing = (coords: [number, number][], suffix = "") => {
-      const ring: [number, number][] = coords.map(([lng, lat]) => [lng, lat]);
-      if (ring.length >= 3) polygons.push({ name: `${rawName}${suffix}`, ring });
+    const addPolygon = (coords: [number, number][][], suffix = "") => {
+      const [ring, ...holes] = coords.map(r => r.map(([lng, lat]) => [lng, lat] as [number, number]));
+      if (!ring || [ring, ...holes].some(r => r.length < 3 || r.some(([lng, lat]) =>
+        !Number.isFinite(lng) || !Number.isFinite(lat) || Math.abs(lng) > 180 || Math.abs(lat) > 90))) {
+        throw new Error("Invalid Shapefile polygon ring");
+      }
+      polygons.push({ name: `${rawName}${suffix}`, ring, ...(holes.length ? { holes } : {}) });
     };
 
     const geom = feat.geometry;
@@ -200,10 +200,10 @@ export async function parseShpPolygons(buffer: ArrayBuffer): Promise<KmlPolygon[
 
     if (geom.type === "Polygon") {
       const coords = geom.coordinates as [number, number][][];
-      addRing(coords[0]);
+      addPolygon(coords);
     } else if (geom.type === "MultiPolygon") {
       (geom.coordinates as [number, number][][][]).forEach((poly, pi) => {
-        addRing(poly[0], (geom.coordinates as unknown[]).length > 1 ? ` (${pi + 1})` : "");
+        addPolygon(poly, (geom.coordinates as unknown[]).length > 1 ? ` (${pi + 1})` : "");
       });
     }
   });
@@ -226,6 +226,27 @@ function pip(lng: number, lat: number, ring: [number, number][]): boolean {
     }
   }
   return inside;
+}
+
+/** Includes ring edges, so a hole's boundary never receives a dose. */
+function onRing(lng: number, lat: number, ring: [number, number][]): boolean {
+  const epsilon = 1e-10; // coordinate tolerance in degrees
+  return ring.some(([x, y], i) => {
+    const [xx, yy] = ring[(i + 1) % ring.length];
+    const length = Math.hypot(xx - x, yy - y);
+    if (!length) return Math.hypot(lng - x, lat - y) <= epsilon;
+    return Math.abs((lng - x) * (yy - y) - (lat - y) * (xx - x)) <= epsilon * length &&
+      lng >= Math.min(x, xx) - epsilon && lng <= Math.max(x, xx) + epsilon &&
+      lat >= Math.min(y, yy) - epsilon && lat <= Math.max(y, yy) + epsilon;
+  });
+}
+
+function inHole(lng: number, lat: number, polygon: KmlPolygon): boolean {
+  return (polygon.holes ?? []).some(ring => pip(lng, lat, ring) || onRing(lng, lat, ring));
+}
+
+export function pointInField(lng: number, lat: number, polygon: KmlPolygon): boolean {
+  return pip(lng, lat, polygon.ring) && !inHole(lng, lat, polygon);
 }
 
 /** Returns the proj4 string for the UTM zone covering a given WGS84 longitude/latitude. */
@@ -306,6 +327,9 @@ export function computeIdwGrid(
   cellSize = 10,
   power = 2,
 ): PolyIdwResult {
+  // Keep the established treatment of external controls, but never interpolate
+  // from measurements belonging to explicitly excluded interior areas.
+  controls = controls.filter(c => !inHole(c.lng, c.lat, polygon));
   const empty = (msg?: string): PolyIdwResult => ({
     polygon, controls, grid: [],
     bbox: [0, 0, 0, 0], utmZone: 0, utmSouth: false,
@@ -336,13 +360,15 @@ export function computeIdwGrid(
 
   // UTM bounding box (project all ring vertices)
   const utmRing = polygon.ring.map(([lng, lat]) => toUTM(proj, lng, lat));
+  const utmHoles = (polygon.holes ?? []).map(ring => ring.map(([lng, lat]) => toUTM(proj, lng, lat)));
   const utmXs   = utmRing.map(p => p[0]);
   const utmYs   = utmRing.map(p => p[1]);
   const utmW    = Math.min(...utmXs);
   const utmE    = Math.max(...utmXs);
   const utmS    = Math.min(...utmYs);
   const utmN    = Math.max(...utmYs);
-  const areaHa  = polygonAreaM2(utmRing) / 10_000;
+  const areaHa  = Math.max(0, polygonAreaM2(utmRing) -
+    utmHoles.reduce((sum, ring) => sum + polygonAreaM2(ring), 0)) / 10_000;
   const planControls = utmControls
     .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale) && c.azotoTotale >= 0)
     .map(c => ({ utmX: c.utmX, utmY: c.utmY, dose: c.azotoTotale! }));
@@ -359,7 +385,7 @@ export function computeIdwGrid(
   for (let y = utmS + cellSize / 2; y <= utmN; y += cellSize) {
     for (let x = utmW + cellSize / 2; x <= utmE; x += cellSize) {
       const [lng, lat] = toWGS84(proj, x, y);
-      if (!pip(lng, lat, polygon.ring)) continue;
+      if (!pointInField(lng, lat, polygon)) continue;
       const dose = idwAt(utmControls, x, y, power);
       const azotoTotale = planControls.length ? idwAt(planControls, x, y, power) : undefined;
       const azotoGiaDistribuito = distributedControls.length
@@ -618,6 +644,9 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
     const col = Math.floor((g.lng - west)  / csLon);
     const row = Math.floor((north - g.lat) / csLat);
     if (col >= 0 && col < cols && row >= 0 && row < rows) {
+      // Raster pixels differ from the UTM grid: mask their own centres too,
+      // rather than letting a neighbouring valid node colour an excluded area.
+      if (!pointInField(west + (col + 0.5) * csLon, north - (row + 0.5) * csLat, polygon)) continue;
       const idx = row * cols + col;
       // Keep the higher dose if two points map to the same pixel (conservative)
       if (data[idx] === NODATA || g.dose > data[idx]) data[idx] = g.dose;
