@@ -9,6 +9,16 @@ Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL:
 
 **How to apply:** non rendere disponibili nello sviluppo ordinario credenziali scrivibili di produzione o amministrative. Esplicitare che i test di salvataggio non sono possibili con la sola lettura; qualsiasi accesso QA aggiuntivo o database temporaneo richiede approvazione, non una deroga implicita.
 
+Il titolare ha creato il progetto Supabase “Agri Precision” nella regione
+West EU (Ireland). Questa è la destinazione dichiarata per la fase successiva;
+non presumere più che il target Supabase sia nel Regno Unito.
+
+**Why:** il titolare ha comunicato la regione del progetto effettivamente creato.
+
+**How to apply:** confermare project reference/endpoint prima di qualsiasi
+connessione; nome e stato Healthy dichiarato non costituiscono verifica del
+server o autorizzazione a SQL, ruoli, tabelle o dati.
+
 Per la migrazione del solo database Clerk deve rimanere invariato, con tutti gli utenti, identificativi e autorizzazioni. Un'eventuale portabilità fuori Replit resta una verifica futura separata, non un prerequisito della fase attuale. Il titolare ha autorizzato soltanto preparazione inattiva, mantenendo i percorsi di avvio e gli automatismi esistenti fino a successiva autorizzazione.
 
 **Why:** il titolare ha ristretto esplicitamente l'ambito alla preparazione del database e confermato di non attivare modifiche che possano interrompere l'applicazione corrente.
