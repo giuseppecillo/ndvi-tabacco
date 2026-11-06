@@ -20,3 +20,17 @@ Un confronto logico positivo dello schema non autorizza importazioni per posizio
 **Why:** la ricostruzione da sorgenti può disporre le colonne in ordine diverso da uno schema evoluto con ALTER TABLE, pur conservando nomi e tipi. Un CSV importato per posizione può corrompere i dati.
 
 **How to apply:** confrontare anche l'ordine, non combinare restore completo e baseline, e non considerare la sola uguaglianza degli schemi prova della corrispondenza dei record.
+
+Valutare la protezione readonly con prove negative delle autorizzazioni effettive,
+non soltanto con il default di sessione read-only. Un collaudo locale con
+superuser non certifica che l'amministratore di un servizio gestito possa
+applicare le stesse restrizioni.
+
+**Why:** PUBLIC e routine integrate possono consentire effetti non coperti dai
+soli grants delle tabelle; rimuoverli può incidere su altri servizi del provider.
+L'assenza di errori nei mock non dimostra l'isolamento sul server.
+
+**How to apply:** nelle sole destinazioni di test autorizzate provare i divieti
+anche con il default read-only disattivato; prima dell'attivazione richiedere
+verifica specifica dei privilegi e dell'impatto sul target gestito, senza
+saltare revoche non autorizzate o non consentite.

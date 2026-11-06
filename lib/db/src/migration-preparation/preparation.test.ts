@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { prepareConnection, assertOrdinaryRole, type RoleInspection, type DatabasePurpose } from "./connection";
 import { inspectPreparedStartup, type ReadonlyQueryClient } from "./startup";
+import { inspectDatabaseRole } from "./privileges";
 
 // All connection strings and role inspections in this suite are synthetic.
 // No pg import, pool, database credentials or database connection is used.
@@ -19,6 +20,7 @@ const safeRole: RoleInspection = {
   superuser: false, createRole: false, createDatabase: false, replication: false,
   bypassRls: false, ownsApplicationObjects: false,
   canCreateInApplicationSchema: false, canCreateSchema: false,
+  canCreateTemporaryObjects: false,
   canAssumePrivilegedRole: false, hasWritePrivileges: true,
   hasSequenceMutationPrivileges: false, hasUnsafeFunctionAccess: false,
 };
@@ -72,7 +74,7 @@ test("safe runtime role passes without any database call", () => {
 for (const key of [
   "superuser", "createRole", "createDatabase", "replication", "bypassRls",
   "ownsApplicationObjects", "canCreateInApplicationSchema", "canCreateSchema",
-  "canAssumePrivilegedRole", "hasUnsafeFunctionAccess",
+  "canCreateTemporaryObjects", "canAssumePrivilegedRole", "hasUnsafeFunctionAccess",
 ] as const) {
   test(`rejects effective privilege ${key}`, () => {
     assert.throws(() => assertOrdinaryRole("runtime", { ...safeRole, [key]: true }));
@@ -89,6 +91,22 @@ test("readonly rejects both write and sequence mutation privileges", () => {
   assert.doesNotThrow(() => assertOrdinaryRole("readonly", readonly));
   assert.throws(() => assertOrdinaryRole("readonly", { ...readonly, hasWritePrivileges: true }));
   assert.throws(() => assertOrdinaryRole("readonly", { ...readonly, hasSequenceMutationPrivileges: true }));
+});
+test("catalog inspector fails closed on missing, multiple or malformed results", async () => {
+  const cases: Record<string, unknown>[][] = [
+    [], [{ ...safeRole }, { ...safeRole }],
+    [{ ...safeRole, bypassRls: null }], [{ currentUser: "app_runtime" }],
+  ];
+  for (const rows of cases) {
+    await assert.rejects(inspectDatabaseRole({
+      async query(sql) {
+        assert.match(sql, /FROM pg_roles/);
+        return { rows };
+      },
+    }));
+  }
+  const inspected = await inspectDatabaseRole({ async query() { return { rows: [{ ...safeRole }] }; } });
+  assert.deepEqual(inspected, safeRole);
 });
 function mockStartup(missingTable = false, missingAdmin = false) {
   const calls: string[] = [];

@@ -1,5 +1,10 @@
 # Verifica autorizzata degli schemi — 6 novembre 2026
 
+Nota successiva: il collaudo sintetico locale è ora documentato in
+[SYNTHETIC_TEST_REPORT.md](SYNTHETIC_TEST_REPORT.md). Questo documento conserva
+gli esiti e i limiti della precedente lettura degli schemi; le prove locali
+non equivalgono a un collaudo del target Supabase.
+
 ## Esito e limiti
 
 **PASS per il confronto dei metadati applicativi Development/Production letti.

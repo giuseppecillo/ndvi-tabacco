@@ -73,6 +73,7 @@ export interface RoleInspection {
   ownsApplicationObjects: boolean;
   canCreateInApplicationSchema: boolean;
   canCreateSchema: boolean;
+  canCreateTemporaryObjects: boolean;
   canAssumePrivilegedRole: boolean;
   hasWritePrivileges: boolean;
   hasSequenceMutationPrivileges: boolean;
@@ -95,7 +96,7 @@ export function assertOrdinaryRole(
   const forbidden: (keyof RoleInspection)[] = [
     "superuser", "createRole", "createDatabase", "replication", "bypassRls",
     "ownsApplicationObjects", "canCreateInApplicationSchema", "canCreateSchema",
-    "canAssumePrivilegedRole", "hasUnsafeFunctionAccess",
+    "canCreateTemporaryObjects", "canAssumePrivilegedRole", "hasUnsafeFunctionAccess",
     ...(purpose === "readonly" ? ["hasWritePrivileges", "hasSequenceMutationPrivileges"] as const : []),
   ];
   if (forbidden.some(key => inspection[key] !== false)) {

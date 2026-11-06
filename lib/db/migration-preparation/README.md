@@ -8,6 +8,13 @@ autorizzata. Risultati, differenze rispetto alle bozze e limiti sono in
 eseguite scritture, backup, restore o attivazioni. Le indicazioni sotto sulla
 preparazione originaria restano riferite a quella fase.
 
+Successivamente è stato autorizzato il collaudo con soli dati sintetici su un
+cluster PostgreSQL locale nuovo e temporaneo, senza credenziali o connessioni
+esterne. Rapporto ed esecuzione riproducibile:
+[SYNTHETIC_TEST_REPORT.md](SYNTHETIC_TEST_REPORT.md).
+Le scritture di quel collaudo riguardano esclusivamente il cluster usa e getta;
+nessuna attivazione o modifica dei database esistenti è stata autorizzata.
+
 ## Ambito autorizzato
 
 L'app resta sviluppata, eseguita e pubblicata su **Replit**. Clerk resta quello
@@ -57,8 +64,10 @@ Nessuna libreria sostituita e nessuna dipendenza aggiunta.
   `session_user`, proprietà oggetti, membership anche transitiva, privilegi
   effettivi, funzioni eseguibili, sequenze, viste, RLS e grants PUBLIC.
 - `assertOrdinaryRole` respinge ruoli privilegiati o ispezioni incomplete.
-  L'adattatore che costruisce l'ispezione PostgreSQL NON è ancora integrato:
-  non attivare il runtime senza implementarlo e provarlo.
+  `privileges.ts` costruisce ora l'ispezione dai cataloghi, collaudata sul cluster
+  locale sintetico. È ancora INATTIVA e NON integrata nei pool: prima di attivarla
+  occorre provarla sul target Supabase autorizzato e revisionare gli oggetti
+  specifici del provider, le funzioni, il pooler e i controlli RLS/Data API.
 - `inspectPreparedStartup` controlla tabelle e amministratore già esistente con
   sole SELECT. Non crea account né modifica identificativi. Va completato con il
   confronto dello schema e dei vincoli prima del cutover.
@@ -121,9 +130,19 @@ Prima dell'attivazione occorre:
    runtime. Un ruolo SQL readonly non impedisce scritture tramite un'API live
    con credenziali utente autorizzate.
 
-## Collaudo consentito ora
+## Collaudo originario e successiva estensione autorizzata
 
-Solo test puri, mock di client query, integrità dei file e typecheck. Non eseguire
+La preparazione originaria comprendeva solo test puri, mock di client query,
+integrità dei file e typecheck. L'autorizzazione successiva consente inoltre:
+
+```sh
+bash lib/db/migration-preparation/tests/run-isolated.sh
+```
+
+Lo script usa i binari PostgreSQL già presenti, un ambiente ripulito e un nuovo
+cluster in `/tmp/nitrocrop-synthetic.*`, solo socket privato, senza rete né
+password. Alla fine ferma il server e rimuove il cluster. Non passa da workflow,
+Drizzle o connessioni dell'app. Non eseguire
 test:access, setup:admin, startup dell'API o qualsiasi script che si colleghi ai
 database per preparare questi materiali.
 
@@ -141,8 +160,10 @@ git diff --check
 Il test di regressione dei percorsi attivi usa il commit di riferimento di questa
 preparazione; al cutover andrà aggiornato consapevolmente, non aggirato.
 
-Le prove reali di INSERT/UPDATE/DELETE, RLS, DDL negato, funzioni mutanti e
-salvataggi richiedono successiva autorizzazione e un ambiente isolato: non basta
+Le prove con dati sintetici di INSERT/UPDATE/DELETE, DDL negato e funzioni mutanti
+sono state eseguite nell'istanza locale; non sono un test Supabase/RLS o del
+salvataggio end-to-end dell'app. Prove su Supabase richiedono successiva
+autorizzazione e un ambiente isolato: non basta
 ROLLBACK su produzione, perché sequenze, notifiche o servizi esterni possono
 avere effetti non annullabili. Restando a tre ruoli e un solo Supabase,
 non promettere una preview scrivibile isolata: accesso QA aggiuntivo o database
@@ -150,8 +171,9 @@ temporaneo richiedono approvazione separata.
 
 ## Attivazione: autorizzazioni ancora necessarie
 
-Creazione progetto Supabase/regione; ispezione read-only di sviluppo E produzione
-Replit; backup; restore di prova; grants/LOGIN e proprietà; eventuali riparazioni;
+Creazione progetto Supabase/regione; ulteriori letture oltre ai metadati già
+autorizzati; backup; restore di prova; grants/LOGIN e proprietà sul target;
+eventuali riparazioni;
 runner/ledger; rimozione effettiva automatismi e bootstrap; cambio credenziali
 runtime/sviluppo; qualsiasi riavvio o pubblicazione associato al cutover.
 Non riutilizzare accidentalmente dati Development per sostituire Production.

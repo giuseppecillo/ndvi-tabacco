@@ -14,6 +14,13 @@ CREATE ROLE app_readonly NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATI
 -- mapping). This script deliberately does not transfer existing object owners.
 -- PUBLIC grants are shared: revoke only after auditing all affected consumers.
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+-- PostgreSQL normally grants TEMPORARY to PUBLIC on a database. Merely setting
+-- default_transaction_read_only does not prevent a role from turning it off.
+-- Review ALL consumers before applying this database-wide change on a target.
+DO $$
+BEGIN
+  EXECUTE format('REVOKE CREATE, TEMPORARY ON DATABASE %I FROM PUBLIC', current_database());
+END; $$;
 GRANT USAGE, CREATE ON SCHEMA public TO app_migrator;
 GRANT USAGE ON SCHEMA public TO app_runtime, app_readonly;
 
@@ -28,6 +35,25 @@ GRANT SELECT, INSERT ON public.security_events TO app_runtime;
 GRANT SELECT ON public.app_users, public.security_state, public.privacy_requests,
   public.security_events, public.osservazioni TO app_readonly;
 ALTER ROLE app_readonly SET default_transaction_read_only = on;
+
+-- Large-object SQL functions can write outside ordinary table ACLs. There is
+-- no per-role DENY overriding PUBLIC EXECUTE: review the impact on ALL database
+-- consumers before activation. A hosted target may require its administrator
+-- to authorize these catalog-function revocations; never silently skip them.
+DO $$
+DECLARE f record;
+BEGIN
+  FOR f IN
+    SELECT p.oid::regprocedure AS signature
+    FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='pg_catalog' AND p.proname = ANY(ARRAY[
+      'lo_create','lo_creat','lo_from_bytea','lo_put','lo_unlink',
+      'lo_import','lo_export','lo_open','lowrite','lo_truncate','lo_truncate64'
+    ])
+  LOOP
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC', f.signature);
+  END LOOP;
+END; $$;
 
 -- Permissions for NEW functions created by the migration owner. A global
 -- default revoke is required; schema-only revoke cannot undo a global default.
