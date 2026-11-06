@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Placemark>
+      <name>Campo sintetico IDW</name>
+      <Polygon><outerBoundaryIs><LinearRing><coordinates>
+        12.0000,42.0000,0 12.0012,42.0000,0
+        12.0012,42.0009,0 12.0000,42.0009,0 12.0000,42.0000,0
+      </coordinates></LinearRing></outerBoundaryIs></Polygon>
+    </Placemark>
+  </Document>
+</kml>

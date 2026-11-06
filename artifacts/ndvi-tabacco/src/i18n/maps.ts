@@ -1,6 +1,7 @@
 import type { Translation } from "./runtime";
 
 export const maps: readonly Translation[] = [
+  ["Elaborazioni e Mappe", "Processing and maps", "Procesamiento y mapas"],
   ["Importa Poligoni", "Import polygons", "Importar polígonos"],
   ["📊 Da Registro NDVI", "📊 From NDVI log", "📊 Desde el registro NDVI"],
   ["📁 Da Shapefile esterno", "📁 From external Shapefile", "📁 Desde un Shapefile externo"],

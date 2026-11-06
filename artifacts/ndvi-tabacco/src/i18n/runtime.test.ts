@@ -114,6 +114,7 @@ test("Instructions controls follow English and Spanish, including identical tran
 
 test("Map and nitrogen savings widget labels are localized without changing units", () => {
   const labels = [
+    ["Elaborazioni e Mappe", "Processing and maps", "Procesamiento y mapas"],
     ["Risparmio di azoto sull’intero poligono", "Nitrogen savings across the entire polygon", "Ahorro de nitrógeno en todo el polígono"],
     ["Risparmio stimato", "Estimated savings", "Ahorro estimado"],
     ["Risparmio %", "Savings %", "Ahorro %"],
