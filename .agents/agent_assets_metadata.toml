@@ -34,9 +34,25 @@ id = "lyPmqWFbcvP83bdPmXss4"
 uri = "file://.local/outputs/NitroCrop-NDVI---Report-e-Presentazione.pdf"
 type = "pdf"
 title = "NitroCrop NDVI — Report e Presentazione.pdf"
+logical_id = "7d27f2f0-8c3f-4f16-b1a3-46451d57ad9e"
 
 [[outputs]]
 id = "5KordYv_SoiveHbm4CbIi"
 uri = "file://.local/outputs/NitroCrop-NDVI---Report-e-Presentazione.pptx"
 type = "slides"
 title = "NitroCrop NDVI — Report e Presentazione.pptx"
+logical_id = "1c06c37e-7836-4534-a5a5-ba6ea3147eb8"
+
+[[outputs]]
+id = "4tXWJxuC4kuHvaEEEYoxF"
+uri = "file://generated-artifacts/supabase-inventory/rapporto-inventario-agri-precision.html"
+type = "html"
+title = "Agri Precision — Inventario Supabase"
+description = "Rapporto del 6 novembre 2026: inventario SQL in sola lettura, ruoli, privilegi, RLS, funzioni, rischi e limiti della verifica Data API. Nessuna credenziale inclusa."
+logical_id = "db8d75cd-5538-42e2-ab02-a68f3d685ffc"
+content_hash = "sha256:7dcbf87576df565f436f3301848f99a0b58d13fb9c0ab82813bdcc4668e2dd6f"
+size = 15219
+mtime_ms = 1793984936414
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/db8d75cd-5538-42e2-ab02-a68f3d685ffc/1636c946-d5f7-4c9c-8f50-5ad4500def2e"
+storage_version_token = "1793984937032918"
+content_type = "text/html"

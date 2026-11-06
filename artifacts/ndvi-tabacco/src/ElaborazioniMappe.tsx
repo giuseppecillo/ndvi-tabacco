@@ -22,9 +22,9 @@ import shp from "shpjs";
 import { Observation } from "./App";
 import {
   KmlPolygon, ControlPoint, PolyIdwResult, IdwGridPoint, findDoseCell,
-  parseKml, parseKmz, parseShpPolygons,
   computeIdwGrid, downloadShapefile, downloadGeoTiff,
 } from "./utils/geoUtils";
+import { canSpatialize, createPolygonImporter, emptyPolygonImport } from "./utils/polygonImport";
 import { NitrogenSavings } from "./components/NitrogenSavings";
 import { t, useLanguage } from "./i18n/runtime";
 
@@ -265,9 +265,11 @@ interface ShpRawFeature {
 
 export function ElaborazioniMappe({ osservazioni }: Props) {
   // KML state
-  const [polygons,      setPolygons]      = useState<KmlPolygon[]>([]);
-  const [kmlName,       setKmlName]       = useState("");
-  const [selPolyIdx,    setSelPolyIdx]    = useState<number | null>(null);
+  const [polygonImport, setPolygonImport] = useState(emptyPolygonImport);
+  const { polygons, filename: kmlName, selectedIndex: selPolyIdx } = polygonImport;
+  const setSelPolyIdx = (selectedIndex: number) => {
+    setPolygonImport(prev => prev.loading ? prev : { ...prev, selectedIndex });
+  };
 
   // Control-point source
   const [pointSource,   setPointSource]   = useState<PointSource>("db");
@@ -283,6 +285,16 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   // Results
   const [results,       setResults]       = useState<Map<number, PolyIdwResult>>(new Map());
   const [computing,     setComputing]     = useState(false);
+  const computationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const polygonImporter = useMemo(() => createPolygonImporter(setPolygonImport, () => {
+    clearTimeout(computationTimer.current);
+    setResults(new Map());
+    setComputing(false);
+  }), []);
+  useEffect(() => () => {
+    polygonImporter.invalidate();
+    clearTimeout(computationTimer.current);
+  }, [polygonImporter]);
 
   // UI
   const [showNotes,     setShowNotes]     = useState(false);
@@ -315,50 +327,10 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   const handlePolygonFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setKmlName(file.name);
-    setResults(new Map());
-
-    const ext = file.name.toLowerCase().split(".").pop() ?? "";
-
-    if (ext === "kml") {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        try {
-          const polys = parseKml(ev.target?.result as string);
-          setPolygons(polys);
-          setSelPolyIdx(polys.length ? 0 : null);
-          if (!polys.length) alert("Nessun poligono trovato nel file KML.");
-        } catch { alert("Errore nel parsing del file KML."); }
-      };
-      reader.readAsText(file);
-    } else if (ext === "kmz") {
-      const reader = new FileReader();
-      reader.onload = async ev => {
-        try {
-          const polys = await parseKmz(ev.target?.result as ArrayBuffer);
-          setPolygons(polys);
-          setSelPolyIdx(polys.length ? 0 : null);
-          if (!polys.length) alert("Nessun poligono trovato nel file KMZ.");
-        } catch (err) { alert(`Errore KMZ: ${(err as Error).message}`); }
-      };
-      reader.readAsArrayBuffer(file);
-    } else if (ext === "zip") {
-      const reader = new FileReader();
-      reader.onload = async ev => {
-        try {
-          const polys = await parseShpPolygons(ev.target?.result as ArrayBuffer);
-          setPolygons(polys);
-          setSelPolyIdx(polys.length ? 0 : null);
-        } catch (err) { alert(`Errore Shapefile: ${(err as Error).message}`); }
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      alert("Formato non supportato. Usa .kml, .kmz o .zip (Shapefile).");
-    }
-
     // Reset input so the same file can be re-selected
     e.target.value = "";
-  }, []);
+    void polygonImporter.load(file);
+  }, [polygonImporter]);
 
   // ── Shapefile upload ────────────────────────────────────────────────────────
 
@@ -424,15 +396,18 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   // ── IDW computation ─────────────────────────────────────────────────────────
 
   const runIdw = useCallback(() => {
-    if (selPolyIdx === null || !activeControls.length) return;
+    if (!canSpatialize(polygonImport, activeControls.length, computing) || selPolyIdx === null) return;
+    const version = polygonImporter.version;
     setComputing(true);
-    setTimeout(() => {
-      const poly   = polygons[selPolyIdx];
-      const result = computeIdwGrid(poly, activeControls, 10, power);
-      setResults(prev => new Map(prev).set(selPolyIdx, result));
-      setComputing(false);
+    computationTimer.current = setTimeout(() => {
+      if (version !== polygonImporter.version) return;
+      try {
+        const poly   = polygons[selPolyIdx];
+        const result = computeIdwGrid(poly, activeControls, 10, power);
+        setResults(prev => new Map(prev).set(selPolyIdx, result));
+      } finally { setComputing(false); }
     }, 50);
-  }, [selPolyIdx, polygons, activeControls, power]);
+  }, [polygonImport, computing, polygonImporter, selPolyIdx, polygons, activeControls, power]);
 
   const currentResult = selPolyIdx !== null ? results.get(selPolyIdx) : undefined;
 
@@ -504,6 +479,12 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
           </span>
           <input type="file" accept=".kml,.kmz,.zip" className="hidden" onChange={handlePolygonFile} />
         </label>
+        {polygonImport.loading && <p role="status">{t("Caricamento dei poligoni in corso…")}</p>}
+        {polygonImport.error && (
+          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">
+            {t(polygonImport.error)}
+          </p>
+        )}
 
         {polygons.length > 0 && (
           <div className="mt-3 space-y-1.5">
@@ -695,7 +676,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
       {/* ── Step 4: Run ─────────────────────────────────────────────────────── */}
       <button
         onClick={runIdw}
-        disabled={computing || selPolyIdx === null || activeControls.length === 0}
+        disabled={!canSpatialize(polygonImport, activeControls.length, computing)}
         className="w-full bg-green-800 hover:bg-green-900 active:bg-green-950 disabled:bg-stone-300 text-white font-bold py-4 rounded-2xl text-base transition-colors flex items-center justify-center gap-3"
       >
         {computing ? (

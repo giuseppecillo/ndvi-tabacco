@@ -95,6 +95,7 @@ export function findDoseCell(result: PolyIdwResult, lng: number, lat: number): I
  */
 export function parseKml(text: string): KmlPolygon[] {
   const doc = new DOMParser().parseFromString(text, "text/xml");
+  if (doc.querySelector("parsererror")) throw new Error("Invalid KML XML");
   const results: KmlPolygon[] = [];
 
   doc.querySelectorAll("Placemark").forEach((pm) => {

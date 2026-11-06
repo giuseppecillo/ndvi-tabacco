@@ -13,9 +13,11 @@ Destinazione dichiarata e confermata dal titolare:
 - Porta attesa: 5432; database atteso: postgres.
 - Username del pooler atteso: `postgres.bhnaarbzpmcniesxyldx`.
 
-**Stato attuale: adeguamento QA verificato offline; inventario NON ripreso.**
-Il titolare ha autorizzato l'adeguamento del solo programma, chiedendo una nuova
-autorizzazione prima dell'inventario completo. Rapporto delle modifiche:
+**Stato attuale: inventario SQL completato con autorizzazione separata.**
+Rapporto dei risultati e dei limiti, inclusa l'esposizione Data API non
+certificabile con le sole query autorizzate:
+[PHASE1_RESULTS.md](PHASE1_RESULTS.md).
+Nessuna fase successiva autorizzata o avviata. Rapporto dell'adeguamento QA:
 [READONLY_ADJUSTMENT.md](READONLY_ADJUSTMENT.md).
 
 Primo tentativo, senza CA specifica:
@@ -64,7 +66,9 @@ default, né rende readonly le altre sessioni amministrative.
 Al termine della diagnosi sono stati eseguiti ROLLBACK e chiusura della
 connessione, senza proseguire con l'inventario. L'adeguamento successivamente
 autorizzato cambia soltanto il runner e i suoi test: nessuna modifica server.
-L'inventario resta in attesa di autorizzazione; la diagnosi non lo avvia.
+La diagnosi non ha avviato l'inventario. Il titolare ha poi autorizzato
+separatamente l'esecuzione completa del programma verificato, con gli stessi
+vincoli e senza nuove query. L'esito è documentato nel rapporto dei risultati.
 
 ## Controlli verificati prima della connessione
 
@@ -124,8 +128,9 @@ pnpm --filter @workspace/api-server exec esbuild ../../lib/db/migration-preparat
 ```
 
 L'invocazione manuale seguente userà il solo Secret QA nel processo isolato,
-mai una URL come argomento. **La versione adeguata non è stata eseguita:**
-prima serve la nuova autorizzazione richiesta dal titolare.
+mai una URL come argomento. **La versione adeguata è stata eseguita una volta,
+con autorizzazione esplicita.** Una ripetizione o ulteriori operazioni non sono
+automaticamente autorizzate dall'esito positivo.
 
 ```sh
 node /tmp/nitrocrop-inventory.cjs --project-ref bhnaarbzpmcniesxyldx --host aws-0-eu-west-1.pooler.supabase.com --metadata-only --ca-file lib/db/migration-preparation/inventory/fixtures/supabase-root-2021.pem
