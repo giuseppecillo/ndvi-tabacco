@@ -1,3 +1,4 @@
+- [Migrazione protetta](migration-safety.md) — Unico Supabase, tre ruoli separati e Replit in sola lettura; continuità Clerk da verificare prima di procedere.
 - [IDW module architecture](idw-module.md) — Elaborazioni e Mappe uses UTM projection for 10 m grid, WGS84 for all I/O; shpjs for SHP reading, jszip for output packaging.
 - [GeoTIFF writer](geotiff-writer.md) — minimal Float32 GeoTIFF encoder implemented manually in geoUtils.ts; GDAL_NODATA tag (42113) required for QGIS/ArcGIS compatibility.
 - [App.tsx exports](app-exports.md) — TipoIntervento, TIPO_LABELS, Observation are exported; non-component exports cause Vite HMR full-reload (expected, not an error).
