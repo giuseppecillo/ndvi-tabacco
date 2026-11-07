@@ -790,13 +790,16 @@ describe("mappe sintetiche a cavallo dell'equatore", () => {
   // ~100 × 100 m on the central meridian of zone 33, far from a zone
   // boundary. Both fields AND both pairs of controls straddle latitude zero.
   // No observations, database, or external fixtures are used.
-  function fixture(centre: number) {
+  function fixture(centre: number, reversed = false, closed = false) {
+    const ring: KmlPolygon["ring"] = [
+      [14.99955, centre - 0.00045], [15.00045, centre - 0.00045],
+      [15.00045, centre + 0.00045], [14.99955, centre + 0.00045],
+    ];
+    if (reversed) ring.reverse();
+    if (closed) ring.push([...ring[0]]);
     return computeIdwGrid({
       name: "Equatore sintetico",
-      ring: [
-        [14.99955, centre - 0.00045], [15.00045, centre - 0.00045],
-        [15.00045, centre + 0.00045], [14.99955, centre + 0.00045],
-      ],
+      ring,
     }, [
       { obsId: "equator-south", cliente: "Sintetico", appezzamento: "Equatore",
         lng: 14.9998, lat: centre - 0.00025, dose: 20 },
@@ -826,16 +829,31 @@ describe("mappe sintetiche a cavallo dell'equatore", () => {
     assert.ok(north - Math.max(...points.map(p => p.lat)) < margin);
   }
 
-  for (const { centre, south } of [
-    { centre: 0.00005, south: false },
-    { centre: -0.00005, south: true },
+  for (const { label, centre, south, reversed, closed } of [
+    { label: "centro appena a nord", centre: 0.00005, south: false, reversed: false, closed: false },
+    { label: "centro appena a sud", centre: -0.00005, south: true, reversed: false, closed: false },
+    ...[false, true].flatMap(reversed => [false, true].map(closed => ({
+      label: `centro esattamente zero, anello ${reversed ? "invertito" : "originale"} ${closed ? "chiuso" : "aperto"}`,
+      centre: 0, south: false, reversed, closed,
+    }))),
   ]) {
-    describe(south ? "centro appena a sud" : "centro appena a nord", () => {
+    describe(label, () => {
       it("usa un unico emisfero UTM con celle di 10 m e dosi continue attraverso l'equatore", () => {
-        const result = fixture(centre);
+        const result = fixture(centre, reversed, closed);
         assert.equal(result.utmZone, 33);
         assert.equal(result.utmSouth, south);
         assert.deepEqual(result.bbox, [14.99955, centre - 0.00045, 15.00045, centre + 0.00045]);
+        if (centre === 0) {
+          assert.equal((result.bbox[1] + result.bbox[3]) / 2, 0, "centre is exactly zero, not merely near zero");
+          const baseline = fixture(0);
+          // Compare every coordinate and dose, not just the hemisphere flag:
+          // vertex order and a repeated closing vertex must not move the grid.
+          assert.deepEqual(result.grid, baseline.grid);
+          assert.deepEqual(result.stats, baseline.stats);
+          assert.deepEqual(result.cellSizeDeg, baseline.cellSizeDeg);
+          assert.ok(result.grid.some(p => p.utmY < 0), "northern reference keeps negative northings south of zero");
+          assert.ok(result.grid.some(p => p.utmY > 0));
+        }
         assertExtent(result.grid, result);
         assert.ok(result.controls[0].lat < 0 && result.controls[1].lat > 0);
         const minX = Math.min(...result.grid.map(p => p.utmX));
@@ -884,7 +902,7 @@ describe("mappe sintetiche a cavallo dell'equatore", () => {
       });
 
       it("riapre con shpjs lo Shapefile WGS84 conservando coordinate e dosi nei due emisferi", async () => {
-        const result = fixture(centre);
+        const result = fixture(centre, reversed, closed);
         const { blob } = await captureDownload(() => downloadShapefile(result));
         const buffer = await blob.arrayBuffer();
         const zip = await JSZip.loadAsync(buffer);
@@ -911,7 +929,7 @@ describe("mappe sintetiche a cavallo dell'equatore", () => {
       });
 
       it("riapre con geotiff il raster EPSG:4326 senza vuoti o dosi alterate all'equatore", async () => {
-        const result = fixture(centre);
+        const result = fixture(centre, reversed, closed);
         const { blob } = await captureDownload(() => downloadGeoTiff(result));
         const image = await (await readGeoTiff(await blob.arrayBuffer())).getImage();
         const [west, southLat, east, north] = result.bbox;
