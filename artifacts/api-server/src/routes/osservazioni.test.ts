@@ -6,6 +6,10 @@ import pool from "../lib/db";
 
 const pianoGranoValido = (): Record<string, unknown> => ({
   coltura: "grano duro",
+  varieta: "Redidenari",
+  resa: 50,
+  densitaValore: 385,
+  densitaUnita: "semi/m²",
   giorni: 130,
   bbch: "20–29",
   faseFonte: "BBCH confermato in campo",
@@ -55,6 +59,7 @@ test("standard grain accepts the frontend parity matrix, including clamped quota
           );
           const plan = {
             ...pianoGranoValido(), varieta: "Redidenari", resa: fixture.yield,
+            densitaValore: fixture.factor === 0.9 ? 192.5 : fixture.factor === 1.1 ? 577.5 : 385,
             giorni: phase.das, bbch: phase.bbch, faseFenologica: phase.label,
             n1: mean, n2: mean, n3: mean, n4: mean, n5: mean, media: mean,
             ottimale: phase.reference, discostamento: phase.reference - mean,
@@ -65,6 +70,174 @@ test("standard grain accepts the frontend parity matrix, including clamped quota
         }
       }
     }
+  }
+});
+
+// Independent varietal references: never derive expected PMG or totals from the
+// production module, otherwise app and API could share the same regression.
+const varietaStandard = [
+  { varieta: "Redidenari", semiMq: 385, pmg: 55.8 },
+  { varieta: "Telemaco", semiMq: 385, pmg: 53.2 },
+  { varieta: "President", semiMq: 325, pmg: 59.2 },
+  { varieta: "Federico II", semiMq: 350, pmg: 51.4 },
+  { varieta: "Egeo", semiMq: 385, pmg: 55.8 },
+  { varieta: "Minosse", semiMq: 405, pmg: 55.6 },
+  { varieta: "Spineto", semiMq: 425, pmg: 56.5 },
+  { varieta: "Farah", semiMq: 475, pmg: 56.8 },
+  { varieta: "Furio Camillo", semiMq: 425, pmg: 50.6 },
+  { varieta: "Marco Aurelio", semiMq: 425, pmg: 50.6 },
+  { varieta: "Nazareno", semiMq: 375, pmg: 45.3 },
+  { varieta: "Quadrato", semiMq: 425, pmg: 56.5 },
+  { varieta: "Giulio", semiMq: 385, pmg: 53.2 },
+];
+
+const pianoSemina = (input: Record<string, unknown>): Record<string, unknown> => ({
+  ...pianoGranoValido(),
+  giorni: 10, bbch: "00–09", faseFenologica: "Semina / emergenza",
+  n1: 0, n2: 0, n3: 0, n4: 0, n5: 0,
+  media: 0, ottimale: 0.27, discostamento: 0.27,
+  azotoGiaDistribuito: 0, dose: 31, quotaAzoto: 31,
+  ...input,
+});
+
+test("all standard varieties validate PMG conversions, yields and bounded density corrections", () => {
+  const yields = [
+    { resa: 0.1, totals: [0, 0, 0, 0, 0], doses: [0, 0, 0, 0, 0] },
+    { resa: 40, totals: [108, 120, 132, 115, 125], doses: [27, 27, 27, 27, 27] },
+    { resa: 50, totals: [135, 150, 165, 144, 156], doses: [28, 31, 34, 30, 32] },
+    { resa: 60, totals: [162, 180, 198, 173, 187], doses: [34, 36, 36, 36, 36] },
+    // Round yield * 3 first, then apply the density correction.
+    { resa: 50.17, totals: [136, 151, 166, 145, 157], doses: [28, 31, 35, 30, 33] },
+    { resa: 72, totals: [194, 216, 238, 207, 225], doses: [36, 36, 36, 36, 36] },
+  ];
+  for (const variety of varietaStandard) {
+    // The extremes are warnings in the app, not prohibitions: retain the
+    // existing +/-10% cap instead of inventing new agronomic limits.
+    for (const [ratio, index] of [[0.01, 0], [0.6, 0], [0.84, 3], [1, 1], [1.16, 4], [1.4, 2], [3, 2]]) {
+      const semiMq = variety.semiMq * ratio;
+      for (const [densitaUnita, densitaValore] of [
+        ["semi/m²", semiMq],
+        ["semi/ha", semiMq * 10_000],
+        ["kg/ha", semiMq * variety.pmg / 100],
+      ] as const) {
+        for (const fixture of yields) {
+          const plan = pianoSemina({
+            varieta: variety.varieta, resa: fixture.resa, densitaUnita, densitaValore,
+            azotoTotale: fixture.totals[index], dose: fixture.doses[index], quotaAzoto: fixture.doses[index],
+            // A client-supplied equivalent must not influence the calculation.
+            pianteHaEquivalenti: 1,
+          });
+          const label = JSON.stringify({ variety, ratio, densitaUnita, fixture });
+          assert.equal(erroreOsservazioneGrano(plan), null, label);
+          assert.match(erroreOsservazioneGrano({
+            ...plan, azotoTotale: fixture.totals[index] + 1,
+          }) ?? "", /fabbisogno grano/, label);
+          assert.match(erroreOsservazioneGrano({
+            ...plan, azotoTotale: fixture.totals[index] - 1,
+          }) ?? "", /fabbisogno grano|non sono validi/, label);
+        }
+      }
+    }
+  }
+});
+
+test("preserves the app's existing PMG floating-point rounding at half-unit boundaries", () => {
+  // The original kg/ha conversion produces 389.99999999999994 seeds/m²,
+  // not exactly 390. Do not introduce an epsilon that changes agronomic advice.
+  for (const [densitaUnita, densitaValore, azotoTotale, dose] of [
+    ["kg/ha", 230.88, 157, 33],
+    ["semi/m²", 390, 158, 33],
+    ["semi/ha", 3_900_000, 158, 33],
+  ]) {
+    assert.equal(erroreOsservazioneGrano(pianoSemina({
+      varieta: "President", resa: 50, densitaUnita, densitaValore, azotoTotale, dose, quotaAzoto: dose,
+    })), null);
+  }
+});
+
+test("standard grain rejects missing or invalid yield, density and variety without defaults", () => {
+  for (const { varieta, semiMq } of varietaStandard) {
+    const plan = { ...pianoGranoValido(), varieta, densitaValore: semiMq };
+    for (const key of ["resa", "densitaValore"]) {
+      for (const value of [undefined, null, "", "  ", true, false, NaN, Infinity, -Infinity, "abc", {}, [], 0, -1]) {
+        assert.match(erroreOsservazioneGrano({ ...plan, [key]: value }) ?? "", /Resa e densità/, `${varieta}: ${key}=${String(value)}`);
+      }
+    }
+    for (const densitaUnita of [undefined, null, "", "piante/ha", "semi/m2", "KG/HA", {}, true]) {
+      assert.match(erroreOsservazioneGrano({ ...plan, densitaUnita }) ?? "", /Resa e densità/);
+    }
+    for (const azotoTotale of [undefined, null, "", true, NaN, Infinity]) {
+      assert.match(erroreOsservazioneGrano({ ...plan, azotoTotale }) ?? "", /non sono completi/);
+    }
+  }
+  for (const varieta of [undefined, null, "", "sconosciuta", "redidenari", "toString", "__proto__", "constructor", {}, true]) {
+    assert.match(erroreOsservazioneGrano({ ...pianoGranoValido(), varieta }) ?? "", /varietà/);
+  }
+  // Retain numeric string handling at the API boundary.
+  assert.equal(erroreOsservazioneGrano({
+    ...pianoGranoValido(), resa: "50", densitaValore: "385", azotoTotale: "150",
+  }), null);
+  for (const input of [
+    { resa: Number.MAX_VALUE },
+    { densitaValore: Number.MAX_VALUE, densitaUnita: "kg/ha" },
+  ]) {
+    assert.ok(erroreOsservazioneGrano({ ...pianoGranoValido(), ...input }));
+  }
+  // Same tolerance as the existing RGT NATUR and dose checks.
+  assert.equal(erroreOsservazioneGrano({ ...pianoGranoValido(), azotoTotale: 150.009 }), null);
+  assert.match(erroreOsservazioneGrano({ ...pianoGranoValido(), azotoTotale: 150.02 }) ?? "", /fabbisogno grano/);
+});
+
+test("rejects standard totals with consistently forged doses, even when the dose is zero", () => {
+  const plan = pianoSemina({ azotoTotale: 150 });
+  assert.equal(erroreOsservazioneGrano(plan), null);
+  for (const input of [
+    { azotoTotale: 300, dose: 36, quotaAzoto: 36 },
+    { azotoTotale: 108, dose: 27, quotaAzoto: 27 },
+    { azotoTotale: 300, azotoGiaDistribuito: 300, dose: 0, quotaAzoto: 0 },
+    { azotoTotale: 300, n1: 0.27, n2: 0.27, n3: 0.27, n4: 0.27, n5: 0.27, media: 0.27, discostamento: 0, dose: 0, quotaAzoto: 0 },
+    { resa: 60 },
+    { densitaValore: 577.5 },
+    // Telemaco's PMG, incorrectly reused for Redidenari, would give 150 N.
+    { densitaUnita: "kg/ha", densitaValore: 204.82 },
+  ]) {
+    assert.match(erroreOsservazioneGrano({ ...plan, ...input }) ?? "", /fabbisogno grano/);
+  }
+});
+
+test("POST rejects forged standard nitrogen plans before any database write, including legacy crop aliases", async () => {
+  const layer = router.stack.find((item) => item.route?.path === "/osservazioni"
+    && item.route.stack.some((handler) => handler.method === "post"));
+  assert.ok(layer?.route);
+  const save = layer.route.stack[0].handle;
+  const query = mock.method(pool, "query", async () => {
+    throw new Error("Invalid plans must never reach PostgreSQL");
+  });
+  try {
+    for (const cropField of ["coltura", "tipoIntervento"]) {
+      for (const input of [
+        { azotoTotale: 300, dose: 36, quotaAzoto: 36 },
+        { azotoTotale: 108, dose: 27, quotaAzoto: 27 },
+        { resa: undefined }, { densitaValore: null }, { densitaUnita: "piante/ha" }, { varieta: "unknown" },
+      ]) {
+        const body = pianoSemina({ id: "qa-forged-standard", ...input });
+        delete body.coltura;
+        body[cropField] = "grano duro";
+        let status = 0;
+        let payload: unknown;
+        const response = {
+          locals: { account: { id: "qa-synthetic-owner" } },
+          status(value: number) { status = value; return this; },
+          json(value: unknown) { payload = value; return this; },
+        } as unknown as Response;
+        await save({ body } as Request, response, () => {});
+        assert.equal(status, 400, JSON.stringify({ cropField, input }));
+        assert.ok((payload as { error: string }).error);
+      }
+    }
+    assert.equal(query.mock.callCount(), 0);
+  } finally {
+    query.mock.restore();
   }
 });
 
@@ -83,6 +256,7 @@ test("save dispatch validates both coltura and legacy tipoIntervento without con
       for (const dose of [14, 13]) {
         const body: Record<string, unknown> = {
           ...pianoGranoValido(), id: "qa-standard-parity", varieta: "Telemaco",
+          resa: 40, densitaValore: 385,
           giorni: 10, bbch: "00–09", faseFenologica: "Semina / emergenza",
           n1: 0.135, n2: 0.135, n3: 0.135, n4: 0.135, n5: 0.135,
           media: 0.135, ottimale: 0.27, discostamento: 0.135,
@@ -138,6 +312,23 @@ test("RGT NATUR validates its own phase quotas and rejects tampered plans", () =
       media: reference, discostamento: 0, dose: 0, quotaAzoto: 0,
     }), null);
     assert.equal(erroreOsservazioneGrano({ ...plan, azotoGiaDistribuito: 175, dose: 5, quotaAzoto: 5 }), null);
+  }
+});
+
+test("RGT NATUR retains its yield and density checks in all supported units", () => {
+  for (const [resa, total, quota] of [[40, 120, 20], [50, 150, 25], [60, 180, 30]]) {
+    for (const [densitaUnita, densitaValore] of [
+      ["kg/ha", 220], ["semi/m²", 440], ["semi/ha", 4_400_000],
+    ]) {
+      const plan = pianoSemina({
+        varieta: "RGT NATUR", resa, densitaUnita, densitaValore,
+        azotoTotale: total, dose: quota, quotaAzoto: quota,
+      });
+      assert.equal(erroreOsservazioneGrano(plan), null);
+      assert.match(erroreOsservazioneGrano({ ...plan, azotoTotale: total + 1 }) ?? "", /fabbisogno grano/);
+      assert.match(erroreOsservazioneGrano({ ...plan, resa: undefined }) ?? "", /Resa e densità/);
+      assert.match(erroreOsservazioneGrano({ ...plan, densitaValore: null }) ?? "", /Resa e densità/);
+    }
   }
 });
 

@@ -1,5 +1,12 @@
 // Modello agronomico puro condiviso da app e API. La validazione degli input
 // e la conferma in campo del BBCH restano responsabilità dei chiamanti.
+export {
+  GRANO_DURO_DB, granoSemiMqDaKgHa, granoKgHaDaSemiMq, calcolaDensitaGrano,
+  fattoreAzotoGrano, type DensitaUnita, type GranoVarietaDati,
+} from "./density";
+import { FASI_RGT_NATUR } from "./varietal-phases";
+export { FASI_RGT_NATUR } from "./varietal-phases";
+
 export type FaseGranoLabel = "Semina / emergenza" | "Accestimento" | "Inizio levata" | "Foglia a bandiera" | "Levata" | "Botticella";
 
 export type FaseGrano = {
@@ -18,22 +25,12 @@ export const FASI_GRANO: FaseGrano[] = [
   { label: "Foglia a bandiera", bbch: "37–39", azotoMin: 20, azotoMax: 30 },
 ];
 
-export const FASI_RGT_NATUR: FaseGrano[] = [
-  { label: "Semina / emergenza", bbch: "00–09", azotoMin: 30, azotoMax: 30, quotaSulTotale: 1 / 6 },
-  { label: "Levata", bbch: "30–39", azotoMin: 90, azotoMax: 90, quotaSulTotale: 1 / 2 },
-  { label: "Botticella", bbch: "41–49", azotoMin: 60, azotoMax: 60, quotaSulTotale: 1 / 3 },
-];
-
 export function fasiGranoPerVarieta(varieta?: string): FaseGrano[] {
   return varieta === "RGT NATUR" ? FASI_RGT_NATUR : FASI_GRANO;
 }
 
 export function faseGranoDaBbch(bbch: string, varieta?: string): FaseGrano | null {
   return fasiGranoPerVarieta(varieta).find((fase) => fase.bbch === bbch) ?? null;
-}
-
-export function fattoreAzotoGrano(rapportoDensita: number): number {
-  return Math.max(0.90, Math.min(1.10, 0.75 + rapportoDensita * 0.25));
 }
 
 export function calcolaFabbisognoNGrano(resaQHa: number, fattoreDensita: number): { base: number; corretto: number } {

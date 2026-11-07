@@ -5,7 +5,7 @@ import { riferimentoNdviTabacco, calcolaDoseNTabacco } from "@workspace/tobacco-
 import { requireAccount, requirePrivacyAck, requireSubscription } from "../middlewares/access";
 import {
   faseGranoDaBbch, calcolaDoseNGrano, calcolaFabbisognoNGrano,
-  fattoreAzotoGrano, ndviOttimaleGrano,
+  GRANO_DURO_DB, calcolaDensitaGrano, ndviOttimaleGrano,
 } from "@workspace/grain-calculations";
 
 const router = Router();
@@ -101,20 +101,21 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
   if (das < 0 || azotoTotale < 0 || azotoGiaDistribuito < 0 || dose < 0 || quotaAzoto < 0 || ottimale < 0 || ottimale > 1) {
     return "I valori del piano azoto grano non sono validi.";
   }
-  if (o.varieta === "RGT NATUR") {
-    const densita = numero(o.densitaValore);
-    const resa = numero(o.resa);
-    const semiMq = densita === null ? NaN : o.densitaUnita === "kg/ha" ? densita * 2
-      : o.densitaUnita === "semi/m²" ? densita
-      : o.densitaUnita === "semi/ha" ? densita / 10_000 : NaN;
-    if (!Number.isFinite(semiMq) || semiMq <= 0 || resa === null || resa <= 0) {
-      return "Resa e densità di RGT NATUR non sono valide.";
-    }
-    const fattore = fattoreAzotoGrano(semiMq / 440);
-    const totaleAtteso = calcolaFabbisognoNGrano(resa, fattore).corretto;
-    if (Math.abs(azotoTotale - totaleAtteso) > 0.01) {
-      return "Il fabbisogno RGT NATUR non corrisponde alla resa e alla densità.";
-    }
+  if (typeof o.varieta !== "string" || !Object.hasOwn(GRANO_DURO_DB, o.varieta)) {
+    return "La varietà di grano duro non è supportata.";
+  }
+  const densita = numero(o.densitaValore);
+  const resa = numero(o.resa);
+  const unita = o.densitaUnita;
+  if (densita === null || densita <= 0 || resa === null || resa <= 0
+    || (unita !== "kg/ha" && unita !== "semi/m²" && unita !== "semi/ha")) {
+    return "Resa e densità del grano duro non sono valide.";
+  }
+  const { semiMqEquivalenti, fattoreAzoto } = calcolaDensitaGrano(densita, unita, GRANO_DURO_DB[o.varieta]);
+  const totaleAtteso = calcolaFabbisognoNGrano(resa, fattoreAzoto).corretto;
+  if (!Number.isFinite(semiMqEquivalenti) || !Number.isFinite(totaleAtteso)
+    || Math.abs(azotoTotale - totaleAtteso) > 0.01) {
+    return "Il fabbisogno grano non corrisponde alla resa e alla densità.";
   }
 
   const mediaCalcolata = (letture as number[]).reduce((somma, valore) => somma + valore, 0) / letture.length;
