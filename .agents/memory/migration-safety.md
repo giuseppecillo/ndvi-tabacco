@@ -3,7 +3,7 @@ name: Vincoli di migrazione e sviluppo
 description: Vincoli richiesti dal titolare per Supabase, sviluppo su Replit e continuità delle identità Clerk.
 ---
 
-Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL: app_runtime per l'applicazione Replit pubblicata, app_readonly per controlli di sviluppo in sola lettura e app_migrator per modifiche strutturali autorizzate. Netlify è escluso dalla fase attuale; sviluppo, esecuzione e pubblicazione restano su Replit con Clerk invariato.
+Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL: app_runtime per l'applicazione Replit pubblicata, app_readonly per controlli di sviluppo in sola lettura e app_migrator per modifiche strutturali autorizzate. Netlify è escluso dalla fase attuale; sviluppo, esecuzione e pubblicazione restano su Replit con Clerk invariato. Per questa migrazione non creare un secondo database o progetto Supabase, nemmeno per il collaudo.
 
 **Why:** evitare che Replit Agent possa modificare accidentalmente i dati di produzione.
 
