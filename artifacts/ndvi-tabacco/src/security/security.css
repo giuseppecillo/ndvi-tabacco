@@ -101,8 +101,7 @@ html, body { overflow-x: clip; max-width: 100%; }
   --nc-ink: #12301d; --nc-leaf: #1d5a34; --nc-leaf-2: #2a7346; --nc-muted: #3d5a46;
   --nc-paper: #f3faee; --nc-paper-2: #e2f0d8; --nc-line: #b9d6a8; --nc-sage: #9fc28a;
   position: relative; isolation: isolate; color: var(--nc-ink); background-color: #e9f4e1;
-  background-image: radial-gradient(110% 70% at 0% 100%, rgba(159,194,138,.35), transparent 60%),
-    repeating-radial-gradient(circle at 85% 15%, transparent 0 22px, rgba(42,115,70,.08) 22px 23px);
+  background-image: none;
 }
 .nc-signin-brand, .nc-signin-lang {
   background: #fbfef8; border: 1px solid var(--nc-line); border-radius: 999px;
