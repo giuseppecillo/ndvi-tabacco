@@ -786,6 +786,212 @@ describe("campi irregolari sintetici a cavallo di 12° est", () => {
   }
 });
 
+describe("mappe sintetiche a cavallo dell'equatore", () => {
+  // ~100 × 100 m on the central meridian of zone 33, far from a zone
+  // boundary. Both fields AND both pairs of controls straddle latitude zero.
+  // No observations, database, or external fixtures are used.
+  function fixture(centre: number) {
+    return computeIdwGrid({
+      name: "Equatore sintetico",
+      ring: [
+        [14.99955, centre - 0.00045], [15.00045, centre - 0.00045],
+        [15.00045, centre + 0.00045], [14.99955, centre + 0.00045],
+      ],
+    }, [
+      { obsId: "equator-south", cliente: "Sintetico", appezzamento: "Equatore",
+        lng: 14.9998, lat: centre - 0.00025, dose: 20 },
+      { obsId: "equator-north", cliente: "Sintetico", appezzamento: "Equatore",
+        lng: 15.0002, lat: centre + 0.00025, dose: 40 },
+    ], 10, 2);
+  }
+  // Independent WGS84 equatorial scales (a*pi/180 and a*(1-e²)*pi/180).
+  // At these sub-100 m offsets, curvature corrections are negligible.
+  // Do not use proj4 or the production IDW as the expected-value oracle.
+  const metresLon = 111_319.490793;
+  const metresLat = 110_574.275822;
+  function metres(a: { lng: number; lat: number }, b: { lng: number; lat: number }) {
+    return Math.hypot((a.lng - b.lng) * metresLon, (a.lat - b.lat) * metresLat);
+  }
+  function assertExtent(points: Array<{ lng: number; lat: number }>, result: PolyIdwResult) {
+    const [west, south, east, north] = result.bbox;
+    assert.ok(points.length >= 90 && points.length <= 110, "roughly 1 ha, not a false-northing-sized grid");
+    assert.ok(points.some(p => p.lat < 0) && points.some(p => p.lat > 0), "both hemispheres survive");
+    for (const p of points) {
+      assert.ok(p.lng >= west && p.lng <= east && p.lat >= south && p.lat <= north);
+    }
+    const margin = 0.0001; // about one 10 m cell at each edge
+    assert.ok(Math.min(...points.map(p => p.lng)) - west < margin);
+    assert.ok(east - Math.max(...points.map(p => p.lng)) < margin);
+    assert.ok(Math.min(...points.map(p => p.lat)) - south < margin);
+    assert.ok(north - Math.max(...points.map(p => p.lat)) < margin);
+  }
+
+  for (const { centre, south } of [
+    { centre: 0.00005, south: false },
+    { centre: -0.00005, south: true },
+  ]) {
+    describe(south ? "centro appena a sud" : "centro appena a nord", () => {
+      it("usa un unico emisfero UTM con celle di 10 m e dosi continue attraverso l'equatore", () => {
+        const result = fixture(centre);
+        assert.equal(result.utmZone, 33);
+        assert.equal(result.utmSouth, south);
+        assert.deepEqual(result.bbox, [14.99955, centre - 0.00045, 15.00045, centre + 0.00045]);
+        assertExtent(result.grid, result);
+        assert.ok(result.controls[0].lat < 0 && result.controls[1].lat > 0);
+        const minX = Math.min(...result.grid.map(p => p.utmX));
+        const minY = Math.min(...result.grid.map(p => p.utmY));
+        const cells = new Map(result.grid.map(p => {
+          const col = (p.utmX - minX) / 10;
+          const row = (p.utmY - minY) / 10;
+          assert.ok(Math.abs(col - Math.round(col)) < 1e-7);
+          assert.ok(Math.abs(row - Math.round(row)) < 1e-7);
+          // One false northing for the entire field, NOT one per vertex,
+          // control or cell. Northern UTM permits negative northings here;
+          // southern UTM permits values above 10,000,000 m north of zero.
+          const northing = p.utmY - (south ? 10_000_000 : 0);
+          assert.ok(Math.abs(northing - p.lat * metresLat * 0.9996) < 0.01);
+          assert.ok(Math.abs(p.utmX - 500_000 - (p.lng - 15) * metresLon * 0.9996) < 0.01);
+          const weights = result.controls.map(c => 1 / metres(p, c) ** 2);
+          const expected = weights.reduce((sum, w, i) => sum + w * result.controls[i].dose, 0)
+            / weights.reduce((sum, w) => sum + w, 0);
+          assert.ok(Number.isFinite(p.dose) && p.dose >= 20 && p.dose <= 40);
+          assert.ok(Math.abs(p.dose - expected) < 0.001, "independent metric IDW on both sides");
+          return [`${Math.round(col)},${Math.round(row)}`, p] as const;
+        }));
+        assert.equal(cells.size, result.grid.length);
+        const visited = new Set<string>();
+        const queue = [cells.keys().next().value!];
+        let crossingEdges = 0;
+        for (let i = 0; i < queue.length; i++) {
+          const key = queue[i];
+          if (visited.has(key)) continue;
+          visited.add(key);
+          const p = cells.get(key)!;
+          const [col, row] = key.split(",").map(Number);
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const neighbourKey = `${col + dx},${row + dy}`;
+            const neighbour = cells.get(neighbourKey);
+            if (!neighbour) continue;
+            assert.ok(Math.abs(metres(p, neighbour) - 10) < 0.01, "physical spacing stays 10 m");
+            assert.ok(Math.abs(p.dose - neighbour.dose) < 8, "no dose jump at latitude zero");
+            if ((p.lat < 0) !== (neighbour.lat < 0)) crossingEdges++;
+            if (!visited.has(neighbourKey)) queue.push(neighbourKey);
+          }
+        }
+        assert.ok(crossingEdges > 0, "actually checked neighbours across the equator");
+        assert.equal(visited.size, cells.size, "no disconnected hemisphere");
+        assert.equal(result.stats.count, cells.size);
+      });
+
+      it("riapre con shpjs lo Shapefile WGS84 conservando coordinate e dosi nei due emisferi", async () => {
+        const result = fixture(centre);
+        const { blob } = await captureDownload(() => downloadShapefile(result));
+        const buffer = await blob.arrayBuffer();
+        const zip = await JSZip.loadAsync(buffer);
+        const prj = Object.values(zip.files).filter(entry => entry.name.endsWith(".prj"));
+        assert.equal(prj.length, 1);
+        const wkt = await prj[0].async("string");
+        assert.match(wkt, /^GEOGCS\["GCS_WGS_1984"/); // ESRI WKT equivalent of EPSG:4326
+        assert.doesNotMatch(wkt, /PROJCS|UTM/);
+        const collection = await shpjs(buffer);
+        assert.ok(!Array.isArray(collection), "one exported layer");
+        assert.equal(collection.features.length, result.grid.length);
+        const points = collection.features.map((feature, index) => {
+          const expected = result.grid[index];
+          assert.equal(feature.geometry.type, "Point");
+          const [lng, lat] = feature.geometry.coordinates;
+          assert.ok(Math.abs(lng - expected.lng) < EPSILON);
+          assert.ok(Math.abs(lat - expected.lat) < EPSILON);
+          assert.equal(feature.properties.DOSE_IDW, Number(expected.dose.toFixed(4)));
+          assert.equal(feature.properties.LAT, Number(expected.lat.toFixed(8)));
+          assert.equal(feature.properties.LNG, Number(expected.lng.toFixed(8)));
+          return { lng, lat };
+        });
+        assertExtent(points, result);
+      });
+
+      it("riapre con geotiff il raster EPSG:4326 senza vuoti o dosi alterate all'equatore", async () => {
+        const result = fixture(centre);
+        const { blob } = await captureDownload(() => downloadGeoTiff(result));
+        const image = await (await readGeoTiff(await blob.arrayBuffer())).getImage();
+        const [west, southLat, east, north] = result.bbox;
+        const { lon, lat } = result.cellSizeDeg;
+        const cols = Math.ceil((east - west) / lon);
+        const rows = Math.ceil((north - southLat) / lat);
+        assert.equal(image.getWidth(), cols);
+        assert.equal(image.getHeight(), rows);
+        assert.ok(cols >= 10 && cols <= 11 && rows >= 10 && rows <= 11);
+        assert.equal(image.getGeoKeys().GeographicTypeGeoKey, 4326);
+        assert.equal(image.getGeoKeys().GTModelTypeGeoKey, 2);
+        assert.equal(image.getGeoKeys().GTRasterTypeGeoKey, 1);
+        assert.deepEqual(image.getOrigin(), [west, north, 0]);
+        assert.deepEqual(image.getResolution(), [lon, -lat, 0]);
+        const bounds = image.getBoundingBox();
+        assert.ok(Math.abs(bounds[0] - west) < EPSILON && Math.abs(bounds[3] - north) < EPSILON);
+        assert.ok(bounds[2] >= east && bounds[2] - east < lon);
+        assert.ok(bounds[1] <= southLat && southLat - bounds[1] < lat);
+        assert.ok(bounds[1] < 0 && bounds[3] > 0);
+        assert.equal(image.getGDALNoData(), -9999);
+        const expected = new Float32Array(cols * rows).fill(-9999);
+        for (const p of result.grid) {
+          const col = Math.floor((p.lng - west) / lon);
+          const row = Math.floor((north - p.lat) / lat);
+          assert.ok(col >= 0 && col < cols && row >= 0 && row < rows);
+          if (west + (col + 0.5) * lon >= east || north - (row + 0.5) * lat <= southLat) continue;
+          const index = row * cols + col;
+          expected[index] = Math.max(expected[index], Math.fround(p.dose));
+        }
+        const raster = await image.readRasters({ interleave: true });
+        assert.deepEqual(Array.from(raster), Array.from(expected));
+        const points: Array<{ lng: number; lat: number }> = [];
+        const validRows = new Set<number>();
+        let crossingEdges = 0;
+        for (let row = 0; row < rows; row++) {
+          const validCols: number[] = [];
+          for (let col = 0; col < cols; col++) {
+            const value = raster[row * cols + col];
+            if (value === -9999) continue;
+            assert.ok(Number.isFinite(value) && value >= 20 && value <= 40);
+            const latitude = north - (row + 0.5) * lat;
+            validCols.push(col);
+            validRows.add(row);
+            points.push({ lng: west + (col + 0.5) * lon, lat: latitude });
+            if (row + 1 < rows && raster[(row + 1) * cols + col] !== -9999
+              && (latitude < 0) !== (latitude - lat < 0)) {
+              crossingEdges++;
+              assert.ok(Math.abs(value - raster[(row + 1) * cols + col]) < 8);
+            }
+          }
+          if (validCols.length) assert.equal(validCols.length, validCols.at(-1)! - validCols[0] + 1);
+        }
+        assert.equal(validRows.size, Math.max(...validRows) - Math.min(...validRows) + 1, "no missing raster row");
+        assert.ok(crossingEdges > 0, "adjacent valid pixels bridge latitude zero");
+        assertExtent(points, result);
+      });
+    });
+  }
+
+  it("non cambia scala o dosi passando dal riferimento UTM nord a quello sud", () => {
+    const north = fixture(0.00005);
+    const south = fixture(-0.00005);
+    assert.equal(north.utmSouth, false);
+    assert.equal(south.utmSouth, true);
+    assert.deepEqual(north.cellSizeDeg, south.cellSizeDeg);
+    assert.equal(north.grid.length, south.grid.length);
+    for (const [index, n] of north.grid.entries()) {
+      const s = south.grid[index];
+      assert.ok(Math.abs(n.lng - s.lng) < EPSILON);
+      assert.ok(Math.abs(n.lat - s.lat - 0.0001) < EPSILON);
+      assert.ok(Math.abs(n.utmX - s.utmX) < 0.001);
+      assert.ok(Math.abs(s.utmY - n.utmY - 10_000_000 + 0.0001 * metresLat * 0.9996) < 0.001);
+      assert.ok(Math.abs(n.dose - s.dose) < 0.001, "false northing cannot change the weights");
+    }
+    for (const key of ["min", "max", "mean"] as const) {
+      assert.ok(Math.abs(north.stats[key] - south.stats[key]) < 0.001);
+    }
+  });
+});
+
 describe("export agronomici IDW", () => {
   for (const mixed of [false, true]) {
     describe(mixed ? "dosi miste zero e positive" : "dosi interamente zero", () => {
