@@ -8,6 +8,23 @@ import { POLYGON_FORMAT_ERROR, POLYGON_IMPORT_ERROR } from "../utils/polygonImpo
 
 afterEach(() => setLanguage("it"));
 
+test("Sign-in introductory copy is concise in all supported languages", () => {
+  const root = readFileSync(new URL("../security/SecurityRoot.tsx", import.meta.url), "utf8");
+  assert.ok(root.includes("Supporto alla fertilizzazione azotata."));
+  assert.ok(root.includes("Accesso riservato agli utenti."));
+  assert.ok(!root.includes("Supporto alla fertilizzazione azotata di grano e tabacco."));
+  assert.ok(!root.includes("Accesso riservato agli utenti autorizzati dall’amministratore."));
+  for (const [language, support, access] of [
+    ["it", "Supporto alla fertilizzazione azotata.", "Accesso riservato agli utenti."],
+    ["en", "Nitrogen fertilization support.", "Access restricted to users."],
+    ["es", "Apoyo a la fertilización nitrogenada.", "Acceso restringido a usuarios."],
+  ] as const) {
+    setLanguage(language);
+    assert.equal(t("Supporto alla fertilizzazione azotata."), support);
+    assert.equal(t("Accesso riservato agli utenti."), access);
+  }
+});
+
 test("polygon import counts, progress and failures translate without changing filenames", () => {
   for (const [language, single, plural] of [
     ["en", "1 polygon detected", "3 polygons detected"],

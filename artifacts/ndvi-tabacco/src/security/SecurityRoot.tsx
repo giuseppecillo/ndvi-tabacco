@@ -100,8 +100,8 @@ function SignInPage({ embedded = false }: { embedded?: boolean }) {
       <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5"><Brand /><LanguageSelector /></header>
       <main className="mx-auto w-full max-w-[480px] px-4 pb-6">
         <h1 className="mb-5 text-center text-sm text-[var(--nc-muted)]">
-          Supporto alla fertilizzazione azotata di grano e tabacco.
-          <span className="mt-1 block">Accesso riservato agli utenti autorizzati dall’amministratore.</span>
+          Supporto alla fertilizzazione azotata.
+          <span className="mt-1 block">Accesso riservato agli utenti.</span>
         </h1>
         {embedded
           // Root is a public page, not a Clerk route prefix. Hash routing
