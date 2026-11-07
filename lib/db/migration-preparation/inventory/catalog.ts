@@ -1,8 +1,11 @@
 /**
- * Fixed, catalog-only statements. No table contents, defaults, policy
- * expressions, function bodies, server/user-mapping options or passwords.
+ * Original inventory statements exclude defaults, policy expressions and
+ * function bodies. The separately authorized point-1 mode may deparse only
+ * the five tables' metadata and the exact approved event-trigger routine.
+ * Neither mode reads table contents, server/user-mapping options or passwords.
  */
 import { InventoryBlocked } from "./guard";
+import { POINT1_QUERIES } from "./point1-queries";
 
 export const METADATA_QUERIES = Object.freeze({
   identity: `SELECT pg_catalog.current_database() AS database,
@@ -108,6 +111,7 @@ export const SESSION_DIAGNOSTIC_QUERY = `SELECT pg_catalog.current_database() AS
 export const BEGIN_READ_ONLY = "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY";
 export const READ_ONLY_PROBE = "SELECT pg_catalog.current_setting('transaction_read_only') AS transaction_read_only";
 const authorizedSelects = new Set<string>([...Object.values(METADATA_QUERIES), SESSION_DIAGNOSTIC_QUERY]);
+const point1AuthorizedSelects = new Set<string>([METADATA_QUERIES.identity, ...Object.values(POINT1_QUERIES)]);
 type CatalogSelect = (sql: string) => ReturnType<CatalogClient["query"]>;
 
 /**
@@ -119,10 +123,19 @@ export async function withReadOnlyCatalog<T>(
   client: CatalogClient,
   read: (select: CatalogSelect) => Promise<T>,
 ): Promise<T> {
+  return withAllowedReadOnlyCatalog(client, read, authorizedSelects);
+}
+
+/** Not exported: callers cannot supply an arbitrary query allowlist. */
+async function withAllowedReadOnlyCatalog<T>(
+  client: CatalogClient,
+  read: (select: CatalogSelect) => Promise<T>,
+  allowed: ReadonlySet<string>,
+): Promise<T> {
   try {
     await client.query(BEGIN_READ_ONLY);
     const select: CatalogSelect = async sql => {
-      if (!authorizedSelects.has(sql)) throw new InventoryBlocked("UNAUTHORIZED_CATALOG_QUERY");
+      if (!allowed.has(sql)) throw new InventoryBlocked("UNAUTHORIZED_CATALOG_QUERY");
       const { rows } = await client.query(READ_ONLY_PROBE);
       if (rows.length !== 1 || rows[0].transaction_read_only !== "on") {
         throw new InventoryBlocked("TRANSACTION_NOT_READ_ONLY");
@@ -185,4 +198,32 @@ export async function readMetadata(client: CatalogClient) {
     }
     return result;
   });
+}
+
+/** Explicitly authorized migration-point-1 subset; no full inventory repeated. */
+export async function readPoint1Metadata(client: CatalogClient) {
+  return withAllowedReadOnlyCatalog(client, async select => {
+    const identity = (await select(METADATA_QUERIES.identity)).rows;
+    if (identity.length !== 1 || identity[0].database !== "postgres" ||
+        identity[0].current_user !== "postgres" || identity[0].session_user !== "postgres" ||
+        identity[0].transaction_read_only !== "on") {
+      throw new InventoryBlocked("SERVER_IDENTITY_OR_READONLY_MISMATCH");
+    }
+    const metadata: Record<string, Record<string, unknown>[]> = { identity };
+    for (const [name, sql] of Object.entries(POINT1_QUERIES)) {
+      const { rows } = await select(sql);
+      if (rows.length > (name === "applicationRelations" ? 5 : 500)) {
+        throw new InventoryBlocked("METADATA_LIMIT_EXCEEDED");
+      }
+      metadata[name] = rows;
+    }
+    const routine = metadata.rlsRoutine, trigger = metadata.rlsEventTrigger;
+    if (routine.length !== 1 || trigger.length !== 1 ||
+        routine[0].routine_oid !== trigger[0].routine_oid ||
+        routine[0].result_type !== "event_trigger" || trigger[0].result_type !== "event_trigger" ||
+        typeof routine[0].definition !== "string" || !routine[0].definition.trim()) {
+      throw new InventoryBlocked("POINT1_TRIGGER_METADATA_INCOMPLETE");
+    }
+    return metadata;
+  }, point1AuthorizedSelects);
 }
