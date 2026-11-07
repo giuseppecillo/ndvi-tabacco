@@ -96,18 +96,40 @@ html, body { overflow-x: clip; max-width: 100%; }
 .nc-modhead-title { margin: 0; min-width: 0; color: var(--nc-leaf, #1f3d2b); font-weight: 600; font-size: clamp(1.25rem, 4.6vw, 2.25rem); line-height: 1.15; overflow-wrap: anywhere; hyphens: auto; }
 .nc-modhead-sub { margin-top: .5rem; color: var(--nc-muted, #5d6a5f); font-size: .95rem; }
 
-/* Sign-in: full square field composite (3 crop panels + prescription map) beside the form */
-.nc-signin { position: relative; isolation: isolate; background-color: var(--nc-paper);
-  background-image: radial-gradient(120% 70% at 0% 100%, rgba(159,194,138,.28), transparent 60%), repeating-radial-gradient(circle at 85% 15%, transparent 0 22px, rgba(159,194,138,.16) 22px 23px); }
-.nc-signin-head > * { background: rgba(251,248,241,.92); border-radius: 999px; }
+/* Sign-in: pale-green login palette (scoped) + full square composite beside form */
+.nc-signin {
+  --nc-ink: #12301d; --nc-leaf: #1d5a34; --nc-leaf-2: #2a7346; --nc-muted: #3d5a46;
+  --nc-paper: #f3faee; --nc-paper-2: #e2f0d8; --nc-line: #b9d6a8; --nc-sage: #9fc28a;
+  position: relative; isolation: isolate; color: var(--nc-ink); background-color: #e9f4e1;
+  background-image: radial-gradient(110% 70% at 0% 100%, rgba(159,194,138,.35), transparent 60%),
+    repeating-radial-gradient(circle at 85% 15%, transparent 0 22px, rgba(42,115,70,.08) 22px 23px);
+}
+.nc-signin-brand, .nc-signin-lang {
+  background: #fbfef8; border: 1px solid var(--nc-line); border-radius: 999px;
+  box-shadow: 0 10px 24px -18px rgba(29,90,52,.55); transition: border-color .15s ease, box-shadow .15s ease;
+}
+.nc-signin-brand { padding: .4rem 1.1rem .4rem .45rem; }
+.nc-signin-brand img { background: #ffffff; box-shadow: 0 0 0 1px var(--nc-line); }
+.nc-signin-brand span { font-size: 1.3rem; color: var(--nc-ink); }
+.nc-signin-brand:hover, .nc-signin-lang:hover { border-color: var(--nc-leaf-2); }
+.nc-signin-brand a:focus-visible { outline: 3px solid var(--nc-leaf); outline-offset: 4px; border-radius: 999px; }
+.nc-signin-lang { padding: .35rem .45rem .35rem 1rem; }
+.nc-signin-lang label { font-weight: 600; color: var(--nc-ink); }
+.nc-signin-lang select { background: var(--nc-paper-2); border-color: var(--nc-line); color: var(--nc-ink); font-weight: 600; cursor: pointer; }
+.nc-signin-lang select:focus-visible { outline: 3px solid var(--nc-leaf); outline-offset: 2px; }
 .nc-signin-layout { max-width: 72rem; margin: 0 auto; padding: 0 1rem 1.5rem; display: grid; grid-template-columns: 1fr; gap: 1.25rem; justify-items: center; }
 .nc-signin-photo { margin: 0; width: 100%; max-width: 560px; aspect-ratio: 1 / 1; border-radius: 1.25rem; overflow: hidden;
-  border: 1px solid var(--nc-line); background: var(--nc-paper-2); box-shadow: 0 24px 50px -30px rgba(31,61,43,.55); }
+  border: 1px solid var(--nc-line); background: var(--nc-paper-2); box-shadow: 0 24px 50px -30px rgba(29,90,52,.55); }
 .nc-signin-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .nc-signin-main { min-width: 0; }
-.nc-signin-panel { background: rgba(251,248,241,.96); border: 1px solid var(--nc-line); border-radius: 1rem; padding: .75rem 1rem; color: var(--nc-ink);
-  box-shadow: 0 12px 30px -22px rgba(31,61,43,.55); transition: background-color .2s ease; }
-.nc-signin-main > h1 { color: var(--nc-leaf-2); }
+.nc-signin-panel { background: #f6fbf2; border: 1px solid var(--nc-line); border-radius: 1rem; padding: .75rem 1rem; color: var(--nc-ink);
+  box-shadow: 0 12px 30px -22px rgba(29,90,52,.5); transition: background-color .2s ease; }
+.nc-signin-main > h1 { color: var(--nc-leaf); font-weight: 500; }
+.nc-signin .nc-signin-primary { background: #1d5a34; color: #f3faee; border-radius: 999px; font-weight: 600; }
+.nc-signin .nc-signin-primary:hover { background: #2a7346 !important; }
+.nc-signin .nc-signin-primary:focus-visible { outline: 3px solid #1d5a34; outline-offset: 3px; }
+.nc-signin .nc-signin-link { color: #1d5a34; font-weight: 700; }
+.nc-signin .nc-signin-link:hover { color: #2a7346 !important; }
 @media (min-width: 1024px) {
   .nc-signin-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 480px); align-items: start; gap: 2.5rem; justify-items: stretch; }
   .nc-signin-photo { position: sticky; top: 1.5rem; max-width: min(100%, calc(100dvh - 3rem)); justify-self: end; }
@@ -115,5 +137,6 @@ html, body { overflow-x: clip; max-width: 100%; }
 @media (max-width: 767px) {
   .nc-signin-layout { padding: 0 .75rem 1.5rem; }
   .nc-signin-photo { border-radius: 1rem; }
+  .nc-signin-brand span { font-size: 1.15rem; }
 }
-@media (prefers-reduced-motion: reduce) { .nc-signin-panel { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .nc-signin-panel, .nc-signin-brand, .nc-signin-lang { transition: none; } }

@@ -94,10 +94,41 @@ function AuthShell({ children, aside }: { children: React.ReactNode; aside: Reac
   );
 }
 
+// Login-only pale-green palette; applied to both hash and path SignIn variants.
+const signInAppearance = {
+  variables: {
+    colorPrimary: "#1d5a34",
+    colorForeground: "#12301d",
+    colorMutedForeground: "#3d5a46",
+    colorBackground: "#f6fbf2",
+    colorInput: "#ffffff",
+    colorInputForeground: "#12301d",
+    colorNeutral: "#2c4a36",
+  },
+  elements: {
+    cardBox: { background: "#f6fbf2", border: "1px solid #b9d6a8", boxShadow: "0 22px 50px -28px rgba(29,90,52,.45)" },
+    headerTitle: { color: "#12301d" },
+    headerSubtitle: { color: "#3d5a46" },
+    formFieldLabel: { color: "#12301d" },
+    formFieldInput: { background: "#fbfef8", color: "#12301d", border: "1px solid #a9cc96" },
+    formButtonPrimary: "nc-signin-primary",
+    footerActionLink: "nc-signin-link",
+    footerActionText: { color: "#3d5a46" },
+    dividerLine: { background: "#c6dfb7" },
+    dividerText: { color: "#3d5a46" },
+    socialButtonsBlockButton: { border: "1px solid #b9d6a8", background: "#fbfef8" },
+    identityPreviewEditButton: { color: "#1d5a34" },
+    otpCodeFieldInput: { color: "#12301d", border: "1px solid #a9cc96" },
+  },
+};
+
 function SignInPage({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="nc-signin min-h-[100dvh]">
-      <header className="nc-signin-head mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5"><Brand /><LanguageSelector /></header>
+      <header className="nc-signin-head mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-3 px-4 py-5">
+        <div className="nc-signin-brand" data-testid="brand-signin"><Brand /></div>
+        <div className="nc-signin-lang" data-testid="select-signin-language"><LanguageSelector /></div>
+      </header>
       <div className="nc-signin-layout">
       <figure className="nc-signin-photo" aria-hidden="true">
         <img
@@ -117,8 +148,8 @@ function SignInPage({ embedded = false }: { embedded?: boolean }) {
         {embedded
           // Root is a public page, not a Clerk route prefix. Hash routing
           // preserves recovery steps without claiming /privacy etc.
-          ? <SignIn routing="hash" signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />
-          : <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />}
+          ? <SignIn appearance={signInAppearance} routing="hash" signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />
+          : <SignIn appearance={signInAppearance} routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />}
         <div className="nc-signin-panel mt-5 space-y-3 text-center text-sm text-[var(--nc-muted)]">
           <p><Link href="/privacy" className="underline">Leggi l’informativa privacy e cookie</Link></p>
           <p>Assistenza per recupero e cambio password:<br />
