@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { fromArrayBuffer as readGeoTiff } from "geotiff";
 import JSZip from "jszip";
 import shpjs from "shpjs";
+import proj4 from "proj4";
 import {
   FASI_GRANO,
   FINESTRE_DAS_LOCALI_TEMPLATE,
@@ -37,6 +38,7 @@ import {
   findDoseCell,
   downloadGeoTiff,
   downloadShapefile,
+  type KmlPolygon,
   type PolyIdwResult,
 } from "./utils/geoUtils";
 
@@ -579,6 +581,209 @@ describe("mappe sintetiche al confine UTM 32/33 (12° est)", () => {
     assert.ok(Math.abs(west.stats.max - east.stats.max) < 1);
     assert.deepEqual(west.cellSizeDeg, east.cellSizeDeg);
   });
+});
+
+describe("campi irregolari sintetici a cavallo di 12° est", () => {
+  // A ~140 × 134 m field. A north-facing notch leaves a connected U;
+  // the same rectangle with an interior exclusion leaves a connected annulus.
+  // Both exclusions straddle the meridian. Test both choices of field-wide CRS.
+  for (const centre of [11.99995, 12.00005]) {
+    for (const shape of ["concavo", "con foro"] as const) {
+      describe(`${shape}, centro ${centre < 12 ? "ovest" : "est"}`, () => {
+        const west = centre - 0.00085;
+        const south = 42;
+        const width = 0.0017;
+        const height = 0.0012;
+        const xy = (x: number, y: number): [number, number] =>
+          [west + x * width, south + y * height];
+        const ring = (coords: number[][]) => coords.map(([x, y]) => xy(x, y));
+        const polygon: KmlPolygon = {
+          name: `Sintetico ${shape}`,
+          ring: ring(shape === "concavo"
+            ? [[0, 0], [1, 0], [1, 1], [.65, 1], [.65, .4], [.35, .4], [.35, 1], [0, 1]]
+            : [[0, 0], [1, 0], [1, 1], [0, 1]]),
+          ...(shape === "con foro"
+            ? { holes: [ring([[.35, .35], [.65, .35], [.65, .7], [.35, .7]])] } : {}),
+        };
+        // Analytic rectangle mask, deliberately independent of pointInField.
+        const excluded = (lng: number, lat: number) =>
+          lng >= xy(.35, 0)[0] && lng <= xy(.65, 0)[0] &&
+          lat >= xy(0, shape === "concavo" ? .4 : .35)[1] &&
+          (shape === "concavo" || lat <= xy(0, .7)[1]);
+        const cultivated = (lng: number, lat: number) =>
+          lng > west && lng < west + width && lat > south && lat < south + height &&
+          !excluded(lng, lat);
+        const controls = [
+          { obsId: "west", cliente: "Sintetico", appezzamento: "Irregolare",
+            lng: xy(.15, .25)[0], lat: xy(.15, .25)[1], dose: 20 },
+          { obsId: "east", cliente: "Sintetico", appezzamento: "Irregolare",
+            lng: xy(.85, .8)[0], lat: xy(.85, .8)[1], dose: 40 },
+        ];
+        const fixture = () => computeIdwGrid(polygon, controls, 10, 2);
+        function assertConnected(cells: Map<string, { lng: number; lat: number }>) {
+          assert.ok(cells.size > 0);
+          const visited = new Set<string>();
+          const queue = [cells.keys().next().value!];
+          let crossingEdges = 0;
+          for (let i = 0; i < queue.length; i++) {
+            const key = queue[i];
+            if (visited.has(key)) continue;
+            visited.add(key);
+            const [col, row] = key.split(",").map(Number);
+            const point = cells.get(key)!;
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const next = `${col + dx},${row + dy}`;
+              const neighbour = cells.get(next);
+              if (!neighbour) continue;
+              if ((point.lng < 12) !== (neighbour.lng < 12)) crossingEdges++;
+              if (!visited.has(next)) queue.push(next);
+            }
+          }
+          assert.equal(visited.size, cells.size, "all cultivated arms remain connected");
+          assert.ok(crossingEdges > 0, "connected cells cross 12° E");
+        }
+        function assertCoverage(points: Array<{ lng: number; lat: number }>) {
+          for (const p of points) assert.ok(cultivated(p.lng, p.lat), "no dose in an excluded area");
+          // Do not accept an empty map, a single surviving arm, or a lost bridge.
+          for (const [x, y] of [[.15, .2], [.85, .2], [.15, .8], [.85, .8], [.5, .15],
+            ...(shape === "con foro" ? [[.5, .85]] : [])]) {
+            const [lng, lat] = xy(x, y);
+            assert.ok(points.some(p => Math.hypot(
+              (p.lng - lng) * 82_700, (p.lat - lat) * 111_100,
+            ) < 15), `cultivated probe ${x},${y} has a cell within 15 m`);
+          }
+        }
+
+        it("copre tutti e soli i centri coltivati con passo 10 m e IDW continuo", () => {
+          const result = fixture();
+          const zone = centre < 12 ? 32 : 33;
+          assert.equal(result.utmZone, zone);
+          assert.equal(result.utmSouth, false);
+          const crs = `+proj=utm +zone=${zone} +datum=WGS84 +units=m +no_defs`;
+          const vertices = polygon.ring.map(p => proj4("EPSG:4326", crs, p));
+          const minX = Math.min(...vertices.map(p => p[0]));
+          const minY = Math.min(...vertices.map(p => p[1]));
+          const maxX = Math.max(...vertices.map(p => p[0]));
+          const maxY = Math.max(...vertices.map(p => p[1]));
+          const cells = new Map(result.grid.map(p => {
+            const col = (p.utmX - minX - 5) / 10;
+            const row = (p.utmY - minY - 5) / 10;
+            assert.ok(Math.abs(col - Math.round(col)) < EPSILON);
+            assert.ok(Math.abs(row - Math.round(row)) < EPSILON);
+            return [`${Math.round(col)},${Math.round(row)}`, p] as const;
+          }));
+          assert.equal(cells.size, result.grid.length, "no duplicate cells");
+          for (let row = 0; minY + 5 + row * 10 <= maxY; row++) {
+            for (let col = 0; minX + 5 + col * 10 <= maxX; col++) {
+              const [lng, lat] = proj4(crs, "EPSG:4326", [minX + 5 + col * 10, minY + 5 + row * 10]);
+              assert.equal(cells.has(`${col},${row}`), cultivated(lng, lat),
+                `complete independent mask at ${col},${row}`);
+            }
+          }
+          assertCoverage(result.grid);
+          assertConnected(cells);
+          for (const point of result.grid) {
+            const weights = controls.map(c => {
+              const rad = Math.PI / 180;
+              const distance = 6_371_008.8 * rad * Math.hypot(
+                (point.lng - c.lng) * Math.cos((point.lat + c.lat) / 2 * rad), point.lat - c.lat,
+              );
+              return 1 / distance ** 2;
+            });
+            const expected = (weights[0] * 20 + weights[1] * 40) / (weights[0] + weights[1]);
+            assert.ok(point.dose >= 20 && point.dose <= 40);
+            assert.ok(Math.abs(point.dose - expected) < .06, "IDW agrees with geographic distances");
+          }
+          assert.equal(result.stats.count, cells.size);
+        });
+
+        it("non restituisce dosi nelle esclusioni né usa i controlli interni al foro", () => {
+          const result = fixture();
+          const probes = shape === "con foro"
+            ? [[.5, .5], [.35, .5], [.65, .5], [.5, .35], [.5, .7], [.35, .35], [.65, .7]]
+            : [[.5, .5], [.5, .9]];
+          for (const [x, y] of probes) assert.equal(findDoseCell(result, ...xy(x, y)), undefined);
+          if (shape === "con foro") {
+            const poisoned = probes.map(([x, y], i) => ({
+              ...controls[0], obsId: `excluded-${i}`, lng: xy(x, y)[0], lat: xy(x, y)[1], dose: 999_999,
+            }));
+            const withExcludedControls = computeIdwGrid(polygon, [...controls, ...poisoned], 10, 2);
+            assert.deepEqual(withExcludedControls, result, "hole interior and edge controls have no effect");
+            assert.equal(computeIdwGrid(polygon, poisoned).grid.length, 0);
+          }
+        });
+
+        it("riapre lo Shapefile WGS84 senza riempire concavità o foro", async () => {
+          const result = fixture();
+          const { blob } = await captureDownload(() => downloadShapefile(result));
+          const buffer = await blob.arrayBuffer();
+          const zip = await JSZip.loadAsync(buffer);
+          const prj = Object.values(zip.files).filter(f => f.name.endsWith(".prj"));
+          assert.equal(prj.length, 1);
+          assert.match(await prj[0].async("string"), /^GEOGCS\["GCS_WGS_1984"/);
+          const parsed = await shpjs(buffer);
+          assert.ok(!Array.isArray(parsed));
+          assert.equal(parsed.features.length, result.grid.length);
+          const points = parsed.features.map((feature, i) => {
+            assert.equal(feature.geometry.type, "Point");
+            const [lng, lat] = feature.geometry.coordinates;
+            assert.ok(Math.abs(lng - result.grid[i].lng) < EPSILON);
+            assert.ok(Math.abs(lat - result.grid[i].lat) < EPSILON);
+            assert.equal(feature.properties.DOSE_IDW, Number(result.grid[i].dose.toFixed(4)));
+            return { lng, lat };
+          });
+          assertCoverage(points);
+        });
+
+        it("riapre il GeoTIFF WGS84 con dosi corrette e NoData nelle zone escluse", async () => {
+          const result = fixture();
+          const { blob } = await captureDownload(() => downloadGeoTiff(result));
+          const image = await (await readGeoTiff(await blob.arrayBuffer())).getImage();
+          const { lon, lat } = result.cellSizeDeg;
+          const north = south + height;
+          const cols = Math.ceil(width / lon);
+          const rows = Math.ceil(height / lat);
+          assert.equal(image.getWidth(), cols);
+          assert.equal(image.getHeight(), rows);
+          assert.equal(image.getGeoKeys().GeographicTypeGeoKey, 4326);
+          assert.equal(image.getGeoKeys().GTModelTypeGeoKey, 2);
+          assert.equal(image.getGeoKeys().GTRasterTypeGeoKey, 1);
+          assert.deepEqual(image.getOrigin(), [west, north, 0]);
+          assert.deepEqual(image.getResolution(), [lon, -lat, 0]);
+          assert.equal(image.getGDALNoData(), -9999);
+          const expected = new Float32Array(cols * rows).fill(-9999);
+          for (const p of result.grid) {
+            const col = Math.floor((p.lng - west) / lon);
+            const row = Math.floor((north - p.lat) / lat);
+            if (!cultivated(west + (col + .5) * lon, north - (row + .5) * lat)) continue;
+            const i = row * cols + col;
+            expected[i] = Math.fround(Math.max(expected[i], p.dose));
+          }
+          const raster = await image.readRasters({ interleave: true });
+          assert.deepEqual(Array.from(raster), Array.from(expected));
+          const cells = new Map<string, { lng: number; lat: number }>();
+          let excludedPixels = 0;
+          for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+              const lng = west + (col + .5) * lon;
+              const y = north - (row + .5) * lat;
+              const value = raster[row * cols + col];
+              if (excluded(lng, y)) {
+                excludedPixels++;
+                assert.equal(value, -9999, "excluded pixel centres must never receive a dose");
+              }
+              if (value === -9999) continue;
+              assert.ok(value >= 20 && value <= 40);
+              cells.set(`${col},${row}`, { lng, lat: y });
+            }
+          }
+          assert.ok(excludedPixels >= 10, "the exclusion is large enough to test multiple pixels");
+          assertCoverage([...cells.values()]);
+          assertConnected(cells);
+        });
+      });
+    }
+  }
 });
 
 describe("export agronomici IDW", () => {
