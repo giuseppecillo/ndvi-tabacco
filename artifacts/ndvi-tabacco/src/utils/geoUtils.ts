@@ -19,6 +19,7 @@
 import proj4 from "proj4";
 import JSZip from "jszip";
 import { readShpLayers } from "./shapefileImport";
+import { checkGisFileSize, checkGisCount, readBoundedZip } from "./gisLimits";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,14 +100,21 @@ export function findDoseCell(result: PolyIdwResult, lng: number, lat: number): I
  * Handles both KML 2.2 and older formats.
  */
 export function parseKml(text: string): KmlPolygon[] {
+  checkGisFileSize(new TextEncoder().encode(text).byteLength);
   const doc = new DOMParser().parseFromString(text, "text/xml");
   if (doc.getElementsByTagNameNS("*", "parsererror").length) throw new Error("Invalid KML XML");
   const results: KmlPolygon[] = [];
+  let vertices = 0;
+  checkGisCount(doc.getElementsByTagNameNS("*", "Folder").length, "layers");
+  checkGisCount(doc.getElementsByTagNameNS("*", "Polygon").length, "features");
   const elements = (parent: Document | Element, name: string): Element[] =>
     Array.from(parent.getElementsByTagNameNS("*", name));
   const readRing = (boundary: Element): [number, number][] => {
     const text = elements(boundary, "coordinates")[0]?.textContent?.trim() ?? "";
-    const ring = text.split(/\s+/).map(token => {
+    const tokens = text.split(/\s+/);
+    vertices += tokens.length;
+    checkGisCount(vertices, "vertices");
+    const ring = tokens.map(token => {
       const [lng, lat] = token.split(",");
       return [lng?.trim() ? Number(lng) : NaN, lat?.trim() ? Number(lat) : NaN] as [number, number];
     });
@@ -146,15 +154,13 @@ export function parseKml(text: string): KmlPolygon[] {
  * Requires jszip as a peer dependency.
  */
 export async function parseKmz(buffer: ArrayBuffer): Promise<KmlPolygon[]> {
-  // Dynamic import keeps the bundle lean for users who never load KMZ
-  const JSZip = (await import("jszip")).default;
-  const zip   = await JSZip.loadAsync(buffer);
+  const files = await readBoundedZip(buffer);
   // KMZ spec: the root KML is usually doc.kml; fall back to any .kml entry
   const entry =
-    zip.file("doc.kml") ??
-    Object.values(zip.files).find(f => !f.dir && f.name.toLowerCase().endsWith(".kml"));
+    files.get("doc.kml") ??
+    [...files].find(([name]) => name.toLowerCase().endsWith(".kml"))?.[1];
   if (!entry) throw new Error("Nessun file .kml trovato nell'archivio KMZ.");
-  const text = await entry.async("string");
+  const text = new TextDecoder().decode(entry);
   return parseKml(text);
 }
 
@@ -181,6 +187,7 @@ export async function parseShpPolygons(buffer: ArrayBuffer): Promise<KmlPolygon[
     ) ?? `Poligono ${fi + 1}`;
 
     const addPolygon = (coords: [number, number][][], suffix = "") => {
+      checkGisCount(polygons.length + 1, "features");
       const [ring, ...holes] = coords.map(r => r.map(([lng, lat]) => [lng, lat] as [number, number]));
       if (!ring || [ring, ...holes].some(r => r.length < 3 || r.some(([lng, lat]) =>
         !Number.isFinite(lng) || !Number.isFinite(lat) || Math.abs(lng) > 180 || Math.abs(lat) > 90))) {

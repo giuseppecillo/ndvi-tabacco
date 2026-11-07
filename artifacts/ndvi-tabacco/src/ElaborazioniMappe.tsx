@@ -23,10 +23,12 @@ import {
   computeIdwGrid, downloadShapefile, downloadGeoTiff,
 } from "./utils/geoUtils";
 import { canSpatialize, createPolygonImporter, emptyPolygonImport } from "./utils/polygonImport";
-import { readShpPointLayers, pointLayerControls, SHP_POINT_ERROR, SHP_POINT_POLICY,
+import { pointLayerControls, SHP_POINT_ERROR, SHP_POINT_POLICY,
   SHP_POLYGON_POLICY, SHP_DOSE_ERROR, type ShpPointLayer } from "./utils/shapefileImport";
 import { NitrogenSavings } from "./components/NitrogenSavings";
 import { t, useLanguage } from "./i18n/runtime";
+import { checkGisFileSize, gisErrorMessage } from "./utils/gisLimits";
+import { decodeGis } from "./utils/gisWorkerClient";
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
 
@@ -289,6 +291,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   const [shpError, setShpError] = useState("");
   const [shpLoading, setShpLoading] = useState(false);
   const shpVersion = useRef(0);
+  const shpController = useRef<AbortController | undefined>(undefined);
   const selectedShpLayer = shpLayers.find(layer => layer.key === shpLayerKey);
   const shpFields = selectedShpLayer?.numericFields ?? [];
   const shpPoints = useMemo<ControlPoint[]>(() =>
@@ -310,6 +313,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   }), []);
   useEffect(() => () => {
     shpVersion.current++;
+    shpController.current?.abort();
     polygonImporter.invalidate();
     clearTimeout(computationTimer.current);
   }, [polygonImporter]);
@@ -368,6 +372,8 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
     if (!file) return;
     e.target.value = "";
     const attempt = ++shpVersion.current;
+    shpController.current?.abort();
+    const controller = shpController.current = new AbortController();
     clearPointResults();
     setShpFileName(file.name);
     setShpLayers([]);
@@ -376,14 +382,17 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
     setShpError("");
     setShpLoading(true);
     try {
-      const layers = await readShpPointLayers(await file.arrayBuffer());
+      checkGisFileSize(file.size);
+      const buffer = await file.arrayBuffer();
+      if (attempt !== shpVersion.current) return;
+      const layers = await decodeGis<ShpPointLayer[]>("points", buffer, controller.signal);
       if (!layers.length) throw new Error(SHP_POINT_ERROR);
       if (attempt !== shpVersion.current) return;
       setShpLayers(layers);
       // Multiple levels require an explicit choice: no accidental double weighting.
       if (layers.length === 1) selectShpLayer(layers[0].key, layers);
-    } catch {
-      if (attempt === shpVersion.current) setShpError(SHP_POINT_ERROR);
+    } catch (error) {
+      if (attempt === shpVersion.current) setShpError(gisErrorMessage(error) ?? SHP_POINT_ERROR);
     } finally {
       if (attempt === shpVersion.current) setShpLoading(false);
     }

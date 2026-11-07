@@ -29,6 +29,7 @@ if (!basePath) {
 
 export default defineConfig({
   base: basePath,
+  worker: { format: "es" },
   plugins: [
     localizeUi(),
     react(),

@@ -1,5 +1,37 @@
 # IDW: synthetic browser verification
 
+## Browser GIS resource budgets
+
+Imports are local only: maximum **10 MiB file**, **32 MiB actual expanded ZIP
+data**, **128 ZIP entries**, **16 layers**, **10,000 features** and **100,000
+vertices**, summed across layers. KML folders count toward the layer budget;
+all ZIP members (even unrelated attachments) count toward the byte budget.
+Encrypted, multipart and ZIP64 archives are unsupported. Failed imports discard
+the whole attempt, never a silently truncated subset.
+
+The browser parses KML/KMZ/SHP in a dedicated module worker with a **15-second
+deadline**. Replacement/unmount terminates obsolete workers. ZIP directory sizes
+are checked before inflation, and sequential streamed inflation checks the real
+output too, so lying headers cannot bypass the byte budget. SHP/DBF record
+counts are checked before the Shapefile parser allocates output.
+
+`gis-limits.test.mjs` generates all archives in memory, including forged ZIP
+size fields, and verifies limits, translation, clearing/recovery and worker
+deadline/cancellation. Run with the normal `test` command.
+`runGisLimitsBrowserPass(page, { baseURL })` in `gis-limits-browser-pass.mjs`
+checks the real component import/reject/recover journey without auth or APIs.
+It verifies that result/export controls disappear and spatialization is blocked
+after either failed importer, with IT/EN/ES messages and narrow-screen recovery.
+It uses only `fixtures/gis-limits.mjs` and `fixtures/idw-imports.mjs`; no database
+or real observations are involved.
+
+Verified in the isolated browser: valid polygon ZIP/KMZ and four-point ZIP
+recovery, all six excessive-archive fixtures, a 10 MiB + 1 byte file, translated
+size errors in all three languages, and cleared map/rows/exports with disabled
+compute after rejection. A UI heartbeat advanced during forged-size rejection.
+Recovery and export-control visibility were also checked at 390px. This does
+not claim verification of authenticated accounts, databases or export contents.
+
 The development-only entry `/tests/idw.html?module=maps` renders the real `App`,
 `ElaborazioniMappe`, `NitrogenSavings`, language selector and Vite localization
 transform. It does not render authentication: this is a component integration

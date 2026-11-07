@@ -18,3 +18,4 @@
 - [Fedeltà degli import PowerPoint](pptx-import-fidelity.md) — Un import riuscito può omettere riempimenti SVG: confrontare con il file originale prima di considerare completa la grafica.
 - [Fixture browser isolate](isolated-browser-fixtures.md) — Se il runner non importa helper Node locali, trasferire payload statici sintetici senza rimuovere i blocchi API.
 - [Livelli Shapefile](shapefile-layer-policy.md) — Poligoni da tutti i livelli; punti da un solo livello scelto esplicitamente per evitare pesature IDW duplicate.
+- [Risorse GIS](gis-resource-policy.md) — Non fidarsi delle dimensioni ZIP dichiarate; contare i byte reali e isolare i parser interrompibili, senza import parziali.

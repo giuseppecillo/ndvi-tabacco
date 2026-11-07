@@ -1,3 +1,5 @@
+import { checkGeometryBudget, checkGisCount, GIS_ERRORS, readBoundedZip } from "./gisLimits";
+
 // Shared layer normalization. Keep source data separate from translated UI copy.
 export interface ShpFeature {
   id?: string | number;
@@ -15,14 +17,68 @@ export interface ShpLayer {
   features: ShpFeature[];
 }
 export async function readShpLayers(buffer: ArrayBuffer): Promise<ShpLayer[]> {
+  const files = await readBoundedZip(buffer);
   const shp = (await import("shpjs")).default as
-    (input: ArrayBuffer) => Promise<ShpCollection | ShpCollection[]>;
-  const raw = await shp(buffer);
-  return (Array.isArray(raw) ? raw : [raw]).map((fc, i) => ({
-    key: String(i),
-    name: fc.fileName ?? `#${i + 1}`,
-    features: fc.features,
-  }));
+    (input: { shp: Uint8Array; dbf?: Uint8Array; prj?: string; cpg?: string }) => Promise<ShpCollection>;
+  const decoder = new TextDecoder();
+  const layers: ShpLayer[] = [];
+  let records = 0, vertices = 0;
+  for (const [name, bytes] of files) {
+    if (name.includes("__MACOSX") || !/\.(shp|json)$/i.test(name)) continue;
+    const base = name.replace(/\.(shp|json)$/i, "");
+    let fc: ShpCollection;
+    if (/\.json$/i.test(name)) {
+      fc = JSON.parse(decoder.decode(bytes));
+      if (fc.type !== "FeatureCollection" || !Array.isArray(fc.features)) throw new Error(GIS_ERRORS.invalid);
+    } else {
+      // Inspect record counts and declared coordinate/part counts before shpjs allocates.
+      const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      if (v.byteLength < 100 || v.getInt32(0) !== 9994 ||
+          v.getInt32(24) * 2 !== v.byteLength) throw new Error(GIS_ERRORS.invalid);
+      for (let at = 100; at < v.byteLength;) {
+        if (at + 12 > v.byteLength) throw new Error(GIS_ERRORS.invalid);
+        const length = v.getInt32(at + 4) * 2;
+        if (length < 4 || at + 8 + length > v.byteLength) throw new Error(GIS_ERRORS.invalid);
+        checkGisCount(++records, "features");
+        const type = v.getInt32(at + 8, true);
+        if ([1, 11, 21].includes(type)) vertices++;
+        else if ([3, 5, 13, 15, 23, 25, 8, 18, 28].includes(type)) {
+          const multi = [8, 18, 28].includes(type);
+          if (length < (multi ? 40 : 44)) throw new Error(GIS_ERRORS.invalid);
+          const parts = multi ? 0 : v.getInt32(at + 44, true);
+          const points = v.getInt32(at + (multi ? 44 : 48), true);
+          if (parts < 0 || points < 0 || parts > points ||
+              (multi ? 40 : 44) + parts * 4 + points * 16 > length) {
+            throw new Error(GIS_ERRORS.invalid);
+          }
+          vertices += points;
+        } else if (type !== 0) throw new Error(GIS_ERRORS.invalid);
+        checkGisCount(vertices, "vertices");
+        at += 8 + length;
+      }
+      const sibling = (ext: string) => {
+        const key = [...files.keys()].find(k => k.toLowerCase() === `${base}.${ext}`.toLowerCase());
+        return key ? files.get(key) : undefined;
+      };
+      const dbf = sibling("dbf");
+      if (dbf) {
+        if (dbf.byteLength < 32) throw new Error(GIS_ERRORS.invalid);
+        const d = new DataView(dbf.buffer, dbf.byteOffset, dbf.byteLength);
+        checkGisCount(d.getUint32(4, true), "features");
+        const header = d.getUint16(8, true), row = d.getUint16(10, true);
+        if (header < 33 || !row || header + row * d.getUint32(4, true) > dbf.byteLength) {
+          throw new Error(GIS_ERRORS.invalid);
+        }
+      }
+      const prj = sibling("prj"), cpg = sibling("cpg");
+      fc = await shp({ shp: bytes, dbf,
+        prj: prj && decoder.decode(prj), cpg: cpg && decoder.decode(cpg) });
+    }
+    layers.push({ key: String(layers.length), name: base, features: fc.features });
+    checkGeometryBudget(layers);
+  }
+  if (!layers.length) throw new Error(GIS_ERRORS.invalid);
+  return layers;
 }
 
 export interface ShpPointFeature extends ShpFeature {

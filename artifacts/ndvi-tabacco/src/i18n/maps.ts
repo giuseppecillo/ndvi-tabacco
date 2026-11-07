@@ -1,6 +1,14 @@
 import type { Translation } from "./runtime";
 
 export const maps: readonly Translation[] = [
+  ["File GIS troppo grande: massimo 10 MiB.", "GIS file too large: maximum 10 MiB.", "Archivo GIS demasiado grande: máximo 10 MiB."],
+  ["Archivio GIS troppo grande: massimo 32 MiB decompressi.", "GIS archive too large: maximum 32 MiB uncompressed.", "Archivo GIS demasiado grande: máximo 32 MiB descomprimidos."],
+  ["Archivio GIS troppo complesso: massimo 128 voci ZIP.", "GIS archive too complex: maximum 128 ZIP entries.", "Archivo GIS demasiado complejo: máximo 128 entradas ZIP."],
+  ["Troppi livelli GIS: massimo 16.", "Too many GIS layers: maximum 16.", "Demasiadas capas GIS: máximo 16."],
+  ["Troppi elementi GIS: massimo 10000.", "Too many GIS features: maximum 10000.", "Demasiados elementos GIS: máximo 10000."],
+  ["Troppe coordinate GIS: massimo 100000 vertici.", "Too many GIS coordinates: maximum 100000 vertices.", "Demasiadas coordenadas GIS: máximo 100000 vértices."],
+  ["Importazione GIS interrotta: tempo massimo di 15 secondi superato.", "GIS import stopped: 15-second time limit exceeded.", "Importación GIS interrumpida: se superó el límite de 15 segundos."],
+  ["Archivio GIS non valido o non supportato.", "Invalid or unsupported GIS archive.", "Archivo GIS no válido o no compatible."],
   ["Livello di punti", "Point layer", "Capa de puntos"],
   ["Seleziona un livello di punti", "Select a point layer", "Selecciona una capa de puntos"],
   ["Caricamento dei punti in corso…", "Loading points…", "Cargando puntos…"],
