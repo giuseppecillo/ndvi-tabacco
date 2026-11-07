@@ -75,6 +75,44 @@ function idwExportFixture(): PolyIdwResult {
   ], 10, 2);
 }
 
+// Export-only fixtures: an aligned 3×3 raster avoids IDW smoothing a zero
+// towards positive controls. The L-shaped field contains five cell centres;
+// the four bottom-right cells are outside, not zero-dose observations.
+function zeroDoseExportFixture(mixed: boolean): PolyIdwResult {
+  const step = 1 / 8192; // exactly representable, including bbox and centres
+  const west = 12;
+  const south = 42;
+  const north = south + 3 * step;
+  const doses = mixed ? [0, 12.5, 0, 25.125, 0] : [0, 0, 0, 0, 0];
+  const cells = [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2]];
+  const grid = cells.map(([col, row], index) => ({
+    lng: west + (col + 0.5) * step,
+    lat: north - (row + 0.5) * step,
+    utmX: col * 10, // unused by the WGS84 export writers
+    utmY: -row * 10,
+    dose: doses[index],
+  }));
+  return {
+    polygon: {
+      name: mixed ? "Dose mista sintetica" : "Dose zero sintetica",
+      ring: [[0, 0], [1, 0], [1, 2], [3, 2], [3, 3], [0, 3]]
+        .map(([x, y]): [number, number] => [west + x * step, south + y * step]),
+    },
+    controls: [],
+    grid,
+    bbox: [west, south, west + 3 * step, north],
+    utmZone: 33,
+    utmSouth: false,
+    cellSizeDeg: { lon: step, lat: step },
+    stats: {
+      min: 0,
+      max: Math.max(...doses),
+      mean: doses.reduce((sum, dose) => sum + dose, 0) / doses.length,
+      count: doses.length,
+    },
+  };
+}
+
 async function captureDownload(run: () => void | Promise<void>): Promise<{ blob: Blob; filename: string }> {
   let blob: Blob | undefined;
   let filename = "";
@@ -344,6 +382,78 @@ describe("riepilogo azoto della mappa IDW", () => {
 });
 
 describe("export agronomici IDW", () => {
+  for (const mixed of [false, true]) {
+    describe(mixed ? "dosi miste zero e positive" : "dosi interamente zero", () => {
+      const expectedDoses = mixed ? [0, 12.5, 0, 25.125, 0] : [0, 0, 0, 0, 0];
+      const insideIndices = [0, 1, 2, 3, 6];
+      const outsideIndices = [4, 5, 7, 8];
+
+      async function reopenRaster() {
+        const result = zeroDoseExportFixture(mixed);
+        const { blob } = await captureDownload(() => downloadGeoTiff(result));
+        const tiff = await readGeoTiff(await blob.arrayBuffer());
+        const image = await tiff.getImage();
+        assert.equal(image.getWidth(), 3);
+        assert.equal(image.getHeight(), 3);
+        assert.deepEqual(image.getOrigin(), [12, 42 + 3 / 8192, 0]);
+        assert.deepEqual(image.getResolution(), [1 / 8192, -1 / 8192, 0]);
+        assert.equal(image.getGDALNoData(), -9999, "zero must never be the NoData sentinel");
+        const raster = await image.readRasters({ interleave: true });
+        assert.equal(raster.length, 9);
+        return { image, raster };
+      }
+
+      it("conserva ogni dose zero come valore GeoTIFF valido", async () => {
+        const { image, raster } = await reopenRaster();
+        assert.deepEqual(insideIndices.map(index => raster[index]), expectedDoses);
+        for (const index of insideIndices) {
+          assert.notEqual(raster[index], image.getGDALNoData());
+          assert.ok(Number.isFinite(raster[index]));
+        }
+        const validValues = Array.from(raster).filter(value => value !== image.getGDALNoData());
+        assert.equal(validValues.length, 5, "all five field cells, including zeros, must be valid");
+        assert.equal(validValues.filter(value => value === 0).length, mixed ? 3 : 5);
+        assert.equal(validValues.filter(value => value > 0).length, mixed ? 2 : 0);
+      });
+
+      it("lascia NoData le quattro celle GeoTIFF esterne al poligono", async () => {
+        const { image, raster } = await reopenRaster();
+        assert.deepEqual(outsideIndices.map(index => raster[index]), [-9999, -9999, -9999, -9999]);
+        assert.equal(
+          Array.from(raster).filter(value => value === image.getGDALNoData()).length,
+          4,
+          "only the four excluded cell centres may be NoData",
+        );
+      });
+
+      it("rilegge con shpjs tutti i punti, comprese le dosi zero numeriche", async () => {
+        const result = zeroDoseExportFixture(mixed);
+        const { blob } = await captureDownload(() => downloadShapefile(result));
+        const parsed = await shpjs(await blob.arrayBuffer());
+        assert.ok(!Array.isArray(parsed), "the ZIP must contain a single layer");
+        assert.equal(parsed.features.length, 5, "outside cells must not become Shapefile records");
+        assert.deepEqual(parsed.features.map(feature => feature.properties.DOSE_IDW), expectedDoses);
+        for (const [index, feature] of parsed.features.entries()) {
+          assert.equal(typeof feature.properties.DOSE_IDW, "number", "zero is not null or missing");
+          assert.equal(feature.geometry.type, "Point");
+          assert.deepEqual(feature.geometry.coordinates, [result.grid[index].lng, result.grid[index].lat]);
+        }
+      });
+
+      it("scrive nel DBF dosi zero esplicite, non campi vuoti o NoData", async () => {
+        const result = zeroDoseExportFixture(mixed);
+        const { blob } = await captureDownload(() => downloadShapefile(result));
+        const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+        const dbf = Object.values(zip.files).filter(entry => entry.name.endsWith(".dbf"));
+        assert.equal(dbf.length, 1);
+        const records = readDbf(await dbf[0].async("arraybuffer"));
+        assert.equal(records.length, 5);
+        assert.deepEqual(records.map(record => record.DOSE_IDW), expectedDoses.map(dose => dose.toFixed(4)));
+        assert.equal(records.filter(record => record.DOSE_IDW === "0.0000").length, mixed ? 3 : 5);
+      });
+    });
+  }
+
   const southernFixture = () => computeIdwGrid({
     name: "Campo sud sintetico",
     ring: [[151, -33.001], [151.0012, -33.001], [151.0012, -33.0001], [151, -33.0001]],
