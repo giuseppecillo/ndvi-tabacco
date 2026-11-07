@@ -207,6 +207,22 @@ SHP/DBF/CSV and Float32 GeoTIFF downloads are reopened with independent readers:
 no exported point is inside a hole; raster pixels whose centres are in holes
 are NODATA. Raster masking remains limited by the existing pixel resolution.
 
+### Holes crossing the equator
+
+Run just this regression with
+`pnpm --filter @workspace/ndvi-tabacco exec tsx --test tests/holes.test.mjs`.
+`createEquatorHoleImportFixtures()` generates invented KML, KMZ and real binary
+Shapefile ZIPs in memory. Both the field and its rectangular hole cross latitude
+zero, with field centres at +0.00005° and -0.00005° selecting UTM 33N and 33S.
+Each format checks equivalent varying-dose grids, excluded interior/edge/vertex
+controls, no-dose inspection, and unchanged retained nodes against a no-hole
+baseline. Reopened point Shapefiles contain only cultivated nodes; reopened
+EPSG:4326 GeoTIFFs preserve georeferencing and dose values, with NoData pixels
+inside the hole on **both** sides of the equator. Rectangle-based expectations
+are independent of production point-in-field logic, and positive node/pixel
+counts prevent empty-output false passes. No browser, API, secrets or database
+are involved; this does not claim a visual canvas or pointer-event check.
+
 For a native-canvas visual check, open `/tests/idw-holes.html` in the existing
 web workflow. This development-only page renders the actual map and nitrogen
 summary, without authentication, APIs or storage. Before rendering, it checks

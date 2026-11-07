@@ -159,12 +159,16 @@ export async function createMultiLayerFixtures() {
 /** Independent ESRI polygon record: outer clockwise, holes counterclockwise.
  * A second outer part produces a real MultiPolygon in shpjs, in the same layer.
  */
-export async function createHoleImportFixtures({ multipart = false } = {}) {
-  const kml = await readFile(new URL("./idw-holes.kml", import.meta.url));
-  const rings = [[...ring].reverse(), ...holeRings];
+export async function createHoleImportFixtures({
+  multipart = false, outer = ring, holes = holeRings, kmlText,
+} = {}) {
+  const kml = kmlText === undefined
+    ? await readFile(new URL("./idw-holes.kml", import.meta.url))
+    : Buffer.from(kmlText);
+  const rings = [[...outer].reverse(), ...holes];
   if (multipart) {
-    rings.push([...ring].reverse().map(([x, y]) => [x + 0.003, y]));
-    rings.push(holeRings[0].map(([x, y]) => [x + 0.003, y]));
+    rings.push([...outer].reverse().map(([x, y]) => [x + 0.003, y]));
+    rings.push(holes[0].map(([x, y]) => [x + 0.003, y]));
   }
   const points = rings.flat();
   const record = Buffer.alloc(44 + rings.length * 4 + points.length * 16);
@@ -189,5 +193,32 @@ export async function createHoleImportFixtures({ multipart = false } = {}) {
     kmz: { name: "synthetic-holes.kmz", mimeType: "application/vnd.google-earth.kmz",
       buffer: await new JSZip().file("doc.kml", kml).generateAsync({ type: "nodebuffer" }) },
     polygon: { name: "synthetic-holes.zip", mimeType: "application/zip", buffer: polygon },
+  };
+}
+
+/** Both outer field and hole cross latitude zero; centre selects UTM 33N/33S.
+ * All coordinates are invented; binary input uses the independent ESRI encoder above.
+ */
+export async function createEquatorHoleImportFixtures(centre) {
+  const rectangle = (west, south, east, north) =>
+    [[west, south], [east, south], [east, north], [west, north], [west, south]];
+  const outer = rectangle(14.99955, centre - 0.00045, 15.00045, centre + 0.00045);
+  const hole = rectangle(14.99985, -0.00018, 15.00015, 0.00018);
+  const boundary = (tag, r) => `<${tag}><LinearRing><coordinates>${
+    r.map(p => p.join(",")).join(" ")
+  }</coordinates></LinearRing></${tag}>`;
+  const kmlText = `<kml xmlns="http://www.opengis.net/kml/2.2"><Placemark>
+    <name>Equatore sintetico con foro</name><Polygon>
+    ${boundary("outerBoundaryIs", outer)}${boundary("innerBoundaryIs", hole)}
+    </Polygon></Placemark></kml>`;
+  return {
+    ...await createHoleImportFixtures({ outer, holes: [hole], kmlText }),
+    outer, hole,
+    controls: [
+      { obsId: "synthetic-south", cliente: "QA", appezzamento: "QA",
+        lng: 14.9997, lat: -0.00025, dose: 20, azotoTotale: 100, azotoGiaDistribuito: 10 },
+      { obsId: "synthetic-north", cliente: "QA", appezzamento: "QA",
+        lng: 15.0003, lat: 0.00025, dose: 60, azotoTotale: 100, azotoGiaDistribuito: 10 },
+    ],
   };
 }
