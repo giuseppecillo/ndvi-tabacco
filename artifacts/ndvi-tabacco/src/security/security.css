@@ -118,7 +118,7 @@ html, body { overflow-x: clip; max-width: 100%; }
 .nc-signin-lang select { background: var(--nc-paper-2); border-color: var(--nc-line); color: var(--nc-ink); font-weight: 600; cursor: pointer; }
 .nc-signin-lang select:focus-visible { outline: 3px solid var(--nc-leaf); outline-offset: 2px; }
 /* Image frame: full square composite as backdrop, login form overlaid within its bounds.
-   Form starts below the three operator panels (over the map); frame grows with the form. */
+   Introductory panel starts at the operators' knees; frame grows with the form. */
 .nc-signin-layout {
   position: relative; width: min(100% - 2rem, 860px); margin: 0 auto 1.5rem;
   border-radius: 1.5rem; border: 1px solid var(--nc-line); overflow: clip;
@@ -131,8 +131,8 @@ html, body { overflow-x: clip; max-width: 100%; }
   background: linear-gradient(180deg, transparent 0%, transparent 52%, rgba(233,244,225,.25) 70%, rgba(233,244,225,.85) 94%, #e9f4e1 100%); }
 .nc-signin-main {
   position: relative; z-index: 1; min-width: 0; margin: 0 auto;
-  /* percentage padding is relative to frame width = image height, so the panels stay clear */
-  padding: 51% 1rem 1.5rem;
+  /* Keep the overlay aligned to the same point of the square image on every screen. */
+  padding: 36% 1rem 1.5rem;
 }
 .nc-signin-main > h1 { backdrop-filter: blur(6px); }
 .nc-signin-panel { background: rgba(246,251,242,.95); border: 1px solid var(--nc-line); border-radius: 1rem; padding: .75rem 1rem; color: var(--nc-ink);
@@ -146,6 +146,6 @@ html, body { overflow-x: clip; max-width: 100%; }
 .nc-signin .nc-signin-link:hover { color: #2a7346 !important; }
 @media (max-width: 767px) {
   .nc-signin-layout { width: calc(100% - 1rem); border-radius: 1.1rem; }
-  .nc-signin-main { padding: 50% .5rem 1rem; }
+  .nc-signin-main { padding: 36% .5rem 1rem; }
 }
 @media (prefers-reduced-motion: reduce) { .nc-signin-panel, .nc-signin-brand, .nc-signin-lang { transition: none; } }
