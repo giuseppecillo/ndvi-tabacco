@@ -71,8 +71,9 @@ qualsiasi errore del target interrompe e annulla la transazione.
 
 ## Blocchi effettivi
 
-1. Connessione Production diretta non ancora fornita/verificata e associazione
-   al deployment da confermare dalle impostazioni ufficiali (non dai log).
+1. Connessione diretta e TLS verificati; rapporto in
+   ../backup/SOURCE_IDENTITY_RESULTS.md. Rimane la conferma del titolare che
+   l'URI fornita è la Production associata al deployment, non un override.
 2. Per il backup reale: destinatario cifratura e consegna da concordare senza
    installazioni sul PC, più autorizzazione distinta all'esportazione.
    È pronta l'alternativa `../backup/prepare-key.mjs`, con flag distinto

@@ -37,7 +37,13 @@ ambiente passato dal chiamante, senza ereditarietà automatica. Ogni errore
 interrompe i sottoprocessi e invalida/rimuove soltanto l'output parziale appena
 creato; non sovrascrive né elimina file preesistenti.
 
-## Verifica preliminare della sorgente — ancora bloccata
+## Verifica preliminare della sorgente — conclusa
+
+La connessione diretta fornita dal titolare ha superato le verifiche di
+primario, progetto/ramo e TLS effettivo del client: vedere
+[SOURCE_IDENTITY_RESULTS.md](SOURCE_IDENTITY_RESULTS.md).
+L'autorizzazione all'esportazione resta distinta; i passaggi sotto descrivono
+la procedura diagnostica, non un'autorizzazione a ripeterla.
 
 Il canale SQL production gestito da Replit identifica una replica del database
 neondb, progetto late-darkness-39148782, ramo br-winter-salad-apdld73l.
@@ -61,7 +67,9 @@ node lib/db/migration-preparation/backup/verify-source.mjs --read-only-identity
 Il comando non stampa URI/password. Accetta solo hostname Neon diretti,
 database neondb e TLS verificato; rifiuta pooler, opzioni non previste,
 hostname/schema non ammessi e perdita del readonly. Controlla primario
-(`pg_is_in_recovery=false`), SSL, progetto, ramo, ruolo e major PostgreSQL.
+(`pg_is_in_recovery=false`), TLS del socket con certificato/hostname verificati,
+progetto, ramo, ruolo e major PostgreSQL. pg_stat_ssl resta diagnostico del
+backend dietro al proxy e non sostituisce la verifica del trasporto client.
 Confermare anche l'associazione della connessione Production al deployment
 corrente nel pannello ufficiale; una query a un database gestito Production,
 da sola, non esclude override nella configurazione pubblicata.
