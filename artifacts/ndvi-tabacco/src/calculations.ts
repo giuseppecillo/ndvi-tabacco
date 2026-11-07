@@ -8,15 +8,10 @@ export {
   type FaseGrano, type FaseGranoLabel,
 } from "@workspace/grain-calculations";
 
-export type EtaPiantina = "standard" | "avanzata" | "extra";
+import { riferimentoNdviTabacco, calcolaDoseNTabacco, type EtaPiantina } from "@workspace/tobacco-calculations";
+export { ETA_GIORNI_EQUIVALENTI, type EtaPiantina } from "@workspace/tobacco-calculations";
 export type Coltura = "tabacco" | "grano duro";
 export type DensitaUnita = "piante/ha" | "semi/ha" | "semi/m²" | "kg/ha";
-
-export const ETA_GIORNI_EQUIVALENTI: Record<EtaPiantina, number> = {
-  standard: 0,
-  avanzata: 7,
-  extra: 14,
-};
 
 export type GranoVarietaDati = {
   label: string;
@@ -274,23 +269,6 @@ export function calcolaDensita(
   return { pianteHaEquivalenti, rapportoDensita, fattoreAzoto };
 }
 
-const NDVI_CURVA: Array<{ giorni: number; ottimale: number }> = [
-  { giorni: 0,   ottimale: 0.28 },
-  { giorni: 14,  ottimale: 0.34 },
-  { giorni: 28,  ottimale: 0.48 },
-  { giorni: 42,  ottimale: 0.64 },
-  // Riferimento operativo: crescita fino a 0,70 a 55 DAT, massima
-  // copertura a 0,78–0,80 a 65 DAT e plateau 0,80 da 75 DAT.
-  // La discesa inizia con la fioritura: confrontare sempre la fase osservata.
-  { giorni: 55,  ottimale: 0.70 },
-  { giorni: 65,  ottimale: 0.79 },
-  { giorni: 75,  ottimale: 0.80 },
-  { giorni: 85,  ottimale: 0.80 },
-  { giorni: 95,  ottimale: 0.75 },
-  { giorni: 110, ottimale: 0.68 },
-  { giorni: 130, ottimale: 0.60 },
-];
-
 export const NDVI_FASI: Array<{ giorni: number; label: string }> = [
   { giorni: 0,  label: "Trapianto" },
   { giorni: 20, label: "Ripresa (20 gg)" },
@@ -328,30 +306,10 @@ export function ndviOttimale(
   giorni: number,
   etaPiantina: EtaPiantina = "standard"
 ): { ottimale: number; label: string; giorniFenologici: number } {
-  const giorniFenologici = Math.max(0, giorni + ETA_GIORNI_EQUIVALENTI[etaPiantina]);
-  const first = NDVI_CURVA[0];
-  const last = NDVI_CURVA[NDVI_CURVA.length - 1];
-
-  if (giorniFenologici <= first.giorni) {
-    return { ottimale: first.ottimale, label: NDVI_FASI[0].label, giorniFenologici };
-  }
-  if (giorniFenologici >= last.giorni) {
-    return { ottimale: last.ottimale, label: "Maturazione avanzata", giorniFenologici };
-  }
-
-  for (let i = 1; i < NDVI_CURVA.length; i++) {
-    const right = NDVI_CURVA[i];
-    if (giorniFenologici <= right.giorni) {
-      const left = NDVI_CURVA[i - 1];
-      const t = (giorniFenologici - left.giorni) / (right.giorni - left.giorni);
-      const smoothT = t * t * (3 - 2 * t);
-      const ottimale = left.ottimale + (right.ottimale - left.ottimale) * smoothT;
-      const fase = [...NDVI_FASI].reverse().find((item) => giorniFenologici >= item.giorni) ?? NDVI_FASI[0];
-      return { ottimale, label: fase.label, giorniFenologici };
-    }
-  }
-
-  return { ottimale: last.ottimale, label: "Maturazione avanzata", giorniFenologici };
+  const { ottimale, giorniFenologici } = riferimentoNdviTabacco(giorni, etaPiantina);
+  const fase = [...NDVI_FASI].reverse().find((item) => giorniFenologici >= item.giorni) ?? NDVI_FASI[0];
+  const label = giorniFenologici >= 130 ? "Maturazione avanzata" : fase.label;
+  return { ottimale, label, giorniFenologici };
 }
 
 export function calcola(
@@ -369,12 +327,9 @@ export function calcola(
 ) {
   const stats = statisticheNdvi([n1, n2, n3, n4, n5]);
   const { ottimale, giorniFenologici } = ndviOttimale(giorni, etaPiantina);
-  const media = stats.media;
-  const discostamento = Math.max(0, ottimale - media);
-  const deficitRelativo = ottimale > 0 ? Math.min(1, discostamento / ottimale) : 0;
-  const quotaDaDeficitNdvi = Math.round(fabbisognoN * deficitRelativo * 10) / 10;
-  const residuoPiano = Math.max(0, Math.round((azotoTot - azotoGiaDistribuito) * 10) / 10);
-  const dose = Math.min(residuoPiano, quotaDaDeficitNdvi);
+  const { discostamento, deficitRelativo, quotaDaDeficitNdvi, residuoPiano, dose } = calcolaDoseNTabacco({
+    media: stats.media, ottimale, fabbisognoN, azotoTotale: azotoTot, azotoGiaDistribuito,
+  });
   const rapportoAzoto = fabbisognoN > 0 ? azotoTot / fabbisognoN : 1;
   const statoAzoto = rapportoAzoto < 0.85
     ? "deficit"

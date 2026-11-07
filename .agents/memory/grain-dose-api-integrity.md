@@ -13,4 +13,4 @@ Keep the app and API regression expectations independently specified, even when 
 
 **Why:** Deriving expected values from the shared implementation would make both suites accept the same agronomic regression.
 
-**How to apply:** Preserve explicit expected phase quotas, NDVI references and residual-cap cases in both suites; do not replace them with calls to the production formulas.
+**How to apply:** Preserve explicit expected phase quotas, NDVI references and residual-cap cases in both suites; do not replace them with calls to the production formulas. This independence also applies to tobacco: keep explicit curve, nursery-age and one-decimal dose expectations on both sides when changing shared rules.

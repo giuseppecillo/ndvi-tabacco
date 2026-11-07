@@ -168,6 +168,75 @@ test("accepts the proportional tobacco NDVI plan", () => {
   assert.equal(erroreOsservazioneTabacco(pianoTabaccoValido()), null);
 });
 
+test("validates independent tobacco curve and nursery-age expectations", () => {
+  const cases = [
+    { giorni: 0, etaPiantina: "standard", reference: 0.28 },
+    { giorni: 7, etaPiantina: "standard", reference: 0.31 },
+    { giorni: 0, etaPiantina: "avanzata", reference: 0.31 },
+    { giorni: 0, etaPiantina: "extra", reference: 0.34 },
+    { giorni: 35, etaPiantina: "standard", reference: 0.56 },
+    { giorni: 28, etaPiantina: "avanzata", reference: 0.56 },
+    { giorni: 21, etaPiantina: "extra", reference: 0.56 },
+    { giorni: 55, etaPiantina: "standard", reference: 0.70 },
+    { giorni: 60, etaPiantina: "standard", reference: 0.745 },
+    { giorni: 65, etaPiantina: "standard", reference: 0.79 },
+    { giorni: 75, etaPiantina: "standard", reference: 0.80 },
+    { giorni: 85, etaPiantina: "standard", reference: 0.80 },
+    { giorni: 90, etaPiantina: "standard", reference: 0.775 },
+    { giorni: 95, etaPiantina: "standard", reference: 0.75 },
+    { giorni: 110, etaPiantina: "standard", reference: 0.68 },
+    { giorni: 130, etaPiantina: "standard", reference: 0.60 },
+    { giorni: 160, etaPiantina: "extra", reference: 0.60 },
+  ];
+  for (const { reference, ...input } of cases) {
+    const plan = {
+      ...pianoTabaccoValido(), ...input,
+      n1: reference, n2: reference, n3: reference, n4: reference, n5: reference,
+      media: reference, ottimale: reference, discostamento: 0, dose: 0,
+    };
+    assert.equal(erroreOsservazioneTabacco(plan), null, JSON.stringify(input));
+    assert.match(erroreOsservazioneTabacco({ ...plan, ottimale: reference + 0.01 }) ?? "", /calendario fenologico/);
+  }
+});
+
+test("preserves tobacco quota rounding and rejects altered doses", () => {
+  const cases = [
+    { reading: 0.5, azotoTotale: 120, azotoGiaDistribuito: 0, dose: 26.3 },
+    { reading: 0.5, azotoTotale: 120.04, azotoGiaDistribuito: 100, dose: 20 },
+    { reading: 0.5, azotoTotale: 120.06, azotoGiaDistribuito: 100, dose: 20.1 },
+    { reading: 0, azotoTotale: 120, azotoGiaDistribuito: 0, dose: 120 },
+    { reading: 0.5, azotoTotale: 120, azotoGiaDistribuito: 125, dose: 0 },
+    { reading: 0.64, azotoTotale: 120, azotoGiaDistribuito: 0, dose: 0 },
+    { reading: 1, azotoTotale: 120, azotoGiaDistribuito: 0, dose: 0 },
+  ];
+  for (const { reading, ...input } of cases) {
+    const plan = {
+      ...pianoTabaccoValido(), ...input,
+      n1: reading, n2: reading, n3: reading, n4: reading, n5: reading,
+      media: reading, discostamento: Math.max(0, 0.64 - reading),
+    };
+    assert.equal(erroreOsservazioneTabacco(plan), null, JSON.stringify(input));
+    assert.match(erroreOsservazioneTabacco({ ...plan, dose: input.dose + 0.1 }) ?? "", /dose tabacco/);
+  }
+});
+
+test("retains tobacco API input validation and legacy standard-age defaults", () => {
+  for (const value of [undefined, null, "", true, NaN, Infinity, -0.1, 1.1]) {
+    assert.match(erroreOsservazioneTabacco({ ...pianoTabaccoValido(), n1: value }) ?? "", /letture NDVI/);
+  }
+  for (const key of ["media", "ottimale", "discostamento", "giorni", "resa", "fabbisognoN", "azotoTotale", "azotoGiaDistribuito", "dose"]) {
+    assert.match(erroreOsservazioneTabacco({ ...pianoTabaccoValido(), [key]: undefined }) ?? "", /non sono completi/);
+  }
+  for (const key of ["giorni", "resa", "fabbisognoN", "azotoTotale", "azotoGiaDistribuito", "dose", "ottimale"]) {
+    assert.match(erroreOsservazioneTabacco({ ...pianoTabaccoValido(), [key]: -1 }) ?? "", /non sono validi/);
+  }
+  assert.match(erroreOsservazioneTabacco({ ...pianoTabaccoValido(), media: 0.4 }) ?? "", /media NDVI/);
+  assert.match(erroreOsservazioneTabacco({ ...pianoTabaccoValido(), discostamento: 0.2 }) ?? "", /deficit NDVI/);
+  for (const etaPiantina of [undefined, null, "", "legacy"]) {
+    assert.equal(erroreOsservazioneTabacco({ ...pianoTabaccoValido(), etaPiantina }), null);
+  }
+});
+
 test("requires zero N for tobacco at or above its NDVI reference", () => {
   const piano = pianoTabaccoValido();
   piano.n1 = 0.8;

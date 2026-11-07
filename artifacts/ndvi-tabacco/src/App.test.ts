@@ -997,6 +997,47 @@ describe("tobacco calculations", () => {
     assert.equal(ndviOttimale(0, "extra").ottimale, 0.34);
   });
 
+  it("preserves tobacco interpolation, equivalent ages and endpoint labels", () => {
+    // Independent agronomic expectations, not computed by the shared module.
+    const cases = [
+      { giorni: -7, eta: "standard", age: 0, reference: 0.28, label: "Trapianto" },
+      { giorni: 7, eta: "standard", age: 7, reference: 0.31, label: "Trapianto" },
+      { giorni: 0, eta: "avanzata", age: 7, reference: 0.31, label: "Trapianto" },
+      { giorni: 0, eta: "extra", age: 14, reference: 0.34, label: "Trapianto" },
+      { giorni: 35, eta: "standard", age: 35, reference: 0.56, label: "Sviluppo vegetativo (35 gg)" },
+      { giorni: 28, eta: "avanzata", age: 35, reference: 0.56, label: "Sviluppo vegetativo (35 gg)" },
+      { giorni: 21, eta: "extra", age: 35, reference: 0.56, label: "Sviluppo vegetativo (35 gg)" },
+      { giorni: 60, eta: "standard", age: 60, reference: 0.745, label: "Espansione chioma (55 gg)" },
+      { giorni: 90, eta: "standard", age: 90, reference: 0.775, label: "Massimo vigore (75–85 gg)" },
+      { giorni: 130, eta: "standard", age: 130, reference: 0.60, label: "Maturazione avanzata" },
+      { giorni: 160, eta: "extra", age: 174, reference: 0.60, label: "Maturazione avanzata" },
+    ] as const;
+    for (const item of cases) {
+      const result = ndviOttimale(item.giorni, item.eta);
+      assertApproximately(result.ottimale, item.reference, JSON.stringify(item));
+      assert.equal(result.giorniFenologici, item.age);
+      assert.equal(result.label, item.label);
+    }
+  });
+
+  it("preserves one-decimal tobacco quotas before applying the residual cap", () => {
+    const cases = [
+      { reading: 0.5, total: 120, applied: 0, quota: 26.3, residual: 120, dose: 26.3 },
+      { reading: 0.5, total: 120.04, applied: 100, quota: 26.3, residual: 20, dose: 20 },
+      { reading: 0.5, total: 120.06, applied: 100, quota: 26.3, residual: 20.1, dose: 20.1 },
+      { reading: 0, total: 120, applied: 0, quota: 120, residual: 120, dose: 120 },
+      { reading: 0.5, total: 120, applied: 125, quota: 26.3, residual: 0, dose: 0 },
+      { reading: 0.64, total: 120, applied: 0, quota: 0, residual: 120, dose: 0 },
+      { reading: 1, total: 120, applied: 0, quota: 0, residual: 120, dose: 0 },
+    ];
+    for (const c of cases) {
+      const result = calcola(4.5, c.total, 42, c.reading, c.reading, c.reading, c.reading, c.reading, 120, "standard", c.applied);
+      assert.equal(result.quotaDaDeficitNdvi, c.quota);
+      assert.equal(result.residuoPiano, c.residual);
+      assert.equal(result.dose, c.dose);
+    }
+  });
+
   it("uses the revised tobacco canopy peak and flowering regression", () => {
     assert.equal(ndviOttimale(55).ottimale, 0.70);
     assert.equal(ndviOttimale(65).ottimale, 0.79);

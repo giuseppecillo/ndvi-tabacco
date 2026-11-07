@@ -191,6 +191,9 @@ importers:
       '@workspace/grain-calculations':
         specifier: workspace:*
         version: link:../../lib/grain-calculations
+      '@workspace/tobacco-calculations':
+        specifier: workspace:*
+        version: link:../../lib/tobacco-calculations
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -589,6 +592,9 @@ importers:
       '@workspace/grain-calculations':
         specifier: workspace:*
         version: link:../../lib/grain-calculations
+      '@workspace/tobacco-calculations':
+        specifier: workspace:*
+        version: link:../../lib/tobacco-calculations
       '@xmldom/xmldom':
         specifier: ^0.9.12
         version: 0.9.12
@@ -790,6 +796,8 @@ importers:
         version: 0.31.10
 
   lib/grain-calculations: {}
+
+  lib/tobacco-calculations: {}
 
   scripts:
     devDependencies:

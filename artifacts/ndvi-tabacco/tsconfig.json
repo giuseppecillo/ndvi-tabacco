@@ -18,6 +18,9 @@
   },
   "references": [
     {
+      "path": "../../lib/tobacco-calculations"
+    },
+    {
       "path": "../../lib/grain-calculations"
     },
     {

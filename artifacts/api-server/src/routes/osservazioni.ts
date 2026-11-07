@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
+import { riferimentoNdviTabacco, calcolaDoseNTabacco } from "@workspace/tobacco-calculations";
 import { requireAccount, requirePrivacyAck, requireSubscription } from "../middlewares/access";
 import {
   faseGranoDaBbch, calcolaDoseNGrano, calcolaFabbisognoNGrano,
@@ -10,22 +11,6 @@ import {
 const router = Router();
 router.use("/osservazioni", requireAccount, requireSubscription, requirePrivacyAck);
 
-const CURVA_NDVI_TABACCO = [
-  { giorni: 0, ottimale: 0.28 },
-  { giorni: 14, ottimale: 0.34 },
-  { giorni: 28, ottimale: 0.48 },
-  { giorni: 42, ottimale: 0.64 },
-  { giorni: 55, ottimale: 0.70 },
-  { giorni: 65, ottimale: 0.79 },
-  { giorni: 75, ottimale: 0.80 },
-  { giorni: 85, ottimale: 0.80 },
-  { giorni: 95, ottimale: 0.75 },
-  { giorni: 110, ottimale: 0.68 },
-  { giorni: 130, ottimale: 0.60 },
-];
-
-const ETA_PIANTINA: Record<string, number> = { standard: 0, avanzata: 7, extra: 14 };
-
 const numero = (value: unknown): number | null => {
   if (typeof value !== "number" && (typeof value !== "string" || value.trim() === "")) {
     return null;
@@ -33,24 +18,6 @@ const numero = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
-
-function ndviRiferimentoTabacco(giorni: number, etaPiantina: string): number {
-  const giorniFenologici = Math.max(0, giorni + (ETA_PIANTINA[etaPiantina] ?? 0));
-  const primo = CURVA_NDVI_TABACCO[0];
-  const ultimo = CURVA_NDVI_TABACCO[CURVA_NDVI_TABACCO.length - 1];
-  if (giorniFenologici <= primo.giorni) return primo.ottimale;
-  if (giorniFenologici >= ultimo.giorni) return ultimo.ottimale;
-  for (let index = 1; index < CURVA_NDVI_TABACCO.length; index++) {
-    const destro = CURVA_NDVI_TABACCO[index];
-    if (giorniFenologici <= destro.giorni) {
-      const sinistro = CURVA_NDVI_TABACCO[index - 1];
-      const t = (giorniFenologici - sinistro.giorni) / (destro.giorni - sinistro.giorni);
-      const smoothT = t * t * (3 - 2 * t);
-      return sinistro.ottimale + (destro.ottimale - sinistro.ottimale) * smoothT;
-    }
-  }
-  return ultimo.ottimale;
-}
 
 export function erroreOsservazioneTabacco(o: Record<string, unknown>): string | null {
   const letture = [o.n1, o.n2, o.n3, o.n4, o.n5].map(numero);
@@ -81,22 +48,20 @@ export function erroreOsservazioneTabacco(o: Record<string, unknown>): string | 
   if (Math.abs(media - mediaCalcolata) > 0.0001) {
     return "La media NDVI del tabacco non è coerente con le letture inviate.";
   }
-  const riferimentoAtteso = ndviRiferimentoTabacco(
+  const { ottimale: riferimentoAtteso } = riferimentoNdviTabacco(
     giorni,
-    typeof o.etaPiantina === "string" ? o.etaPiantina : "standard",
+    o.etaPiantina === "avanzata" || o.etaPiantina === "extra" ? o.etaPiantina : "standard",
   );
   if (Math.abs(ottimale - riferimentoAtteso) > 0.0001) {
     return "Il riferimento NDVI del tabacco non corrisponde al calendario fenologico.";
   }
 
-  const discostamentoAtteso = Math.max(0, ottimale - media);
+  const { discostamento: discostamentoAtteso, dose: doseAttesa } = calcolaDoseNTabacco({
+    media, ottimale, fabbisognoN, azotoTotale, azotoGiaDistribuito,
+  });
   if (Math.abs(discostamento - discostamentoAtteso) > 0.0001) {
     return "Il deficit NDVI del tabacco non è coerente con media e riferimento.";
   }
-  const deficitRelativo = ottimale > 0 ? Math.min(1, discostamentoAtteso / ottimale) : 0;
-  const quotaDaDeficitNdvi = Math.round(fabbisognoN * deficitRelativo * 10) / 10;
-  const residuoPiano = Math.max(0, Math.round((azotoTotale - azotoGiaDistribuito) * 10) / 10);
-  const doseAttesa = Math.min(residuoPiano, quotaDaDeficitNdvi);
   if (Math.abs(dose - doseAttesa) > 0.01) {
     return "La dose tabacco non corrisponde alla quota ricalcolata da NDVI e fabbisogno N.";
   }
