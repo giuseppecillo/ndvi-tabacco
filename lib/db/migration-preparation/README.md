@@ -1,5 +1,15 @@
 # Preparazione INATTIVA PostgreSQL → Supabase
 
+## Aggiornamento: punto 2 autorizzato
+
+Le migrazioni e il collegamento a Supabase restano inattivi. È stata invece
+autorizzata e applicata la rimozione degli automatismi dal codice API e dal
+post-merge: l'avvio ora verifica lo schema in sola lettura e non lo ripara.
+Esiti, checkpoint Git e limite del Publish gestito Replit sono documentati in
+[`docs/migrazione-punto-2.md`](../../../docs/migrazione-punto-2.md).
+Le sezioni sotto descrivono anche la preparazione storica, non una nuova
+autorizzazione a importare dati o applicare SQL.
+
 ## Verifica successiva autorizzata
 
 La lettura dei soli metadati di sviluppo e produzione è stata successivamente
@@ -26,18 +36,19 @@ alla pubblicazione. Non è presente un comando che applica le migrazioni. Nessun
 database è stato interrogato per realizzarli. Le migrazioni sono bozze derivate
 dal codice, non certificazioni dello schema attualmente installato.
 
-## Percorsi esistenti lasciati invariati
+## Percorsi individuati e stato dopo il punto 2
 
-| Punto attuale | Sostituzione preparata / futura |
+| Percorso | Stato |
 |---|---|
-| `lib/db/package.json`: push, push-force e push-deployment | Rimuovere i push automatici al cutover autorizzato; usare SQL revisionato, ordinato e con checksum. Non aggiungere un'applicazione SQL al build o alla pubblicazione. |
-| `scripts/post-merge.sh`: push-deployment | Rimuovere il push nel medesimo intervento autorizzato, mantenendo installazione dipendenze e sola verifica dello schema. |
-| `artifacts/api-server/src/index.ts`: initializeSecurity | Sostituire con controlli di lettura, controllo completo dei privilegi e compatibilità dello schema. |
-| `artifacts/api-server/src/lib/security-db.ts`: DDL, backfill, bootstrap | Schema versionato, eventuali riparazioni dati separate e approvate. Conservare l'audit applicativo e PRIVACY_VERSION. |
+| `lib/db/package.json`: push, push-force e push-deployment | Soli comandi manuali; nessun richiamo automatico. Non eseguiti. |
+| `scripts/post-merge.sh` | Push rimosso; sola installazione frozen-lockfile. Il riavvio workflow verifica lo schema senza scritture. |
+| `artifacts/api-server/src/index.ts` | Verifica protetta di sola lettura prima di listen; initializeSecurity rimosso. |
+| `artifacts/api-server/src/lib/security-db.ts` | DDL, backfill e bootstrap rimossi; audit applicativo e PRIVACY_VERSION invariati. |
 | Due pool distinti: API e `@workspace/db` | Usare una configurazione coerente pg/Drizzle con il ruolo della destinazione, senza credenziali privilegiate nel runtime. |
 
-Non sono rimossi ora: questa è la preparazione inattiva confermata dal titolare.
-Non presentarla come una protezione già attiva sui database correnti.
+La configurazione dei nuovi ruoli/pool Supabase resta inattiva. Non presentare
+la sola rimozione degli automatismi come isolamento assoluto delle credenziali
+del workspace o come disattivazione del meccanismo interno Replit Publish.
 
 ## Configurazione futura pg e Drizzle
 

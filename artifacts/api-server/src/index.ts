@@ -1,6 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { initializeSecurity } from "./lib/security-db";
+import { verifySecuritySchema } from "./lib/security-db";
 
 const rawPort = process.env["PORT"];
 
@@ -16,7 +16,8 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-await initializeSecurity();
+await verifySecuritySchema();
+logger.info("Read-only application schema verification passed; automatic migrations disabled");
 app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");

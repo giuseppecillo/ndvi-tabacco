@@ -19,11 +19,11 @@ non presumere più che il target Supabase sia nel Regno Unito.
 connessione; nome e stato Healthy dichiarato non costituiscono verifica del
 server o autorizzazione a SQL, ruoli, tabelle o dati.
 
-Per la migrazione del solo database Clerk deve rimanere invariato, con tutti gli utenti, identificativi e autorizzazioni. Un'eventuale portabilità fuori Replit resta una verifica futura separata, non un prerequisito della fase attuale. Il titolare ha autorizzato soltanto preparazione inattiva, mantenendo i percorsi di avvio e gli automatismi esistenti fino a successiva autorizzazione.
+Per la migrazione del solo database Clerk deve rimanere invariato, con tutti gli utenti, identificativi e autorizzazioni. Un'eventuale portabilità fuori Replit resta una verifica futura separata, non un prerequisito della fase attuale. Il titolare richiede avvio e post-merge senza modifiche automatiche allo schema, bootstrap o riparazioni dei dati: schema incompatibile significa errore esplicito, non autoriparazione.
 
-**Why:** il titolare ha ristretto esplicitamente l'ambito alla preparazione del database e confermato di non attivare modifiche che possano interrompere l'applicazione corrente.
+**Why:** il titolare vuole che cambiamenti strutturali e trasferimenti avvengano soltanto tramite operazioni specificamente approvate, preservando l'applicazione corrente.
 
-**How to apply:** non creare istanze sostitutive né eliminare quella gestita. Non creare Supabase, cambiare credenziali, eseguire SQL sui database esistenti o modificare la pubblicazione senza ulteriore autorizzazione. Per questa fase eseguire solo controlli statici, typecheck e test senza accesso ai database.
+**How to apply:** non creare istanze sostitutive né eliminare quella gestita. Non reintrodurre migrazioni automatiche per risolvere errori di avvio. Connessioni, scritture, credenziali, trasferimenti e pubblicazione richiedono le rispettive autorizzazioni; l'approvazione del piano generale non autorizza tutte le fasi.
 
 Un confronto logico positivo dello schema non autorizza importazioni per posizione: usare liste di colonne esplicite o un restore revisionato degli oggetti applicativi.
 

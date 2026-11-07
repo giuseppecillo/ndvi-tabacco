@@ -1,6 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 pnpm install --frozen-lockfile
-# Applica le modifiche additive allo schema (incluse le colonne delle osservazioni)
-# prima che la riconciliazione riavvii i servizi.
-pnpm --filter @workspace/db run push-deployment
+# No database commands here. Workflow reconciliation restarts the API, whose
+# startup performs read-only schema verification and fails instead of repairing.
