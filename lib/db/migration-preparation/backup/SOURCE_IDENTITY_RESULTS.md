@@ -1,5 +1,10 @@
 # Identità sorgente Production — verifica conclusa, nessuna esportazione
 
+**Aggiornamento successivo:** il titolare ha confermato l'associazione
+Production/deployment e autorizzato il backup e la nuova chiave. Esportazione
+cifrata eseguita e verificata separatamente: vedere REAL_BACKUP_REPORT.md.
+Le condizioni di autorizzazione riportate sotto riguardano la sola diagnosi.
+
 Data: 7 novembre 2026. Credenziale letta esclusivamente dal programma tramite
 il Secret temporaneo `REPLIT_PROD_BACKUP_URL`; nessun valore della credenziale
 stampato, salvato nel rapporto o passato nella riga di comando.

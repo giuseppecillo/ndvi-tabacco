@@ -1,9 +1,10 @@
-# Preliminari backup — 7 novembre 2026
+# Preliminari backup — 7 novembre 2026 — rapporto storico
 
 **Aggiornamento:** la successiva verifica del primario e del TLS client è
 conclusa; vedere [SOURCE_IDENTITY_RESULTS.md](SOURCE_IDENTITY_RESULTS.md).
 I blocchi sotto descrivono lo stato precedente all'inserimento del Secret,
-non quello corrente. L'esportazione reale resta non autorizzata.
+non quello corrente. L'esportazione reale è stata successivamente autorizzata,
+eseguita e verificata: vedere [REAL_BACKUP_REPORT.md](REAL_BACKUP_REPORT.md).
 
 **Nessun dato reale esportato. Nessun backup production creato.**
 

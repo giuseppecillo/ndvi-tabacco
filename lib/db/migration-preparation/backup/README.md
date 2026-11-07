@@ -1,7 +1,9 @@
-# Backup — soli preliminari e collaudo sintetico
+# Backup — preparazione e prima esportazione autorizzata
 
-**L'esportazione di dati reali non è autorizzata. Nessun dump reale creato.**
-`backup-production.mjs` è stato predisposto ma richiede autorizzazione
+**Prima esportazione reale autorizzata, cifrata e verificata il 7 novembre 2026.**
+Vedere [REAL_BACKUP_REPORT.md](REAL_BACKUP_REPORT.md). Custodia esterna da
+confermare; nessun ripristino SQL o intervento su Supabase eseguito.
+Ogni nuova esecuzione di `backup-production.mjs` richiede autorizzazione
 specifica all'esportazione, conferma dell'associazione production e destinatario
 pubblico age: senza questi flag si ferma prima di qualsiasi connessione.
 `pipeline.mjs` è una libreria; non legge credenziali e non parte importandola.
@@ -9,9 +11,11 @@ pubblico age: senza questi flag si ferma prima di qualsiasi connessione.
 ## Programmi e perimetro
 
 - `source-guard.mjs`: controlli puri di URL e identità con client iniettato.
-- `verify-source.mjs`: unica connessione eventualmente reale, ma SOLO transazione
+- `verify-source.mjs`: diagnosi della connessione reale, ma SOLO transazione
   REPEATABLE READ READ ONLY, probe read-only, SELECT di identità/metadati,
   ROLLBACK e chiusura. Nessuna lettura applicativa, pg_dump o scrittura.
+- `backup-production.mjs`: esportazione reale completa, solo dopo autorizzazione
+  specifica, verifica della sorgente e indicazione esplicita del destinatario age.
 - `pipeline.mjs`: dump custom → hash/controllo byte → age e parser pg_restore.
   Il parser produce SQL verso `/dev/null`, senza connessione database.
   Niente file dump in chiaro, stdout dei dati o errori grezzi nei log.
@@ -47,7 +51,8 @@ la procedura diagnostica, non un'autorizzazione a ripeterla.
 
 Il canale SQL production gestito da Replit identifica una replica del database
 neondb, progetto late-darkness-39148782, ramo br-winter-salad-apdld73l.
-Questo NON prova l'endpoint primario da usare con pg_dump.
+Questo da solo NON prova l'endpoint primario; la successiva verifica diretta
+e la conferma del titolare sono riportate nei rapporti aggiornati.
 
 Occorre la connessione esistente da Database → Production → Settings, senza
 rigenerare credenziali o pubblicare. Il titolare ha scelto la verifica da

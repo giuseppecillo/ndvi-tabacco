@@ -1,6 +1,8 @@
 # Preparazione operativa rapida — INATTIVA
 
-**Nessuna connessione, esportazione o scrittura effettuata da questa preparazione.**
+**Script target/cutover ancora inattivi.** Il successivo backup reale è stato
+autorizzato, eseguito e verificato: vedere ../backup/REAL_BACKUP_REPORT.md.
+Nessuna scrittura Supabase, importazione o modifica DATABASE_URL effettuata.
 Solo Replit e il Supabase Agri Precision esistente, nessun PC da configurare e
 nessun altro database.
 
@@ -30,8 +32,8 @@ Non eseguire questi comandi come test sul database reale.
 
 ## Garanzie implementate e limiti
 
-- Sorgente: nome, progetto e ramo già identificati; primario e TLS da validare
-  con il Secret temporaneo. Figlio diagnostico con ambiente limitato a due chiavi,
+- Sorgente: nome, progetto, ramo, primario e TLS del client verificati tramite
+  Secret temporaneo. Figlio diagnostico con ambiente limitato a due chiavi,
   senza DATABASE_URL, PG*, Clerk, import dell'applicazione o funzione di backup.
 - Backup: custom completo, age in streaming, parser completo senza SQL eseguito,
   hash del cifrato e file 0600 in directory 0700 ignorata da Git/pubblicazione.
@@ -71,19 +73,13 @@ qualsiasi errore del target interrompe e annulla la transazione.
 
 ## Blocchi effettivi
 
-1. Connessione diretta e TLS verificati; rapporto in
-   ../backup/SOURCE_IDENTITY_RESULTS.md. Rimane la conferma del titolare che
-   l'URI fornita è la Production associata al deployment, non un override.
-2. Per il backup reale: destinatario cifratura e consegna da concordare senza
-   installazioni sul PC, più autorizzazione distinta all'esportazione.
-   È pronta l'alternativa `../backup/prepare-key.mjs`, con flag distinto
-   --authorized-create-deliverable-age-key: genera su Replit una coppia age,
-   stampa soltanto il destinatario pubblico e conserva la privata 0600 in
-   generated-artifacts/backup-keys (esclusa Git/pubblicazione).
-   Richiede approvazione alla creazione e al periodo di custodia temporanea,
-   download privato autenticato al titolare e successiva rimozione autorizzata.
-   Non è cifratura con chiave mai presente su Replit: dichiarare il limite.
-   Nessuna chiave reale è stata ancora generata e nulla va caricato dal PC.
+1. Origine Production confermata dal titolare; backup reale cifrato, decifrato
+   e integralmente analizzato. Rapporto: ../backup/REAL_BACKUP_REPORT.md.
+2. Rimane da confermare la custodia fuori Replit di archivio, checksum e chiave.
+   La chiave privata è temporaneamente presente su Replit, come autorizzato,
+   con file 0600 e directory 0700 esclusi da Git/pubblicazione.
+   Nessun link pubblico, nessuna installazione sul PC, nessuna rimozione
+   senza autorizzazione. Non è cifratura con chiave mai presente su Replit.
 3. Le fasi target/cutover sono pronte come script/procedura, ma richiedono le
    rispettive autorizzazioni. LOGIN/credenziali e isolamento effettivo dei ruoli
    si verificano prima di esporli all'app e allo sviluppo ordinario.
