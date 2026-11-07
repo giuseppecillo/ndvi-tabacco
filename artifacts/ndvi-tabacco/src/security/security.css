@@ -96,7 +96,7 @@ html, body { overflow-x: clip; max-width: 100%; }
 .nc-modhead-title { margin: 0; min-width: 0; color: var(--nc-leaf, #1f3d2b); font-weight: 600; font-size: clamp(1.25rem, 4.6vw, 2.25rem); line-height: 1.15; overflow-wrap: anywhere; hyphens: auto; }
 .nc-modhead-sub { margin-top: .5rem; color: var(--nc-muted, #5d6a5f); font-size: .95rem; }
 
-/* Sign-in: pale-green login palette (scoped) + full square composite beside form */
+/* Sign-in: pale-green login palette and image-backed access frame */
 .nc-signin {
   --nc-ink: #12301d; --nc-leaf: #1d5a34; --nc-leaf-2: #2a7346; --nc-muted: #3d5a46;
   --nc-paper: #f3faee; --nc-paper-2: #e2f0d8; --nc-line: #b9d6a8; --nc-sage: #9fc28a;
@@ -117,26 +117,35 @@ html, body { overflow-x: clip; max-width: 100%; }
 .nc-signin-lang label { font-weight: 600; color: var(--nc-ink); }
 .nc-signin-lang select { background: var(--nc-paper-2); border-color: var(--nc-line); color: var(--nc-ink); font-weight: 600; cursor: pointer; }
 .nc-signin-lang select:focus-visible { outline: 3px solid var(--nc-leaf); outline-offset: 2px; }
-.nc-signin-layout { max-width: 72rem; margin: 0 auto; padding: 0 1rem 1.5rem; display: grid; grid-template-columns: 1fr; gap: 1.25rem; justify-items: center; }
-.nc-signin-photo { margin: 0; width: 100%; max-width: 560px; aspect-ratio: 1 / 1; border-radius: 1.25rem; overflow: hidden;
-  border: 1px solid var(--nc-line); background: var(--nc-paper-2); box-shadow: 0 24px 50px -30px rgba(29,90,52,.55); }
+/* Image frame: full square composite as backdrop, login form overlaid within its bounds.
+   Form starts below the three operator panels (over the map); frame grows with the form. */
+.nc-signin-layout {
+  position: relative; width: min(100% - 2rem, 860px); margin: 0 auto 1.5rem;
+  border-radius: 1.5rem; border: 1px solid var(--nc-line); overflow: clip;
+  background: linear-gradient(180deg, #dcebd1 0%, #e9f4e1 100%);
+  box-shadow: 0 30px 60px -36px rgba(29,90,52,.6);
+}
+.nc-signin-photo { position: absolute; inset: 0 0 auto 0; margin: 0; aspect-ratio: 1 / 1; pointer-events: none; z-index: 0; }
 .nc-signin-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.nc-signin-main { min-width: 0; }
-.nc-signin-panel { background: #f6fbf2; border: 1px solid var(--nc-line); border-radius: 1rem; padding: .75rem 1rem; color: var(--nc-ink);
+.nc-signin-photo::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 0%, transparent 52%, rgba(233,244,225,.25) 70%, rgba(233,244,225,.85) 94%, #e9f4e1 100%); }
+.nc-signin-main {
+  position: relative; z-index: 1; min-width: 0; margin: 0 auto;
+  /* percentage padding is relative to frame width = image height, so the panels stay clear */
+  padding: 51% 1rem 1.5rem;
+}
+.nc-signin-main > h1 { backdrop-filter: blur(6px); }
+.nc-signin-panel { background: rgba(246,251,242,.95); border: 1px solid var(--nc-line); border-radius: 1rem; padding: .75rem 1rem; color: var(--nc-ink);
   box-shadow: 0 12px 30px -22px rgba(29,90,52,.5); transition: background-color .2s ease; }
 .nc-signin-main > h1 { color: var(--nc-leaf); font-weight: 500; }
+@media (min-width: 768px) { .nc-signin-panel { margin-left: auto; margin-right: auto; } }
 .nc-signin .nc-signin-primary { background: #1d5a34; color: #f3faee; border-radius: 999px; font-weight: 600; }
 .nc-signin .nc-signin-primary:hover { background: #2a7346 !important; }
 .nc-signin .nc-signin-primary:focus-visible { outline: 3px solid #1d5a34; outline-offset: 3px; }
 .nc-signin .nc-signin-link { color: #1d5a34; font-weight: 700; }
 .nc-signin .nc-signin-link:hover { color: #2a7346 !important; }
-@media (min-width: 1024px) {
-  .nc-signin-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 480px); align-items: start; gap: 2.5rem; justify-items: stretch; }
-  .nc-signin-photo { position: sticky; top: 1.5rem; max-width: min(100%, calc(100dvh - 3rem)); justify-self: end; }
-}
 @media (max-width: 767px) {
-  .nc-signin-layout { padding: 0 .75rem 1.5rem; }
-  .nc-signin-photo { border-radius: 1rem; }
-  .nc-signin-brand span { font-size: 1.15rem; }
+  .nc-signin-layout { width: calc(100% - 1rem); border-radius: 1.1rem; }
+  .nc-signin-main { padding: 50% .5rem 1rem; }
 }
 @media (prefers-reduced-motion: reduce) { .nc-signin-panel, .nc-signin-brand, .nc-signin-lang { transition: none; } }
