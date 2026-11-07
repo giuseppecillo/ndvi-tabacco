@@ -1,4 +1,7 @@
-# Punto 5 — preparazione completata, scritture non autorizzate né eseguite
+# Punto 5 — perimetro del collaudo autorizzato
+
+Esecuzione completata nel solo perimetro seguente. Esiti e finding in
+POINT5_RESULTS.md; nessuna fase successiva avviata.
 
 Solo il Supabase Agri Precision esistente. Nessun altro database/progetto,
 nessuna connessione Replit, nessun dato reale, nessuna attivazione LOGIN.
@@ -21,7 +24,7 @@ I permessi TEMP/large object non equivalgono a accesso alle tabelle
 applicative. Sono però un limite al requisito di readonly globale, da
 collaudare e riportare senza correggere automaticamente privilegi PUBLIC.
 
-## Operazioni esatte proposte, tutte da autorizzare prima dell'esecuzione
+## Operazioni esatte approvate per il collaudo
 
 1. Verifica TLS/target e precondizioni indispensabili: cinque tabelle ancora
    vuote, nessuna modifica inattesa alle 15 policy, ruoli ancora NOLOGIN.
@@ -120,6 +123,7 @@ Nessuna di queste operazioni viene avviata dalla preparazione o dal collaudo.
 15 policy attese, aggiornamenti audit NULL-only nei casi positivi, sonde
 circoscritte, assenza di comandi di transazione/credenziali nella specifica,
 identificatori non iniettabili e nessun accesso a connessioni/Secrets.
-TypeScript del preflight superato. Nessuna esecuzione dei 101 casi su Supabase.
-Il runner operativo dovrà rispettare integralmente questo perimetro e usare
-la specifica, senza aggiungere prove o remediation non autorizzate.
+TypeScript del preflight superato. Successivamente sono stati aggiunti
+quattro test offline delle precondizioni/vincoli del runner e TypeScript,
+superati prima dell'unica esecuzione autorizzata. Il runner run-phase5.ts
+ha usato la specifica senza aggiungere remediation; risultati in POINT5_RESULTS.md.

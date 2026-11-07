@@ -47,8 +47,10 @@ non soltanto con il default di sessione read-only. Un collaudo locale con
 superuser non certifica che l'amministratore di un servizio gestito possa
 applicare le stesse restrizioni.
 
-**Why:** PUBLIC e routine integrate possono consentire effetti non coperti dai
-soli grants delle tabelle; rimuoverli può incidere su altri servizi del provider.
+**Why:** il collaudo sul Supabase gestito ha confermato che ruoli privi di
+scritture applicative possono creare TEMP e large object attraverso routine
+integrate. Le sole ACL delle tabelle non garantiscono readonly globale;
+rimuovere privilegi condivisi può incidere sui servizi del provider.
 L'assenza di errori nei mock non dimostra l'isolamento sul server.
 
 **How to apply:** nelle sole destinazioni di test autorizzate provare i divieti
