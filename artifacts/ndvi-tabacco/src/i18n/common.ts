@@ -9,7 +9,7 @@ export const common: readonly Translation[] = [
   ["Supporto alla fertilizzazione azotata.", "Nitrogen fertilization support.", "Apoyo a la fertilización nitrogenada."],
   ["Supporto alla fertilizzazione azotata", "Nitrogen fertilization support", "Apoyo a la fertilización nitrogenada"],
   ["Accesso riservato agli utenti.", "Access restricted to users.", "Acceso restringido a usuarios."],
-  ["Accesso riservato agli account approvati", "Access restricted to approved accounts", "Acceso restringido a cuentas aprobadas"],
+  ["Supporto operativo alla fertilizzazione azotata nel palmo della tua mano", "Practical nitrogen fertilization support in the palm of your hand", "Apoyo práctico a la fertilización nitrogenada en la palma de tu mano"],
   ["Accedi a NitroCrop NDVI", "Sign in to NitroCrop NDVI", "Accede a NitroCrop NDVI"],
   ["Accedi", "Sign in", "Acceder"],
   ["Accedi al tuo account", "Sign in to your account", "Accede a tu cuenta"],

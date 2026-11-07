@@ -97,14 +97,19 @@ function AuthShell({ children, aside }: { children: React.ReactNode; aside: Reac
 function SignInPage({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="nc-signin min-h-[100dvh]">
-      <div
-        className="nc-signin-photo"
-        aria-hidden="true"
-        data-testid="img-signin-background"
-        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}ndvi-field-background.webp)` }}
-      />
       <header className="nc-signin-head mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5"><Brand /><LanguageSelector /></header>
-      <main className="nc-signin-main mx-auto w-full max-w-[480px] px-4 pb-6">
+      <div className="nc-signin-layout">
+      <figure className="nc-signin-photo" aria-hidden="true">
+        <img
+          src={`${import.meta.env.BASE_URL}ndvi-field-background.webp`}
+          alt=""
+          width={1024}
+          height={1024}
+          decoding="async"
+          data-testid="img-signin-background"
+        />
+      </figure>
+      <main className="nc-signin-main w-full max-w-[480px] pb-6">
         <h1 className="nc-signin-panel mb-5 text-center text-sm text-[var(--nc-muted)]">
           Supporto alla fertilizzazione azotata.
           <span className="mt-1 block">Accesso riservato agli utenti.</span>
@@ -123,6 +128,7 @@ function SignInPage({ embedded = false }: { embedded?: boolean }) {
         </div>
         <Activation />
       </main>
+      </div>
     </div>
   );
 }
@@ -229,7 +235,7 @@ function ClerkProviderWithRoutes() {
     ...baseLocalization,
     signIn: {
       ...baseLocalization.signIn,
-      start: { ...baseLocalization.signIn?.start, title: t("Accedi a NitroCrop NDVI"), subtitle: t("Accesso riservato agli account approvati") },
+      start: { ...baseLocalization.signIn?.start, title: t("Accedi a NitroCrop NDVI"), subtitle: t("Supporto operativo alla fertilizzazione azotata nel palmo della tua mano") },
     },
     signUp: {
       ...baseLocalization.signUp,

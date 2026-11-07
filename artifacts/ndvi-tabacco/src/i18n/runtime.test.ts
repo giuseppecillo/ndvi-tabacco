@@ -25,6 +25,21 @@ test("Sign-in introductory copy is concise in all supported languages", () => {
   }
 });
 
+test("Sign-in subtitle presents operational nitrogen support in all languages", () => {
+  const source = "Supporto operativo alla fertilizzazione azotata nel palmo della tua mano";
+  const root = readFileSync(new URL("../security/SecurityRoot.tsx", import.meta.url), "utf8");
+  assert.ok(root.includes(`subtitle: t("${source}")`));
+  assert.ok(!root.includes("Accesso riservato agli account approvati"));
+  for (const [language, expected] of [
+    ["it", source],
+    ["en", "Practical nitrogen fertilization support in the palm of your hand"],
+    ["es", "Apoyo práctico a la fertilización nitrogenada en la palma de tu mano"],
+  ] as const) {
+    setLanguage(language);
+    assert.equal(t(source), expected);
+  }
+});
+
 test("polygon import counts, progress and failures translate without changing filenames", () => {
   for (const [language, single, plural] of [
     ["en", "1 polygon detected", "3 polygons detected"],
