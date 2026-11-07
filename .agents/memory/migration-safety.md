@@ -55,3 +55,16 @@ L'assenza di errori nei mock non dimostra l'isolamento sul server.
 anche con il default read-only disattivato; prima dell'attivazione richiedere
 verifica specifica dei privilegi e dell'impatto sul target gestito, senza
 saltare revoche non autorizzate o non consentite.
+
+Per collaudare i ruoli NOLOGIN su Supabase, ADMIN OPTION non implica
+la possibilità di SET ROLE: verificare separatamente l'opzione SET.
+
+**Why:** l'amministratore del progetto può gestire runtime/readonly ma non
+assumerli inizialmente. Inoltre SET ROLE da una sessione amministrativa
+controlla session_user, non il ruolo simulato: non prova che quest'ultimo
+possa effettuare escalation.
+
+**How to apply:** usare solo concessioni SET circoscritte, esplicitamente
+autorizzate e dentro una transazione destinata a ROLLBACK; non attivare
+LOGIN per il collaudo. Testare DML/DDL come ruolo corrente e valutare
+escalation con metadati del ruolo reale, non con SET ROLE dall'admin.

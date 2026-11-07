@@ -90,3 +90,14 @@ Non sono certificati i futuri GRANT/modifiche fuori dal perimetro applicato.
    Le fasi successive richiedono ancora le rispettive autorizzazioni e non
    sono state avviate. LOGIN/credenziali e isolamento effettivo globale dei ruoli
    si verificano prima di esporli all'app e allo sviluppo ordinario.
+
+## Punto 5 — sola preparazione, in attesa di autorizzazione alle prove
+
+Perimetro esatto in [POINT5_PREPARATION.md](POINT5_PREPARATION.md).
+La specifica pura phase5-cases.mjs contiene 9 fixture e 101 casi; 7 test
+offline della specifica e TypeScript del preflight superati.
+phase5-preflight.ts ha letto soltanto metadati: l'amministratore ha ADMIN
+OPTION ma non SET per runtime/readonly; TEMP e funzioni large object
+restano accessibili. Nessuna concessione SET o scrittura di prova eseguita.
+Le concessioni temporanee e le prove richiedono consenso specifico.
+Il seguito verso backup finale/import è già definito nel piano, non avviato.
