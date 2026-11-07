@@ -381,6 +381,206 @@ describe("riepilogo azoto della mappa IDW", () => {
   });
 });
 
+describe("mappe sintetiche al confine UTM 32/33 (12° est)", () => {
+  // About 100 × 100 m at 42° N. The two crossing fields select opposite
+  // zones: neither grid nodes nor controls may select a zone individually.
+  const cases = [
+    { name: "ovest", centre: 11.9992, zone: 32, crosses: false },
+    { name: "est", centre: 12.0008, zone: 33, crosses: false },
+    { name: "a cavallo, centro ovest", centre: 11.99995, zone: 32, crosses: true },
+    { name: "a cavallo, centro est", centre: 12.00005, zone: 33, crosses: true },
+  ];
+  function fixture(centre: number) {
+    return computeIdwGrid({
+      name: "Confine sintetico",
+      ring: [
+        [centre - 0.0006, 42], [centre + 0.0006, 42],
+        [centre + 0.0006, 42.0009], [centre - 0.0006, 42.0009],
+      ],
+    }, [
+      { obsId: "boundary-west", cliente: "Sintetico", appezzamento: "Confine",
+        lng: centre - 0.0003, lat: 42.0003, dose: 20 },
+      { obsId: "boundary-east", cliente: "Sintetico", appezzamento: "Confine",
+        lng: centre + 0.0003, lat: 42.0006, dose: 40 },
+    ], 10, 2);
+  }
+  // Independent local geographic distance, not proj4 or the production IDW.
+  // Over 100 m the spherical approximation differs from WGS84 by <0.3%.
+  function metres(a: { lng: number; lat: number }, b: { lng: number; lat: number }) {
+    const rad = Math.PI / 180;
+    return 6_371_008.8 * rad * Math.hypot(
+      (a.lng - b.lng) * Math.cos((a.lat + b.lat) / 2 * rad), a.lat - b.lat,
+    );
+  }
+  function assertExtent(points: Array<{ lng: number; lat: number }>, result: PolyIdwResult) {
+    assert.ok(points.length > 80 && points.length < 120, "a roughly 1 ha field has about 100 cells");
+    const [west, south, east, north] = result.bbox;
+    for (const point of points) {
+      assert.ok(point.lng >= west && point.lng <= east, "longitude stays inside the field");
+      assert.ok(point.lat >= south && point.lat <= north, "latitude stays inside the field");
+    }
+    const margin = 0.00015; // <17 m, at most about one cell at the edge
+    assert.ok(Math.min(...points.map(p => p.lng)) < west + margin);
+    assert.ok(Math.max(...points.map(p => p.lng)) > east - margin);
+    assert.ok(Math.min(...points.map(p => p.lat)) < south + margin);
+    assert.ok(Math.max(...points.map(p => p.lat)) > north - margin);
+  }
+
+  for (const testCase of cases) {
+    describe(testCase.name, () => {
+      it("mantiene estensione, passo metrico, continuità e dosi IDW senza salti di fuso", () => {
+        const result = fixture(testCase.centre);
+        assert.equal(result.utmZone, testCase.zone);
+        assert.equal(result.utmSouth, false);
+        assert.deepEqual(result.bbox, [testCase.centre - 0.0006, 42, testCase.centre + 0.0006, 42.0009]);
+        assertExtent(result.grid, result);
+        const minX = Math.min(...result.grid.map(p => p.utmX));
+        const minY = Math.min(...result.grid.map(p => p.utmY));
+        const cells = new Map(result.grid.map(p => {
+          const col = (p.utmX - minX) / 10;
+          const row = (p.utmY - minY) / 10;
+          assert.ok(Math.abs(col - Math.round(col)) < EPSILON);
+          assert.ok(Math.abs(row - Math.round(row)) < EPSILON);
+          return [`${Math.round(col)},${Math.round(row)}`, p] as const;
+        }));
+        assert.equal(cells.size, result.grid.length, "no duplicate grid cells");
+        let crossingEdges = 0;
+        const visited = new Set<string>();
+        const queue = [cells.keys().next().value!];
+        for (let i = 0; i < queue.length; i++) {
+          const key = queue[i];
+          if (visited.has(key)) continue;
+          visited.add(key);
+          const point = cells.get(key)!;
+          const [col, row] = key.split(",").map(Number);
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const neighbourKey = `${col + dx},${row + dy}`;
+            const neighbour = cells.get(neighbourKey);
+            if (!neighbour) continue;
+            const distance = metres(point, neighbour);
+            assert.ok(distance > 9.9 && distance < 10.1, "adjacent cells remain 10 m apart in WGS84");
+            assert.ok(Math.abs(point.dose - neighbour.dose) < 10, "no abrupt dose discontinuity");
+            if ((point.lng < 12) !== (neighbour.lng < 12)) crossingEdges++;
+            if (!visited.has(neighbourKey)) queue.push(neighbourKey);
+          }
+        }
+        assert.equal(visited.size, cells.size, "the entire field is connected, including across 12° E");
+        assert.equal(crossingEdges > 0, testCase.crosses);
+        for (const point of result.grid) {
+          const [a, b] = result.controls;
+          const wa = 1 / metres(point, a) ** 2;
+          const wb = 1 / metres(point, b) ** 2;
+          const expected = (wa * a.dose + wb * b.dose) / (wa + wb);
+          assert.ok(Number.isFinite(point.dose) && point.dose >= 20 && point.dose <= 40);
+          assert.ok(Math.abs(point.dose - expected) < 0.06, "IDW agrees with independent geographic distances");
+        }
+        assert.equal(result.stats.count, result.grid.length);
+        assert.equal(result.stats.min, Math.min(...result.grid.map(p => p.dose)));
+        assert.equal(result.stats.max, Math.max(...result.grid.map(p => p.dose)));
+        assert.ok(Math.abs(result.stats.mean - 30) < 1);
+      });
+
+      it("riapre lo Shapefile in WGS84 con tutta la griglia e le dosi originali", async () => {
+        const result = fixture(testCase.centre);
+        const { blob } = await captureDownload(() => downloadShapefile(result));
+        const buffer = await blob.arrayBuffer();
+        const zip = await JSZip.loadAsync(buffer);
+        const prj = Object.values(zip.files).filter(entry => entry.name.endsWith(".prj"));
+        assert.equal(prj.length, 1);
+        const wkt = await prj[0].async("string");
+        assert.match(wkt, /^GEOGCS\["GCS_WGS_1984"/); // ESRI WKT for EPSG:4326
+        assert.doesNotMatch(wkt, /PROJCS|UTM/);
+        const collection = await shpjs(buffer);
+        assert.ok(!Array.isArray(collection), "exactly one exported layer");
+        assert.equal(collection.features.length, result.grid.length);
+        const points = collection.features.map((feature, index) => {
+          const expected = result.grid[index];
+          assert.equal(feature.geometry.type, "Point");
+          const [lng, lat] = feature.geometry.coordinates;
+          assert.ok(Math.abs(lng - expected.lng) < EPSILON);
+          assert.ok(Math.abs(lat - expected.lat) < EPSILON);
+          assert.equal(feature.properties.DOSE_IDW, Number(expected.dose.toFixed(4)));
+          assert.equal(feature.properties.LAT, Number(expected.lat.toFixed(8)));
+          assert.equal(feature.properties.LNG, Number(expected.lng.toFixed(8)));
+          return { lng, lat };
+        });
+        assertExtent(points, result);
+        if (testCase.crosses) {
+          assert.ok(points.some(p => p.lng < 12) && points.some(p => p.lng > 12));
+        }
+      });
+
+      it("riapre il GeoTIFF EPSG:4326 senza perdita di estensione o salti al meridiano", async () => {
+        const result = fixture(testCase.centre);
+        const { blob } = await captureDownload(() => downloadGeoTiff(result));
+        const tiff = await readGeoTiff(await blob.arrayBuffer());
+        const image = await tiff.getImage();
+        const [west, south, east, north] = result.bbox;
+        const { lon, lat } = result.cellSizeDeg;
+        const cols = Math.ceil((east - west) / lon);
+        const rows = Math.ceil((north - south) / lat);
+        assert.equal(image.getWidth(), cols);
+        assert.equal(image.getHeight(), rows);
+        assert.ok(cols >= 9 && cols <= 11 && rows >= 10 && rows <= 11);
+        assert.equal(image.getGeoKeys().GeographicTypeGeoKey, 4326);
+        assert.equal(image.getGeoKeys().GTModelTypeGeoKey, 2);
+        assert.equal(image.getGeoKeys().GTRasterTypeGeoKey, 1);
+        assert.deepEqual(image.getOrigin(), [west, north, 0]);
+        assert.deepEqual(image.getResolution(), [lon, -lat, 0]);
+        const bounds = image.getBoundingBox();
+        assert.ok(Math.abs(bounds[0] - west) < EPSILON && Math.abs(bounds[3] - north) < EPSILON);
+        assert.ok(bounds[2] >= east && bounds[2] - east < lon);
+        assert.ok(bounds[1] <= south && south - bounds[1] < lat);
+        assert.equal(image.getGDALNoData(), -9999);
+        const expected = new Float32Array(cols * rows).fill(-9999);
+        for (const point of result.grid) {
+          const col = Math.floor((point.lng - west) / lon);
+          const row = Math.floor((north - point.lat) / lat);
+          assert.ok(col >= 0 && col < cols && row >= 0 && row < rows);
+          // Independent rectangular mask for raster pixel centres.
+          if (west + (col + 0.5) * lon >= east || north - (row + 0.5) * lat <= south) continue;
+          const index = row * cols + col;
+          expected[index] = Math.fround(Math.max(expected[index], point.dose));
+        }
+        const raster = await image.readRasters({ interleave: true });
+        assert.deepEqual(Array.from(raster), Array.from(expected));
+        const points: Array<{ lng: number; lat: number }> = [];
+        for (let row = 0; row < rows; row++) {
+          const validCols: number[] = [];
+          for (let col = 0; col < cols; col++) {
+            const value = raster[row * cols + col];
+            if (value === -9999) continue;
+            assert.ok(Number.isFinite(value) && value >= 20 && value <= 40);
+            validCols.push(col);
+            points.push({ lng: west + (col + 0.5) * lon, lat: north - (row + 0.5) * lat });
+          }
+          if (validCols.length) {
+            assert.equal(validCols.length, validCols.at(-1)! - validCols[0] + 1, "no internal raster gap");
+          }
+        }
+        assertExtent(points, result);
+        if (testCase.crosses) {
+          assert.ok(points.some(p => p.lng < 12) && points.some(p => p.lng > 12));
+        }
+      });
+    });
+  }
+
+  it("non cambia scala o valori spostando il centro di pochi metri dal fuso 32 al 33", () => {
+    const west = fixture(11.99995);
+    const east = fixture(12.00005);
+    assert.equal(west.utmZone, 32);
+    assert.equal(east.utmZone, 33);
+    // UTM axes rotate slightly between zones; the discretised edge cells need
+    // not coincide. Compare physical coverage and aggregate doses, not indices.
+    assert.ok(Math.abs(west.grid.length - east.grid.length) <= 5);
+    assert.ok(Math.abs(west.stats.mean - east.stats.mean) < 1);
+    assert.ok(Math.abs(west.stats.min - east.stats.min) < 1);
+    assert.ok(Math.abs(west.stats.max - east.stats.max) < 1);
+    assert.deepEqual(west.cellSizeDeg, east.cellSizeDeg);
+  });
+});
+
 describe("export agronomici IDW", () => {
   for (const mixed of [false, true]) {
     describe(mixed ? "dosi miste zero e positive" : "dosi interamente zero", () => {
