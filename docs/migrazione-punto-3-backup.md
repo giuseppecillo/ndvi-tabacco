@@ -2,10 +2,12 @@
 
 ## Autorizzazione corrente
 
-Autorizzata esclusivamente preparazione e identificazione in sola lettura.
-Esportazione di dati reali NON ancora autorizzata. Nessun dump, nuova
-credenziale, installazione, pubblicazione, modifica a DATABASE_URL o a Publish,
-scrittura SQL, collegamento Supabase o esecuzione del punto 4.
+Piano approvato; autorizzati controlli preliminari e pipeline offline
+esclusivamente sintetica. Esportazione di dati reali NON ancora autorizzata.
+Nessun dump reale, pubblicazione, modifica a DATABASE_URL o a Publish,
+scrittura SQL nei database esistenti, collegamento Supabase o punto 4.
+age è stato installato come strumento locale; il collaudo usa solo un cluster
+PostgreSQL locale effimero senza TCP, creato e rimosso dal programma di test.
 
 ## 1. Identificazione della sorgente
 
@@ -82,9 +84,8 @@ Archivio cifrato temporaneo sotto:
   Nessun dump SQL/custom in chiaro sul filesystem, negli allegati o nei log.
 - Cifratura streaming age con destinatario pubblico del titolare. Chiave privata
   custodita esternamente dal titolare, mai richiesta in chat/repository.
-- age non è attualmente installato: disponibilità e prova offline con dati
-  sintetici vanno completate prima di qualunque esportazione reale, mediante
-  procedura di installazione autorizzata.
+- age 1.2.1 è stato installato; pipeline e guardie sono state collaudate con
+  dati/chiavi esclusivamente sintetici. Questo non autorizza un dump reale.
 - Output visibile limitato a esito, dimensione, tempi, checksum e conteggi
   aggregati approvati, senza righe, coordinate, indirizzi o identificativi utenti.
 - Questa directory è temporanea, NON la destinazione di conservazione finale:
