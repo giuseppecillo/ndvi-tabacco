@@ -6,9 +6,10 @@ Data: 7 novembre 2026. Destinazione: **Agri Precision**, riferimento
 
 ## Esito: PARZIALE, non ancora superato
 
-Letture PostgreSQL concluse. Resta indispensabile la configurazione ufficiale
-Data API del progetto con elenco completo degli schemi esposti. Il punto 2
-non è stato avviato e richiede comunque una nuova autorizzazione.
+Letture PostgreSQL concluse. La schermata Settings ricevuta il 7 novembre
+conferma diversi campi Data API, ma il selettore degli schemi è chiuso:
+restano da leggere i nomi dei due schemi esposti. Il punto 2 non è stato
+avviato e richiede comunque una nuova autorizzazione.
 
 Nessun nuovo progetto/database, DDL, DML, cambio privilegi/configurazione,
 avvio applicativo contro Supabase, importazione, backup reale, lettura di
@@ -116,17 +117,40 @@ prima dell'uso. In particolare, l'ordine fisico di diverse colonne differisce:
 non importare per posizione e non combinare baseline con restore completo.
 Nessun conteggio o confronto di contenuti effettuato in questa fase.
 
-## Data API: unico blocco documentale residuo
+## Data API: schermata Settings ricevuta, nomi degli schemi ancora da leggere
 
 La schermata Overview già fornita documentava l'attivazione al momento della
 sua acquisizione, ma non Exposed schemas, Extra search path o stato corrente.
+La nuova schermata fornita dal titolare è
+`attached_assets/0_2026-11-07_11_28_07_1794047373476.png`.
+
+| Campo visibile in Settings | Evidenza |
+|---|---|
+| Exposed schemas | “2 of 2 schemas exposed”; nomi non visibili, selettore chiuso |
+| Exposed tables | “No tables available” |
+| Exposed functions | “1 of 1 functions exposed”; nome non visibile |
+| Automatically expose new tables | Attivo |
+| Extra search path | public, extensions |
+
+Extra search path non equivale agli schemi esposti: non dedurre da questi
+due valori i nomi del selettore Exposed schemas. Il conteggio della funzione
+esposta non dimostra da solo che la funzione event_trigger sia invocabile
+come RPC. La schermata ritagliata non mostra l'interruttore generale Data API.
+
+Rischio confermato da questa configurazione: le future tabelle potrebbero
+ricevere automaticamente privilegi per i ruoli Data API. Prima della futura
+creazione occorre approvare e verificare una strategia di esposizione/ACL,
+senza assumere che la sola RLS o la creazione tramite app_migrator annulli
+gli automatismi. Nessun toggle o privilegio è stato modificato.
+
 Nessun nuovo token Management API richiesto; nessuna richiesta REST/GraphQL a
 tabelle applicative; nessuna supposizione basata sui soli indizi PostgreSQL.
 
-Serve una schermata attuale della configurazione ufficiale del progetto:
-Integrations → Data API → Settings, con elenco completo Exposed schemas ed
-Extra search path e stato Enable Data API se presente. Nessuna modifica o Save;
-oscurare credenziali e chiavi.
+Per completare il controllo indispensabile degli schemi, aprire soltanto il
+selettore Exposed schemas e fornire una schermata con i due nomi e le relative
+selezioni. Non cambiare spunte/toggle e non premere Save. Se disponibile nella
+stessa pagina, includere lo stato generale Enable Data API; non richiedere
+nuove credenziali per supplire a questa evidenza visiva.
 
 Quando questa evidenza sarà disponibile si potrà concludere il punto 1.
 Questo non autorizza automaticamente il punto 2 o alcuna fase con scritture.
