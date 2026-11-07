@@ -96,10 +96,16 @@ function AuthShell({ children, aside }: { children: React.ReactNode; aside: Reac
 
 function SignInPage({ embedded = false }: { embedded?: boolean }) {
   return (
-    <div className="min-h-[100dvh] nc-contours">
-      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5"><Brand /><LanguageSelector /></header>
-      <main className="mx-auto w-full max-w-[480px] px-4 pb-6">
-        <h1 className="mb-5 text-center text-sm text-[var(--nc-muted)]">
+    <div className="nc-signin min-h-[100dvh]">
+      <div
+        className="nc-signin-photo"
+        aria-hidden="true"
+        data-testid="img-signin-background"
+        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}ndvi-field-background.webp)` }}
+      />
+      <header className="nc-signin-head mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5"><Brand /><LanguageSelector /></header>
+      <main className="nc-signin-main mx-auto w-full max-w-[480px] px-4 pb-6">
+        <h1 className="nc-signin-panel mb-5 text-center text-sm text-[var(--nc-muted)]">
           Supporto alla fertilizzazione azotata.
           <span className="mt-1 block">Accesso riservato agli utenti.</span>
         </h1>
@@ -108,7 +114,7 @@ function SignInPage({ embedded = false }: { embedded?: boolean }) {
           // preserves recovery steps without claiming /privacy etc.
           ? <SignIn routing="hash" signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />
           : <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/user-portal`} />}
-        <div className="mt-5 space-y-3 text-center text-sm text-[var(--nc-muted)]">
+        <div className="nc-signin-panel mt-5 space-y-3 text-center text-sm text-[var(--nc-muted)]">
           <p><Link href="/privacy" className="underline">Leggi l’informativa privacy e cookie</Link></p>
           <p>Assistenza per recupero e cambio password:<br />
             <a className="break-all underline" href={`mailto:${SUPPORT_CONTACT}`}>{SUPPORT_CONTACT}</a>

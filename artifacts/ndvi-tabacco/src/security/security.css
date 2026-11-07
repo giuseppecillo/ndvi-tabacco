@@ -95,3 +95,30 @@ html, body { overflow-x: clip; max-width: 100%; }
 .nc-modhead-photo { width: clamp(40px, 11vw, 80px); height: clamp(40px, 11vw, 80px); object-fit: cover; border-radius: 14px; border: 2px solid #fff8ea; box-shadow: 0 4px 12px -6px rgba(31,61,43,.45); flex-shrink: 0; }
 .nc-modhead-title { margin: 0; min-width: 0; color: var(--nc-leaf, #1f3d2b); font-weight: 600; font-size: clamp(1.25rem, 4.6vw, 2.25rem); line-height: 1.15; overflow-wrap: anywhere; hyphens: auto; }
 .nc-modhead-sub { margin-top: .5rem; color: var(--nc-muted, #5d6a5f); font-size: .95rem; }
+
+/* Sign-in backdrop: illustrative field composite (sensor, crops, prescription map) */
+.nc-signin { position: relative; isolation: isolate; background: var(--nc-paper); }
+.nc-signin-photo { position: fixed; inset: 0; z-index: -1; background-repeat: no-repeat; background-size: cover; background-position: 50% 62%; }
+.nc-signin-photo::after { content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(244,239,227,.18) 30%, rgba(244,239,227,.18) 70%, transparent 100%),
+    linear-gradient(180deg, rgba(244,239,227,.55) 0%, rgba(244,239,227,0) 22%); }
+.nc-signin-head { position: relative; }
+.nc-signin-head > * { background: rgba(251,248,241,.9); border-radius: 999px; }
+.nc-signin-main { position: relative; }
+.nc-signin-panel {
+  background: rgba(251,248,241,.94); border: 1px solid var(--nc-line); border-radius: 1rem; padding: .75rem 1rem; color: var(--nc-ink);
+  box-shadow: 0 12px 30px -22px rgba(31,61,43,.55); transition: background-color .2s ease;
+}
+.nc-signin-main > h1 { color: var(--nc-leaf-2); }
+
+/* Phone/tablet portrait: image becomes a visible top band instead of a full-height crop */
+@media (max-width: 767px) {
+  .nc-signin-photo { position: relative; inset: auto; z-index: 0; width: 100%; aspect-ratio: 1 / .78; background-size: cover; background-position: 50% 85%; }
+  .nc-signin-photo::after { background: linear-gradient(180deg, transparent 70%, var(--nc-paper) 100%); }
+  .nc-signin-head { position: absolute; top: 0; left: 0; right: 0; }
+  .nc-signin-main { margin-top: -1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nc-signin-main > * { transition: none; }
+}
