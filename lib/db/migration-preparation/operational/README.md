@@ -1,6 +1,9 @@
 # Preparazione operativa rapida — INATTIVA
 
-**Script target/cutover ancora inattivi.** Il successivo backup reale è stato
+**Punto 4 tentato e arrestato prima del DDL, con ROLLBACK confermato.**
+Correzione del controllo TLS preparata offline; nessuna nuova esecuzione di
+scrittura senza conferma. Rapporto: [POINT4_RESULTS.md](POINT4_RESULTS.md).
+Il backup reale è stato
 autorizzato, eseguito e verificato: vedere ../backup/REAL_BACKUP_REPORT.md.
 Nessuna scrittura Supabase, importazione o modifica DATABASE_URL effettuata.
 Solo Replit e il Supabase Agri Precision esistente, nessun PC da configurare e
@@ -61,7 +64,7 @@ Non eseguire questi comandi come test sul database reale.
 
 ## Verifica svolta senza ripetere i collaudi precedenti
 
-20 nuovi test puri superati: colonne, parser COPY, ordine/FK, troncamento,
+20 test preparatori e 10 nuovi test TLS puri superati: colonne, parser COPY, ordine/FK, troncamento,
 SQL estraneo, conteggi, fingerprint, readonly, ACL/RLS dichiarate, baseline
 immutata e presenza dei gate. TypeScript dei nuovi programmi superato.
 Nessun database creato e nessuna query effettuata per questi test.
@@ -81,6 +84,7 @@ qualsiasi errore del target interrompe e annulla la transazione.
    con file 0600 e directory 0700 esclusi da Git/pubblicazione.
    Nessun link pubblico, nessuna installazione sul PC, nessuna rimozione
    senza autorizzazione. Non è cifratura con chiave mai presente su Replit.
-3. Le fasi target/cutover sono pronte come script/procedura, ma richiedono le
+3. Nuovo tentativo del punto 4 da confermare dopo l'arresto descritto nel rapporto.
+   Le fasi target/cutover sono pronte come script/procedura, ma richiedono le
    rispettive autorizzazioni. LOGIN/credenziali e isolamento effettivo dei ruoli
    si verificano prima di esporli all'app e allo sviluppo ordinario.
