@@ -1,5 +1,43 @@
 # IDW: synthetic browser verification
 
+## Compiled GIS regression
+
+Run `pnpm --filter @workspace/ndvi-tabacco test:gis-compiled`.
+Install Chromium once with
+`pnpm --filter @workspace/ndvi-tabacco exec playwright install chromium`, or set
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to an existing Chromium executable
+(in this workspace: `/repl/tools/bin/chromium`).
+
+This command loads the real `vite.config.ts` in production mode, including
+localization and ES-module workers, but selects `tests/gis-compiled.html` as a
+separate test-only entry. It builds twice, at `/` and `/qa/nitrocrop/`, then runs
+the shared GIS browser journey in fresh browser contexts. A loopback-only static
+server serves the built files: no Vite development middleware, SPA fallback,
+API proxy, account, secrets or database. Browser routing blocks APIs and external
+hosts; CSP additionally disables network connections, including in workers.
+Observation reads are answered in memory with the invented fixture.
+
+Checks cover KML, KMZ (root and nested uppercase KML), real polygon/point SHP
+ZIPs, all six excessive archives (including false ZIP sizes), a 10 MiB + 1 byte
+file on both importers, IT/EN/ES errors and 390px recovery. Each rejection must
+remove the map, visible point rows where applicable and download controls, and
+disable computation. No download event is allowed. A UI heartbeat must advance
+after each rejection and never stall for two seconds across the journey.
+
+The command checks that the emitted GIS worker **and its actual dynamic-import
+chunk filenames** are requested successfully under each prefix, and confirms
+native `DOMParser` is absent in a real module worker. Successful KML/KMZ imports
+therefore exercise the bundled XML parser, not the page's native DOM.
+Finally, the normal application is built separately and checked for accidental
+inclusion of the synthetic harness/data. Normal application build inputs and
+authentication are not changed.
+
+Outputs, screenshots and `report.json` are under
+`generated-artifacts/gis-compiled/` (ignored by Git and deployment).
+The runner exits nonzero on failure, stores failure evidence, and closes its
+browser/static servers automatically. This is a Chromium component regression;
+it does not verify signed-in flows, production data or other browser engines.
+
 ## Browser GIS resource budgets
 
 Imports are local only: maximum **10 MiB file**, **32 MiB actual expanded ZIP
