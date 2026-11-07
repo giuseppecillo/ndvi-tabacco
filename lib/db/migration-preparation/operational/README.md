@@ -75,7 +75,8 @@ qualsiasi errore del target interrompe e annulla la transazione.
 
 1. Origine Production confermata dal titolare; backup reale cifrato, decifrato
    e integralmente analizzato. Rapporto: ../backup/REAL_BACKUP_REPORT.md.
-2. Rimane da confermare la custodia fuori Replit di archivio, checksum e chiave.
+2. Il titolare ha confermato il download dei file fuori Replit; la modalità
+   effettiva di custodia non è stata verificata indipendentemente.
    La chiave privata è temporaneamente presente su Replit, come autorizzato,
    con file 0600 e directory 0700 esclusi da Git/pubblicazione.
    Nessun link pubblico, nessuna installazione sul PC, nessuna rimozione

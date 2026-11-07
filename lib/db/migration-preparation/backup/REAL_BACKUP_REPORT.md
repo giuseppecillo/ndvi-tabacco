@@ -2,8 +2,10 @@
 
 Data: 7 novembre 2026. Il titolare ha confermato l'associazione della connessione
 Production al deployment pubblicato e autorizzato esplicitamente sia il backup
-reale sia la nuova coppia age. La destinazione definitiva fuori Replit non è
-stata indicata; nessun trasferimento esterno è stato effettuato.
+reale sia la nuova coppia age. Successivamente il titolare ha confermato:
+«ho scaricato i file». La ricezione della copia esterna è quindi confermata
+dal titolare; destinazione esatta e modalità di custodia non sono state
+verificate tecnicamente. Nessun caricamento esterno è stato eseguito dall'Agent.
 
 ## Esito
 
@@ -67,7 +69,8 @@ definitivo serviranno autorizzazioni distinte per congelamento e snapshot finale
 
 ## Azioni ancora necessarie
 
-1. Il titolare scarica e conferma la custodia esterna di archivio, checksum e chiave.
+1. Download dei file confermato dal titolare. Archivio e chiave devono restare
+   custoditi separatamente; nessuna verifica indipendente della custodia.
 2. Qualsiasi rimozione locale del Secret o della chiave richiede conferma separata;
    non garantire cancellazione fisica dalle copie del fornitore.
 3. Attendere nuova autorizzazione specifica prima di creare ruoli/tabelle/RLS
