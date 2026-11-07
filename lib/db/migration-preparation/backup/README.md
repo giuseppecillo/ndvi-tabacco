@@ -1,7 +1,9 @@
 # Backup — soli preliminari e collaudo sintetico
 
 **L'esportazione di dati reali non è autorizzata. Nessun dump reale creato.**
-Non esiste un comando CLI di esportazione production in questa cartella.
+`backup-production.mjs` è stato predisposto ma richiede autorizzazione
+specifica all'esportazione, conferma dell'associazione production e destinatario
+pubblico age: senza questi flag si ferma prima di qualsiasi connessione.
 `pipeline.mjs` è una libreria; non legge credenziali e non parte importandola.
 
 ## Programmi e perimetro
@@ -23,6 +25,10 @@ Per ripetere il solo collaudo:
 bash lib/db/migration-preparation/backup/run-offline.sh
 ```
 
+**Il titolare ora esclude nuovi database, anche di collaudo: non rieseguire
+questo runner che crea un cluster locale.** Conservare il risultato precedente
+di 40 test; usare soltanto i nuovi test puri della preparazione operativa.
+
 Prerequisiti: PostgreSQL 16, Node con supporto WriteStream flush e age.
 age 1.2.1 è stato aggiunto alle sole dipendenze Nix del workspace. Nessun
 campo Publish, DATABASE_URL, codice applicativo o hook di avvio è cambiato.
@@ -38,11 +44,10 @@ neondb, progetto late-darkness-39148782, ramo br-winter-salad-apdld73l.
 Questo NON prova l'endpoint primario da usare con pg_dump.
 
 Occorre la connessione esistente da Database → Production → Settings, senza
-rigenerare credenziali o pubblicare. Preferire la verifica sul computer del
-titolare per non esporre credenziali di produzione nello sviluppo ordinario.
-In alternativa, solo dopo approvazione del titolare, richiederla nel canale
-Secrets con nome separato temporaneo `REPLIT_PROD_BACKUP_URL`; rimuovere poi
-il Secret attraverso l'interfaccia sicura. Non sostituire DATABASE_URL.
+rigenerare credenziali o pubblicare. Il titolare ha scelto la verifica da
+Replit tramite Secret separato temporaneo `REPLIT_PROD_BACKUP_URL`; rimuoverlo
+poi attraverso l'interfaccia sicura dopo sua autorizzazione. Non proporre altre
+installazioni sul PC e non sostituire DATABASE_URL.
 Non usare la connessione Supabase, development o un nuovo progetto Neon.
 L'URL esistente può avere privilegi scrivibili: la transazione READ ONLY del
 programma non trasforma la credenziale in una credenziale readonly permanente.
@@ -64,7 +69,13 @@ da sola, non esclude override nella configurazione pubblicata.
 Se manca una prova, il risultato resta BLOCCATO. Non avviare mai il dump
 come conseguenza del successo di questo comando.
 
-## Chiave di cifratura: sul computer del titolare, NON in Replit
+## Cifratura — istruzioni precedenti, modalità di consegna da concordare
+
+Il titolare non vuole installare strumenti sul PC. I comandi locali sotto
+restano un riferimento tecnico, NON il percorso attualmente scelto. Prima del
+backup reale concordare una chiave pubblica già disponibile oppure la creazione
+e consegna protetta di una chiave tramite Replit, con autorizzazione specifica.
+Non generare chiavi reali o mostrare chiavi private automaticamente.
 
 1. Installare age dai canali ufficiali: https://age-encryption.org
    e https://github.com/FiloSottile/age/releases .

@@ -3,11 +3,22 @@ name: Vincoli di migrazione e sviluppo
 description: Vincoli richiesti dal titolare per Supabase, sviluppo su Replit e continuità delle identità Clerk.
 ---
 
-Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL: app_runtime per l'applicazione Replit pubblicata, app_readonly per controlli di sviluppo in sola lettura e app_migrator per modifiche strutturali autorizzate. Netlify è escluso dalla fase attuale; sviluppo, esecuzione e pubblicazione restano su Replit con Clerk invariato. Per questa migrazione non creare un secondo database o progetto Supabase, nemmeno per il collaudo.
+Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL: app_runtime per l'applicazione Replit pubblicata, app_readonly per controlli di sviluppo in sola lettura e app_migrator per modifiche strutturali autorizzate. Netlify è escluso dalla fase attuale; sviluppo, esecuzione e pubblicazione restano su Replit con Clerk invariato. Per i prossimi passi di questa migrazione non creare altri database o progetti, nemmeno per il collaudo.
 
 **Why:** evitare che Replit Agent possa modificare accidentalmente i dati di produzione.
 
 **How to apply:** non rendere disponibili nello sviluppo ordinario credenziali scrivibili di produzione o amministrative. Esplicitare che i test di salvataggio non sono possibili con la sola lettura; qualsiasi accesso QA aggiuntivo o database temporaneo richiede approvazione, non una deroga implicita.
+
+Il titolare non vuole installare PostgreSQL o altri strumenti sul proprio PC
+per questa migrazione. Vuole procedere esclusivamente tramite Replit e il
+progetto Supabase Agri Precision; per identificare il primario ha scelto un
+Secret temporaneo dedicato, da rimuovere soltanto dopo sua autorizzazione.
+
+**Why:** il titolare ha richiesto questo percorso per accelerare la migrazione.
+
+**How to apply:** non riproporre installazioni locali o ulteriori database.
+Riutilizzare i controlli già superati; esportazioni reali, scritture sul target,
+cambio DATABASE_URL e blocco delle scritture richiedono conferme specifiche.
 
 Il titolare ha creato il progetto Supabase “Agri Precision” nella regione
 West EU (Ireland). Questa è la destinazione dichiarata per la fase successiva;
