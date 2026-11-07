@@ -1,11 +1,12 @@
-# Preparazione operativa rapida — INATTIVA
+# Migrazione operativa — punto 4 completato, fasi successive inattive
 
-**Punto 4 tentato e arrestato prima del DDL, con ROLLBACK confermato.**
-Correzione del controllo TLS preparata offline; nessuna nuova esecuzione di
-scrittura senza conferma. Rapporto: [POINT4_RESULTS.md](POINT4_RESULTS.md).
+**Punto 4 completato nel secondo tentativo esplicitamente autorizzato.**
+COMMIT riuscito; verifica successiva READ ONLY: cinque tabelle vuote, tre ruoli
+NOLOGIN, RLS/FORCE attive e privilegi API negati sulle cinque tabelle.
+Rapporto: [POINT4_RESULTS.md](POINT4_RESULTS.md).
 Il backup reale è stato
 autorizzato, eseguito e verificato: vedere ../backup/REAL_BACKUP_REPORT.md.
-Nessuna scrittura Supabase, importazione o modifica DATABASE_URL effettuata.
+Solo DDL/privilegi Supabase autorizzati; nessuna importazione o modifica DATABASE_URL.
 Solo Replit e il Supabase Agri Precision esistente, nessun PC da configurare e
 nessun altro database.
 
@@ -70,9 +71,10 @@ immutata e presenza dei gate. TypeScript dei nuovi programmi superato.
 Nessun database creato e nessuna query effettuata per questi test.
 Non rieseguire i vecchi runner che creano cluster locali: il titolare lo esclude.
 
-Gli SQL nuovi non sono stati applicati né provati su un altro PostgreSQL.
-I test statici non certificano che il provider autorizzi ogni futuro GRANT;
-qualsiasi errore del target interrompe e annulla la transazione.
+Gli SQL di struttura sono stati applicati al target autorizzato e verificati.
+verify-structure.ts --readonly-created-structure conferma oggetti e privilegi
+con sole letture, senza creare database o eseguire prove di scrittura.
+Non sono certificati i futuri GRANT/modifiche fuori dal perimetro applicato.
 
 ## Blocchi effettivi
 
@@ -84,7 +86,7 @@ qualsiasi errore del target interrompe e annulla la transazione.
    con file 0600 e directory 0700 esclusi da Git/pubblicazione.
    Nessun link pubblico, nessuna installazione sul PC, nessuna rimozione
    senza autorizzazione. Non è cifratura con chiave mai presente su Replit.
-3. Nuovo tentativo del punto 4 da confermare dopo l'arresto descritto nel rapporto.
-   Le fasi target/cutover sono pronte come script/procedura, ma richiedono le
-   rispettive autorizzazioni. LOGIN/credenziali e isolamento effettivo dei ruoli
+3. Punto 4 completato. Non rieseguire apply-target.ts: gli oggetti ora esistono.
+   Le fasi successive richiedono ancora le rispettive autorizzazioni e non
+   sono state avviate. LOGIN/credenziali e isolamento effettivo globale dei ruoli
    si verificano prima di esporli all'app e allo sviluppo ordinario.
