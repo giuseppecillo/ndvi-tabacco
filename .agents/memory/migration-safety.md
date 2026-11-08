@@ -58,6 +58,20 @@ anche con il default read-only disattivato; prima dell'attivazione richiedere
 verifica specifica dei privilegi e dell'impatto sul target gestito, senza
 saltare revoche non autorizzate o non consentite.
 
+Distinguere i limiti readonly globali dalla protezione delle tabelle e
+dall'esecuzione del trasferimento: creare large object non conferisce
+privilegi DML sulle tabelle applicative.
+
+**Why:** un finding su oggetti ausiliari persistenti impedisce di promettere
+readonly globale, ma non dimostra che backup/import o backend fidato siano
+intrinsecamente insicuri. TEMP comporta anche shadowing dei nomi non qualificati.
+
+**How to apply:** classificare separatamente i due requisiti. Un eventuale
+rinvio dell'accesso SQL di sviluppo richiede accettazione esplicita, nessuna
+credenziale amministrativa/scrivibile nello sviluppo ordinario e nessuna
+delega per assumere il ruolo; NOLOGIN da solo non garantisce l'esclusione.
+Non considerare tale variante già approvata e non cambiare i gate dei test.
+
 Per collaudare i ruoli NOLOGIN su Supabase, ADMIN OPTION non implica
 la possibilità di SET ROLE: verificare separatamente l'opzione SET.
 

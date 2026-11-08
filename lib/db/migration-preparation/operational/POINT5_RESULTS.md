@@ -1,5 +1,9 @@
 # Punto 5 — risultati del collaudo autorizzato
 
+La distinzione tra blocco dell'accesso SQL readonly e prosecuzione possibile
+del trasferimento è motivata in POINT5_RISK_ASSESSMENT.md. La variante
+proposta non è stata approvata e non cambia l'esito o i gate del collaudo.
+
 ## Esito
 
 **Completato, con blocco sull'isolamento globale.**
