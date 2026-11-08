@@ -46,6 +46,16 @@ del preflight non distingue assenza, formato, autenticazione e TLS.
 nella nuova release Production, senza acquisire il valore. Conservare
 categorie d'errore sicure, non messaggi o dettagli grezzi del driver.
 
+Un fallimento del preflight Supabase non autorizza a disabilitarlo
+automaticamente per consentire una pubblicazione.
+
+**Why:** il titolare richiede di individuare la causa del fallimento,
+senza ripetere automaticamente la deroga temporanea al controllo.
+
+**How to apply:** mantenere il diagnostico attivo e riferire il codice
+sicuro dell'errore; eventuali ulteriori deroghe richiedono autorizzazione
+esplicita.
+
 Per impostare password di ruoli PostgreSQL, una schermata protetta non prova
 che l'implementazione eviti SQL contenente password o verificatori SCRAM.
 Anche un verificatore va trattato come materiale di autenticazione sensibile.
