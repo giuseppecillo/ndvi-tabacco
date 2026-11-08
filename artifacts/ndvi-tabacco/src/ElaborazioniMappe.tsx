@@ -15,6 +15,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { formatRecordedDose } from "./utils/observationDose";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Observation } from "./App";
@@ -123,7 +124,7 @@ export function MapView({ result }: { result: PolyIdwResult }) {
       L.circleMarker([cp.lat, cp.lng], {
         radius: 7, color: "#fff", weight: 2, fillColor: "#1d4ed8", fillOpacity: 1,
       })
-        .bindTooltip(`<b>#${cp.obsId}</b><br/>${cp.appezzamento}<br/>${cp.dose.toFixed(1)} kg/ha`, {
+        .bindTooltip(`<b>#${cp.obsId}</b><br/>${cp.appezzamento}<br/>${formatRecordedDose(cp.coltura ?? "", cp.dose)} kg/ha`, {
           direction: "top", offset: [0, -6],
         })
         .addTo(map);
@@ -337,6 +338,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   const dbControls = useMemo<ControlPoint[]>(() =>
     gpsObs.map(o => ({
       obsId:        o.id,
+      coltura:      o.coltura,
       cliente:      o.cliente,
       appezzamento: o.appezzamento,
       lng:          o.lng!,
@@ -601,7 +603,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
                         <td className="px-2 py-1.5 truncate max-w-[120px]">{c.appezzamento}</td>
                         <td className="px-2 py-1.5 text-right font-mono">{c.lat.toFixed(6)}</td>
                         <td className="px-2 py-1.5 text-right font-mono">{c.lng.toFixed(6)}</td>
-                        <td className="px-2 py-1.5 text-right font-bold text-green-800">{c.dose.toFixed(1)}</td>
+                        <td className="px-2 py-1.5 text-right font-bold text-green-800">{formatRecordedDose(c.coltura ?? "", c.dose)}</td>
                       </tr>
                     ))}
                   </tbody>

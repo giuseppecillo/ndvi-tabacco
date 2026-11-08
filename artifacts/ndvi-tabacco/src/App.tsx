@@ -12,6 +12,7 @@ import { CatalogueCropParameters, CatalogueCropResults } from "./components/Cata
 import { CROP_PROFILES, CATALOGUE_CROPS, cropPhaseSource, isCatalogueCrop, getCropReference, calculateCrop } from "@workspace/crop-calculations";
 import { PomodoroParameters, PomodoroResults } from "./components/PomodoroParameters";
 import { POMODORO_DB, PRIMO_POMODORO, calcolaPomodoro } from "@workspace/tomato-calculations";
+import { formatRecordedDose } from "./utils/observationDose";
 import { exportObservationsCsv } from "./utils/geoUtils";
 const bibliografiaNdviTabaccoUrl = `${import.meta.env.BASE_URL}bibliografia-ndvi-tabacco.md`;
 import {
@@ -1564,7 +1565,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                       <td className={`px-2 py-2 text-center font-bold ${
                         obs.dose === 0 ? "text-green-700 bg-green-50" : "text-red-700 bg-red-50"
                       }`}>
-                        {(isObsGrano ? obs.quotaAzoto ?? obs.dose : obs.dose).toFixed(1)}
+                        {formatRecordedDose(obs.coltura, isObsGrano ? obs.quotaAzoto ?? obs.dose : obs.dose)}
                       </td>
                       <td className="px-2 py-2 text-center text-xs text-stone-400 font-mono whitespace-nowrap">
                         {obs.lat != null && obs.lng != null ? (

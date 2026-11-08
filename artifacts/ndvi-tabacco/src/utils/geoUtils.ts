@@ -18,6 +18,7 @@
 
 import proj4 from "proj4";
 import JSZip from "jszip";
+import { formatRecordedDose, usesTenthsDose } from "./observationDose";
 import { readShpLayers } from "./shapefileImport";
 import { checkGisFileSize, checkGisCount, readBoundedZip } from "./gisLimits";
 
@@ -33,6 +34,7 @@ export interface KmlPolygon {
 
 export interface ControlPoint {
   obsId: string;
+  coltura?: string;
   sourceLayer?: string;
   cliente: string;
   appezzamento: string;
@@ -739,7 +741,7 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
 
 // ── CSV export of raw observations ───────────────────────────────────────────
 
-export function exportObservationsCsv(
+export function buildObservationsCsv(
   osservazioni: {
     id: string; coltura?: string; data: string; dataTrapianto: string; dataSemina?: string;
     giorni: number;
@@ -752,7 +754,7 @@ export function exportObservationsCsv(
     azotoTotale?: number | null; azotoGiaDistribuito?: number | null; quotaAzoto?: number | null;
     lat: number | null; lng: number | null;
   }[],
-): void {
+): string {
   const header = [
     "ID","Coltura","Data","Data_Semina","Data_Trapianto","DAS_o_Giorni","BBCH","Fase","Fonte_Fase",
     "Cliente","Appezzamento","Varieta",
@@ -770,10 +772,16 @@ export function exportObservationsCsv(
     o.cliente, o.appezzamento, o.varieta,
     o.densitaValore ?? "", o.densitaUnita ?? "", o.pianteHaEquivalenti ?? "",
     o.n1, o.n2, o.n3, o.n4, o.n5,
-    o.media.toFixed(4), o.ottimale.toFixed(4), o.discostamento.toFixed(4), o.dose.toFixed(2), o.azotoTotale ?? "", o.azotoGiaDistribuito ?? "", o.quotaAzoto ?? "",
+    o.media.toFixed(4), o.ottimale.toFixed(4), o.discostamento.toFixed(4),
+    usesTenthsDose(o.coltura ?? "") ? formatRecordedDose(o.coltura!, o.dose) : o.dose.toFixed(2),
+    o.azotoTotale ?? "", o.azotoGiaDistribuito ?? "", o.quotaAzoto ?? "",
     o.lat ?? "", o.lng ?? "",
   ]);
-  const csv  = [header, ...rows].map(r => r.map(cell).join(",")).join("\r\n");
+  return [header, ...rows].map(r => r.map(cell).join(",")).join("\r\n");
+}
+
+export function exportObservationsCsv(osservazioni: Parameters<typeof buildObservationsCsv>[0]): void {
+  const csv = buildObservationsCsv(osservazioni);
   const date = new Date().toISOString().slice(0, 10);
   trigger(
     URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" })),

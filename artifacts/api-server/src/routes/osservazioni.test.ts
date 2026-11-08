@@ -4,6 +4,86 @@ import type { Request, Response } from "express";
 import router, { erroreOsservazioneGrano, erroreOsservazioneTabacco } from "./osservazioni";
 import pool from "../lib/db";
 import { PRIMO_POMODORO } from "@workspace/tomato-calculations";
+import { CATALOGUE_CROPS, CROP_PROFILES, cropPhaseSource } from "@workspace/crop-calculations";
+
+test("tomato and every catalogue crop: safe fractional POST/GET, blocked new overruns, legacy GET unchanged", async () => {
+  const post = router.stack.find(layer => layer.route?.path === "/osservazioni"
+    && layer.route.stack.some(handler => handler.method === "post"))!.route!.stack[0].handle;
+  const get = router.stack.find(layer => layer.route?.path === "/osservazioni"
+    && layer.route.stack.some(handler => handler.method === "get"))!.route!.stack[0].handle;
+  let stored: Record<string, unknown> = {};
+  let writes = 0;
+  const query = mock.method(pool, "query", async (sql: string, values: unknown[]) => {
+    if (sql.includes("INSERT INTO osservazioni")) {
+      writes++;
+      assert.equal(values[30], "synthetic-owner");
+      stored = { id: values[31], data: values[1], coltura: values[3], giorni: values[4],
+        resa: values[8], varieta: values[9], n1: values[13], n2: values[14], n3: values[15],
+        n4: values[16], n5: values[17], media: values[18], ottimale: values[19],
+        discostamento: values[20], dose: values[21], azotoTotale: values[25],
+        azotoGiaDistribuito: values[26], quotaAzoto: values[27] };
+      return { rows: [{ createdAt: "2026-11-08T12:00:00.000Z" }] };
+    }
+    assert.ok(sql.includes("WHERE owner_id=$1"));
+    assert.deepEqual(values, ["synthetic-owner"]);
+    return { rows: [stored] };
+  });
+  const response = () => {
+    let status = 200;
+    let payload: any;
+    const res = {
+      locals: { account: { id: "synthetic-owner", role: "admin" } },
+      status(code: number) { status = code; return this; },
+      json(body: unknown) { payload = body; return this; },
+    } as unknown as Response;
+    return { res, status: () => status, payload: () => payload };
+  };
+  try {
+    for (const coltura of ["pomodoro", ...CATALOGUE_CROPS]) {
+      const p = CROP_PROFILES.find(p => p.crop === coltura);
+      const phase = p?.phases.find(ph => ph.azoto > 1);
+      const total = p?.nitrogen ?? 250;
+      const reference = phase?.riferimento ?? .4;
+      for (const [remaining, expected] of [[.06, 0], [.09, 0], [.16, .1], [.26, .2]]) {
+        const body = {
+          id: `synthetic-${coltura}`, coltura, data: "2026-11-08", cliente: "Synthetic", appezzamento: "Synthetic",
+          varieta: p?.name ?? PRIMO_POMODORO, resa: p?.yield ?? 100, giorni: 0,
+          densitaValore: 30000, pianteHaEquivalenti: 30000, densitaUnita: "piante/ha", bbch: null,
+          faseFenologica: phase ? `${phase.id} · ${phase.label}` : "Sviluppo",
+          faseFonte: p ? cropPhaseSource(coltura, p.name) : "Fase osservata in campo",
+          n1: 0, n2: 0, n3: 0, n4: 0, n5: 0, media: 0, ottimale: reference, discostamento: reference,
+          azotoTotale: total, azotoGiaDistribuito: total - remaining, dose: expected, quotaAzoto: expected,
+        };
+        const saved = response();
+        await post({ body } as Request, saved.res, () => {});
+        assert.equal(saved.status(), 201, `${coltura}/${remaining}`);
+        const loaded = response();
+        await get({} as Request, loaded.res, () => {});
+        assert.equal(loaded.payload()[0].dose, expected);
+        assert.equal(loaded.payload()[0].quotaAzoto, expected);
+        const before = writes;
+        for (const patch of [
+          { dose: remaining, quotaAzoto: remaining },
+          { dose: expected + .000001 }, { quotaAzoto: expected + .000001 },
+          { dose: -.000001 }, { quotaAzoto: -.000001 },
+        ]) {
+          const forged = response();
+          await post({ body: { ...body, ...patch } } as Request, forged.res, () => {});
+          assert.equal(forged.status(), 400);
+        }
+        assert.equal(writes, before, "invalid doses must never reach INSERT/UPDATE");
+      }
+      // Reads do not revalidate or rewrite even a noncanonical legacy fraction.
+      stored = { ...stored, dose: ".06", quotaAzoto: ".06" };
+      const before = writes;
+      const legacy = response();
+      await get({} as Request, legacy.res, () => {});
+      assert.equal(legacy.payload()[0].dose, .06);
+      assert.equal(legacy.payload()[0].quotaAzoto, .06);
+      assert.equal(writes, before);
+    }
+  } finally { query.mock.restore(); }
+});
 
 test("tomato POST and GET preserve crop, profile, phase, coordinates and dose using only a mocked pool", async () => {
   const body = {

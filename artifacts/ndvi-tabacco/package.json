@@ -9,7 +9,7 @@
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:gis-compiled": "node tests/gis-compiled.mjs",
-    "test": "tsx --test src/App.test.ts src/catalogue/calculations.test.ts src/catalogue/filterCatalogue.test.ts src/pomodoro.test.ts src/i18n/runtime.test.ts src/utils/observationPdf.test.ts tests/*.test.mjs"
+    "test": "tsx --test src/App.test.ts src/catalogue/calculations.test.ts src/catalogue/filterCatalogue.test.ts src/pomodoro.test.ts src/i18n/runtime.test.ts src/utils/*.test.ts tests/*.test.mjs"
   },
   "devDependencies": {
     "@clerk/localizations": "^4.24.2",

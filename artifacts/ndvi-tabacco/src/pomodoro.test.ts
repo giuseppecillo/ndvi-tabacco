@@ -32,13 +32,15 @@ test("each profile and phase uses range mean, keeps original quotas and respects
         const [quota, min, max] = profile.fasi[index];
         const target = (min + max) / 2;
         for (const reading of [0, target / 2, target, Math.min(1, target + .1)]) {
-          for (const applied of [0, profile.azotoTotale * scale - .4, profile.azotoTotale * scale + 1]) {
+          for (const applied of [0, profile.azotoTotale * scale - .4,
+            profile.azotoTotale * scale - .06, profile.azotoTotale * scale - .09, profile.azotoTotale * scale + 1]) {
             const r = calcolaPomodoro({ ...input, varieta: profile.id, fase, resa: profile.resa * scale,
               azotoGiaDistribuito: applied, letture: Array(5).fill(reading) });
             assert.equal(r.pronta, true);
             assert.equal(r.ottimale, target);
             assert.equal(r.quota, quota * scale);
             assert.ok(r.dose >= 0 && r.dose <= r.residuo && r.dose <= r.quota);
+            if (r.residuo < .1) assert.equal(r.dose, 0, "a sub-tenth residual permits no representable dose");
             if (reading >= target || applied >= profile.azotoTotale * scale) assert.equal(r.dose, 0);
           }
         }
@@ -53,7 +55,7 @@ test("explicit industry examples: total 250, mean reference .4, 50% deficit, dos
   assert.equal(r.quota, 37.5);
   assert.equal(r.deficitRelativo, .5);
   assert.equal(r.dose, 18.8);
-  assert.equal(calcolaPomodoro({ ...input, azotoGiaDistribuito: 249.7 }).dose, 250 - 249.7);
+  assert.equal(calcolaPomodoro({ ...input, azotoGiaDistribuito: 249.7 }).dose, .3);
   assert.equal(calcolaPomodoro({ ...input, confermata: false }).dose, 0);
   assert.equal(calcolaPomodoro({ ...input, fase: "" }).pronta, false);
 });

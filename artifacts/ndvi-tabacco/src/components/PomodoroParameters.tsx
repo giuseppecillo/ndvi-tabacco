@@ -1,5 +1,6 @@
 import { FASI_POMODORO, POMODORO_DB, type calcolaPomodoro } from "@workspace/tomato-calculations";
 import { getLocale, t } from "../i18n/runtime";
+import { formatRecordedDose } from "../utils/observationDose";
 
 type Props = {
   varieta: string; onVarieta: (value: string) => void;
@@ -89,7 +90,7 @@ export function PomodoroResults({ piano }: { piano: ReturnType<typeof calcolaPom
       <p>{t("NDVI medio")}<br /><strong>{piano.media.toFixed(3)}</strong></p>
       <p>{t("NDVI riferimento")}<br /><strong>{piano.attiva ? piano.ottimale.toFixed(3) : "—"}</strong></p>
       <p>{t("Deficit NDVI relativo")}<br /><strong>{piano.attiva ? `${(piano.deficitRelativo * 100).toFixed(1)}%` : "—"}</strong></p>
-      <p>{t("Dose indicata nel punto")}<br /><strong data-testid="pomodoro-dose">{piano.pronta ? `${number(piano.dose)} kg N/ha` : "—"}</strong></p>
+      <p>{t("Dose indicata nel punto")}<br /><strong data-testid="pomodoro-dose">{piano.pronta ? `${formatRecordedDose("pomodoro", piano.dose, getLocale())} kg N/ha` : "—"}</strong></p>
       <p>{t("Varianza NDVI")}<br /><strong>{piano.varianza.toFixed(5)}</strong></p>
       <p>{t("Deviazione standard")}<br /><strong>{piano.deviazioneStandard.toFixed(4)}</strong></p>
       <p>{t("Coefficiente di variazione")}<br /><strong>{piano.coefficienteVariazione.toFixed(1)}%</strong></p>

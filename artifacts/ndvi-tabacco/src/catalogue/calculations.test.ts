@@ -6,10 +6,10 @@ import { serieDistribuzioneOsservazioni } from "../observationDistribution";
 import { catalogue } from "../i18n/catalogue";
 import { setLanguage, t, hasTranslation } from "../i18n/runtime";
 
-test("all 488 profiles of nine crops are complete before enabling calculation", () => {
-  assert.equal(CROP_PROFILES.length, 488);
-  assert.equal(CATALOGUE_CROPS.length, 9);
-  assert.equal(new Set(CROP_PROFILES.map(p => `${p.crop}/${p.name}`)).size, 488);
+test("all 848 profiles of fifteen crops are complete before enabling calculation", () => {
+  assert.equal(CROP_PROFILES.length, 848);
+  assert.equal(CATALOGUE_CROPS.length, 15);
+  assert.equal(new Set(CROP_PROFILES.map(p => `${p.crop}/${p.name}`)).size, 848);
   assert.ok(CROP_PROFILES.every(completeProfile));
   assert.ok(cropCompleteness.every(p => p.reference?.kind === "direct"));
   for (const crop of CATALOGUE_CROPS) assert.ok(CROP_PROFILES.some(p => p.crop === crop));
@@ -62,6 +62,7 @@ test("every variety, all four stages: quota/yield scaling, zero at or above NDVI
     assert.equal(calculateCrop({ ...input, applied: profile.nitrogen + 1 }).dose, 0);
     const capped = calculateCrop({ ...input, applied: profile.nitrogen - .01 });
     assert.ok(capped.dose >= 0 && capped.dose <= capped.residuo && capped.dose <= capped.quota);
+    assert.equal(capped.dose, 0, `${profile.crop}/${profile.name}/${phase.id}: sub-tenth residual`);
     assert.ok(!calculateCrop({ ...input, variety: "not-a-variety" }).pronta);
     assert.ok(!calculateCrop({ ...input, readings: [NaN, 0, 0, 0, 0] }).pronta);
     assert.ok(!calculateCrop({ ...input, yield: 0 }).pronta);

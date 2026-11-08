@@ -2,6 +2,7 @@ import { isCatalogueCrop } from "@workspace/crop-calculations";
 import JSZip from "jszip";
 import type { Observation } from "../App";
 import { ndviDeviation, type ObservationGroup } from "./observationHistory";
+import { usesTenthsDose } from "./observationDose";
 
 type Translate = (text: string) => string;
 type Value = string | number | null | undefined;
@@ -78,7 +79,13 @@ export async function buildObservationWorkbook(group: ObservationGroup, translat
   ].join("");
   const rows = group.observations.map((o, index) => {
     const number = index + firstDataRow;
-    return `<row r="${number}">${columns.map((column, i) => cell(column.value(o), `${colName(i)}${number}`, column.style)).join("")}</row>`;
+    return `<row r="${number}">${columns.map((column, i) => {
+      const value = column.value(o);
+      // General numeric format preserves legacy sub-tenth doses in Excel too.
+      const legacyDose = usesTenthsDose(o.coltura) && (i === 13 || i === 16)
+        && typeof value === "number" && Number(value.toFixed(1)) !== value;
+      return cell(value, `${colName(i)}${number}`, legacyDose ? 0 : column.style);
+    }).join("")}</row>`;
   }).join("");
   zip.file("[Content_Types].xml", `${declaration}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>`);
   zip.file("_rels/.rels", `${declaration}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`);

@@ -23,6 +23,13 @@ export const POMODORO_DB: Readonly<Record<string, ProfiloPomodoro>> = Object.fro
 );
 export const PRIMO_POMODORO = Object.keys(POMODORO_DB)[0];
 
+/** No epsilon: even binary subtraction boundaries must never overrun the raw cap. */
+function tenthsBelow(value: number) {
+  let tenths = Math.floor(value * 10);
+  if (tenths / 10 > value) tenths--;
+  return tenths / 10;
+}
+
 export function calcolaPomodoro(input: {
   varieta: string;
   fase: string;
@@ -57,7 +64,7 @@ export function calcolaPomodoro(input: {
   const residuo = Math.max(0, azotoTotale - input.azotoGiaDistribuito);
   const quota = attiva?.quota ?? 0;
   const dose = valida && input.confermata && attiva
-    ? Math.max(0, Math.min(residuo, quota, Math.round(quota * deficitRelativo * 10) / 10))
+    ? Math.max(0, Math.min(tenthsBelow(residuo), tenthsBelow(quota), Math.round(quota * deficitRelativo * 10) / 10))
     : 0;
   return {
     valida, profilo, media, varianza, deviazioneStandard, coefficienteVariazione,
@@ -87,6 +94,11 @@ export function erroreOsservazionePomodoro(o: Record<string, unknown>): string |
     letture: [o.n1, o.n2, o.n3, o.n4, o.n5] as number[],
   });
   if (!risultato.pronta) return "Seleziona una varietà e conferma la fase del pomodoro in campo.";
+  // Doses are canonical tenths, not approximate measurements. Tolerance here
+  // would admit tiny overruns or nonzero doses when the safe indication is zero.
+  if (o.dose !== risultato.dose || o.quotaAzoto !== risultato.dose) {
+    return "Il piano azoto pomodoro non coincide con la resa e il residuo.";
+  }
   for (const key of ["media", "ottimale", "discostamento", "dose"] as const) {
     if (Math.abs((o[key] as number) - risultato[key]) > 0.00001) {
       return "Il calcolo pomodoro non coincide con i parametri varietali e NDVI.";

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Info } from "lucide-react";
 import { CROP_PROFILES, getCropReference, type CatalogueCrop, type calculateCrop } from "@workspace/crop-calculations";
 import { getLocale, t, useLanguage } from "../i18n/runtime";
+import { formatRecordedDose } from "../utils/observationDose";
 
 type Piano = ReturnType<typeof calculateCrop>;
 type Props = {
@@ -157,7 +158,7 @@ export function CatalogueCropResults({ piano }: { piano: Piano }) {
       </dl>
       <div className="rounded-lg bg-white/80 p-3">
         <p className="text-sm text-stone-700">{t("Dose indicata nel punto")}</p>
-        <strong className="nc-mono text-xl text-green-900" data-testid="text-catalogue-dose">{piano.pronta ? `${num(piano.dose, 1)} kg N/ha` : "—"}</strong>
+        <strong className="nc-mono text-xl text-green-900" data-testid="text-catalogue-dose">{piano.pronta ? `${formatRecordedDose(piano.reference!.crop, piano.dose, getLocale())} kg N/ha` : "—"}</strong>
       </div>
       {piano.pronta ? (
         <p className="text-xs text-green-900">

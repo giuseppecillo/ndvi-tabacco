@@ -117,7 +117,14 @@ export function calculateCrop(input: {
   const pronta = valida && input.confirmed && !!attiva;
   const rawDose = quota * deficitRelativo;
   const roundedDose = Math.round((rawDose + Number.EPSILON * Math.abs(rawDose) * 4) * 10) / 10;
-  const dose = pronta ? Math.max(0, Math.min(residuo, quota, roundedDose)) : 0;
+  // Keep deficit rounding, but both upper bounds must be representable tenths.
+  // Never compensate subtraction with epsilon: the raw bounds remain binding.
+  const tenthsBelow = (value: number) => {
+    let tenths = Math.floor(value * 10);
+    if (tenths / 10 > value) tenths--;
+    return tenths / 10;
+  };
+  const dose = pronta ? Math.max(0, Math.min(tenthsBelow(residuo), tenthsBelow(quota), roundedDose)) : 0;
   return { resolved, reference, valida, pronta, media, varianza, deviazioneStandard, coefficienteVariazione,
     azotoTotale: valida ? azotoTotale : 0, piano, attiva, ottimale, discostamento, deficitRelativo, residuo, quota, dose };
 }
@@ -150,6 +157,8 @@ export function catalogueObservationError(o: Record<string, unknown>): string | 
   if (!result.pronta || o.faseFenologica !== `${result.attiva?.id} · ${result.attiva?.label}`) {
     return "Seleziona una varietà e conferma la fase della coltura in campo.";
   }
+  // Exact canonical tenths; numeric tolerance must not permit unsafe new writes.
+  if (o.dose !== result.dose || o.quotaAzoto !== result.dose) return "La dose non coincide con il modello della coltura.";
   for (const key of ["media", "ottimale", "discostamento", "dose", "azotoTotale"] as const) {
     if (Math.abs((o[key] as number) - result[key]) > .00001) return "La dose non coincide con il modello della coltura.";
   }

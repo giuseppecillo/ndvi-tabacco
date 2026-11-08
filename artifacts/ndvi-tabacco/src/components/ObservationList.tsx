@@ -4,6 +4,7 @@ import { downloadObservationWorkbook } from "../utils/observationExcel";
 import type { Observation } from "../App";
 import { isCatalogueCrop } from "@workspace/crop-calculations";
 import { getLocale, t, useLanguage } from "../i18n/runtime";
+import { formatRecordedDose } from "../utils/observationDose";
 
 /** Persisted values (IDs, clients, varieties, units) are never translated. */
 type Row = { label: string; value: string };
@@ -54,10 +55,10 @@ function details(o: Observation, locale: string): Row[] {
     { label: t("NDVI medio"), value: num(o.media, 3) ?? "—" },
     { label: t("NDVI ottimale"), value: num(o.ottimale, 3) ?? "—" },
     { label: t("Discostamento registrato (valore originale salvato)"), value: num(o.discostamento, 3) ?? "—" },
-    { label: t("Dose indicata"), value: `${num(o.dose) ?? "—"} kg N/ha` },
+    { label: t("Dose indicata"), value: `${formatRecordedDose(o.coltura, o.dose)} kg N/ha` },
     { label: t("Azoto totale previsto"), value: num(o.azotoTotale) ? `${num(o.azotoTotale)} kg N/ha` : "—" },
     { label: t("Azoto già distribuito"), value: num(o.azotoGiaDistribuito) !== null ? `${num(o.azotoGiaDistribuito)} kg N/ha` : "—" },
-    { label: t("Quota azotata"), value: num(o.quotaAzoto) !== null ? `${num(o.quotaAzoto)} kg N/ha` : "—" },
+    { label: t("Quota azotata"), value: o.quotaAzoto != null ? `${formatRecordedDose(o.coltura, o.quotaAzoto)} kg N/ha` : "—" },
     { label: t("Posizione GPS"), value: o.lat !== null && o.lng !== null ? `${o.lat.toFixed(6)}, ${o.lng.toFixed(6)}` : t("Non disponibile") },
   ];
   return rows.filter((r): r is Row => r !== null);
@@ -149,7 +150,7 @@ function GroupTable({ group, locale }: { group: Group; locale: string }) {
                   <td className="px-3 py-2 text-right">{num(o.ottimale, 3) ?? ""}</td>
                   <td className="px-3 py-2 text-right">{signed(dev.absolute, 3)}</td>
                   <td className="px-3 py-2 text-right">{signed(dev.percent, 1, "%")}</td>
-                  <td className="px-3 py-2 text-right font-semibold">{num(o.dose) ?? ""}</td>
+                  <td className="px-3 py-2 text-right font-semibold">{formatRecordedDose(o.coltura, o.dose)}</td>
                 </tr>
               );
             })}

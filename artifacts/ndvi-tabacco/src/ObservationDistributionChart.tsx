@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { t } from "./i18n/runtime";
 import { CATALOGUE_CROPS } from "@workspace/crop-calculations";
+import { formatRecordedDose } from "./utils/observationDose";
 import {
   CartesianGrid,
   Legend,
@@ -49,7 +50,7 @@ function DistributionTooltip({ active, payload }: TooltipProps) {
           {point.scostamento >= 0 ? "+" : ""}{formatNdvi(point.scostamento)}
         </dd>
         <dt className="text-stone-500">Deficit usato</dt><dd className="font-mono text-stone-800">{formatNdvi(point.deficitNdvi)}</dd>
-        <dt className="text-stone-500">N indicato</dt><dd className="font-mono font-bold text-stone-900">{point.azotoIndicato.toFixed(1)} kg/ha</dd>
+        <dt className="text-stone-500">N indicato</dt><dd className="font-mono font-bold text-stone-900">{formatRecordedDose(point.coltura, point.azotoIndicato)} kg/ha</dd>
       </dl>
     </div>
   );
@@ -152,7 +153,7 @@ export function ObservationDistributionChart({
                   <td className={`px-2 py-2 font-mono font-semibold ${punto.scostamento > 0 ? "text-amber-700" : "text-green-700"}`}>
                     {punto.scostamento >= 0 ? "+" : ""}{formatNdvi(punto.scostamento)}
                   </td>
-                  <td className="px-2 py-2 font-mono font-semibold">{punto.azotoIndicato.toFixed(1)} kg/ha</td>
+                  <td className="px-2 py-2 font-mono font-semibold">{formatRecordedDose(punto.coltura, punto.azotoIndicato)} kg/ha</td>
                 </tr>
               ))}
             </tbody>
