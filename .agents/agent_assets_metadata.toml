@@ -56,3 +56,31 @@ mtime_ms = 1793984936414
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/db8d75cd-5538-42e2-ab02-a68f3d685ffc/1636c946-d5f7-4c9c-8f50-5ad4500def2e"
 storage_version_token = "1793984937032918"
 content_type = "text/html"
+
+[[outputs]]
+id = "O3E7Tze3aKUn6_vg9ttbr"
+uri = "file://generated-artifacts/crop-review/colture_revisionate.csv"
+type = "table"
+title = "Catalogo colture revisionato"
+description = "493 profili; esclusi fosforo, potassio, acqua e note. Corretti ruoli e fasi documentabili; valori N/NDVI non certificati e calcolo automatico non abilitato."
+logical_id = "67d81579-d924-4da6-913c-5a6b682286fd"
+content_hash = "sha256:a0dddc6c61270b0ddaa8eb888a32a433086106a686ebc5e82eb302594474a833"
+size = 136213
+mtime_ms = 1794161296774
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/67d81579-d924-4da6-913c-5a6b682286fd/6ec803c2-c698-47c4-ae12-aa84a6dba9d7"
+storage_version_token = "1794161325261484"
+content_type = "text/csv"
+
+[[outputs]]
+id = "lqczTFCrV75gmLwbaC9v-"
+uri = "file://generated-artifacts/crop-review/revisione_agronomica.html"
+type = "html"
+title = "Risultati della revisione agronomica"
+description = "Correzioni documentate, fonti tecniche e limiti dei parametri che richiedono validazione prima dell’integrazione nei calcoli."
+logical_id = "e35e4527-835a-4d90-8c2e-f0c2a39ec25b"
+content_hash = "sha256:75cc14ed0fd5498ca305a20ac6af152974e41da38ab677a1693656d3f104c665"
+size = 3754
+mtime_ms = 1794161296781
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/e35e4527-835a-4d90-8c2e-f0c2a39ec25b/99fcf11e-2b96-4c92-90f5-24ab2b533c54"
+storage_version_token = "1794161325778799"
+content_type = "text/html"
