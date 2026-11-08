@@ -31,3 +31,12 @@ ad una coltura, considera la precocità e fai una media».
 **How to apply:** usare valori disponibili della stessa coltura e precocità,
 senza mescolare destinazioni incompatibili; conservare il dato specifico quando
 presente. Un gruppo senza osservazioni numeriche non consente una media.
+
+Nella tabella visibile l'utente non vuole spiegazioni su come è stata costruita,
+né indicazioni che distinguano dati specifici, medie o dati da letteratura.
+
+**Why:** l'utente ha ribadito esplicitamente questa regola di presentazione.
+
+**How to apply:** mostrare colture, varietà e parametri senza colonne o etichette
+di provenienza nella tabella principale; conservare la tracciabilità nel materiale
+tecnico separato senza attribuire ai valori una validazione inesistente.
