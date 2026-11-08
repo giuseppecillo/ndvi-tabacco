@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "version": "selected-v1-39d11f8084e934f400c6f7d7df79f80b1d912b97b724bac5921d3820e5ff1854",
+  "csv_sha256": "074a10cda745a8f56d664d51ac8ea1791d0a6ef6308a8ce998e8e8801382fac8",
+  "audit_sha256": "20255535ac624bb58365ab4db2993096e789dc6f95d791946498a12f028cc884",
+  "profile_count": 488,
+  "crop_counts": {
+    "Kiwi": 50,
+    "Vite da vino": 55,
+    "Vite da tavola": 55,
+    "Pere": 55,
+    "Mele": 55,
+    "Lattuga": 55,
+    "Spinacio": 55,
+    "Spinacino (4 gamma)": 55,
+    "Broccoli": 53
+  }
+}

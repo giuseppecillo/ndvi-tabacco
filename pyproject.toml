@@ -6,3 +6,8 @@ requires-python = ">=3.13"
 dependencies = [
     "pymupdf>=1.28.2",
 ]
+
+[dependency-groups]
+dev = [
+    "pglast>=8.7,<9",
+]

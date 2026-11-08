@@ -1,5 +1,13 @@
 # Preparazione INATTIVA PostgreSQL → Supabase
 
+## Catalogo selezionato — preparazione separata
+
+La [preparazione persistente del catalogo](catalogue/README.md) propone uno schema
+dedicato, release vincolata agli hash, applicazione/verifica idempotenti e rollback
+dei soli record della release. Non fa parte della baseline o del manifest delle
+migrazioni; non è collegata ad avvio/post-merge e non è stata applicata al target.
+Non modifica rilievi, account, storico, connessioni o Clerk.
+
 ## Punto 3: programma preparato, esecuzione non autorizzata
 
 Il [programma del backup verificabile](../../../docs/migrazione-punto-3.md)

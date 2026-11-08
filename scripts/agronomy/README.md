@@ -57,6 +57,14 @@ media né fase di riferimento aggiunta nell'output effettivo attuale**.
 Il codice dei fallback è verificato separatamente con fixture sintetiche,
 mai incluse nel dataset. Non viene abilitato alcun calcolo nell'app.
 
+### Preparazione persistente separata
+
+`catalogue_persistence.py` verifica CSV e controllo della selezione contro una
+release fissata dagli hash, riproduce i dati dagli input revisionati e prepara
+SQL manuali per il solo catalogo. Non apre connessioni e non applica modifiche.
+Struttura, comandi, rollback e autorizzazioni necessarie sono nel
+[piano del catalogo persistente](../../lib/db/migration-preparation/catalogue/README.md).
+
 ## Rigenerazione
 
 Dalla radice del progetto, senza dipendenze Python aggiuntive:
