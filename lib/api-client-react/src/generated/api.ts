@@ -23,6 +23,7 @@ import type {
   Account,
   AcknowledgePrivacyBody,
   CreatePrivacyRequestBody,
+  CropCatalogue,
   ExportMyData200,
   GetAccessSetup200,
   HealthStatus,
@@ -43,6 +44,83 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+export const getGetCropCatalogueUrl = () => {
+
+
+
+
+  return `/api/catalogo-colture`
+}
+
+/**
+ * @summary Read-only selected crop catalogue, separate from calculation profiles
+ */
+export const getCropCatalogue = async ( options?: RequestInit): Promise<CropCatalogue> => {
+
+  return customFetch<CropCatalogue>(getGetCropCatalogueUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCropCatalogueQueryKey = () => {
+    return [
+    `/api/catalogo-colture`
+    ] as const;
+    }
+
+
+export const getGetCropCatalogueQueryOptions = <TData = Awaited<ReturnType<typeof getCropCatalogue>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCropCatalogue>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCropCatalogueQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCropCatalogue>>> = ({ signal }) => getCropCatalogue({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCropCatalogue>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCropCatalogueQueryResult = NonNullable<Awaited<ReturnType<typeof getCropCatalogue>>>
+export type GetCropCatalogueQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read-only selected crop catalogue, separate from calculation profiles
+ */
+
+export function useGetCropCatalogue<TData = Awaited<ReturnType<typeof getCropCatalogue>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCropCatalogue>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCropCatalogueQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
 
 
 

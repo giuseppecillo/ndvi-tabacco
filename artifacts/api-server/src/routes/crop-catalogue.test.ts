@@ -1,0 +1,73 @@
+import assert from "node:assert/strict";
+import test, { mock } from "node:test";
+import { readFileSync } from "node:fs";
+import type { Request, Response } from "express";
+import { GRANO_DURO_DB } from "@workspace/grain-calculations";
+import { POMODORO_DB } from "@workspace/tomato-calculations";
+import { GetCropCatalogueResponse } from "@workspace/api-zod";
+import catalogueRouter from "./crop-catalogue";
+import observationsRouter from "./osservazioni";
+import snapshot from "../data/crop-catalogue.json";
+import pool from "../lib/db";
+import { requireAccount, requirePrivacyAck, requireSubscription } from "../middlewares/access";
+
+test("catalogue GET is protected, read-only and returns exactly the selected display snapshot", async () => {
+  const route = catalogueRouter.stack.find(layer => layer.route)?.route;
+  assert.ok(route);
+  assert.equal(route.path, "/catalogo-colture");
+  assert.deepEqual(route.stack.slice(0, 3).map(layer => layer.handle),
+    [requireAccount, requireSubscription, requirePrivacyAck]);
+  assert.ok(route.stack.every(layer => layer.method === "get"));
+  const query = mock.method(pool, "query", () => { throw new Error("Catalogue handler must not query data"); });
+  let payload: unknown;
+  try {
+    await route.stack[3].handle({} as Request, {
+      json(value: unknown) { payload = value; },
+    } as Response, () => {});
+    assert.deepEqual(GetCropCatalogueResponse.parse(payload), snapshot);
+    assert.equal(snapshot.rows.length, 488);
+    assert.equal(snapshot.columns.length, 24);
+    assert.equal(query.mock.calls.length, 0);
+    assert.deepEqual(Object.keys(payload as object).sort(), ["columns", "rows"]);
+  } finally {
+    query.mock.restore();
+  }
+});
+
+test("all selected crop identities stay separate from the 548 calculation profiles", () => {
+  const source = readFileSync("../ndvi-tabacco/src/App.tsx", "utf8");
+  const tobaccoBlock = source.split("export const VARIETA_DB:")[1].split("export const PARAMETRI_AZIENDALI_DEFAULT")[0];
+  const tobaccoNames = [...tobaccoBlock.matchAll(/label: "([^"]+)"/g)].map(match => match[1]);
+  const applicationIdentities = [
+    ...Object.keys(GRANO_DURO_DB).map(name => ["grano duro", name]),
+    ...Object.keys(POMODORO_DB).map(name => ["pomodoro", name]),
+    ...tobaccoNames.map(name => ["tabacco", name]),
+  ];
+  assert.equal(applicationIdentities.length, 548);
+  const key = (pair: string[]) => JSON.stringify(pair.map(value => value.toLocaleLowerCase("it")));
+  const existing = new Set(applicationIdentities.map(key));
+  assert.equal(existing.size, 548);
+  assert.ok(snapshot.rows.every(row => !existing.has(key(row.slice(0, 2)))));
+});
+
+test("none of the nine consultation-only crops may save an observation or fall back to tobacco", async () => {
+  const post = observationsRouter.stack.find(layer => layer.route?.path === "/osservazioni"
+    && layer.route.stack.some(handler => handler.method === "post"))!.route!.stack[0].handle;
+  const query = mock.method(pool, "query", () => { throw new Error("Unsupported crop must not reach storage"); });
+  try {
+    for (const coltura of new Set(snapshot.rows.map(row => row[0]))) {
+      let status = 0;
+      let payload: unknown;
+      const res = {
+        status(value: number) { status = value; return this; },
+        json(value: unknown) { payload = value; return this; },
+      } as unknown as Response;
+      await post({ body: { id: "synthetic-catalogue", coltura } } as Request, res, () => {});
+      assert.equal(status, 400, coltura);
+      assert.deepEqual(payload, { error: "Coltura non supportata." });
+    }
+    assert.equal(query.mock.calls.length, 0);
+  } finally {
+    query.mock.restore();
+  }
+});

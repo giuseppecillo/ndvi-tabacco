@@ -12,6 +12,7 @@ export * from './accountStatus';
 export * from './acknowledgePrivacyBody';
 export * from './createPrivacyRequestBody';
 export * from './createPrivacyRequestBodyType';
+export * from './cropCatalogue';
 export * from './exportMyData200';
 export * from './getAccessSetup200';
 export * from './healthStatus';

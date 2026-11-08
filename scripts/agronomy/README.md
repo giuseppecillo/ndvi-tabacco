@@ -1,5 +1,35 @@
 # Revisione offline delle identità del catalogo
 
+## Consultazione nell'app
+
+Il modulo **Catalogo colture** consulta `/api/catalogo-colture`, protetto dagli
+stessi requisiti di account, abbonamento e privacy dei rilievi. È una fotografia
+di sola lettura della selezione: non richiede né modifica tabelle Supabase.
+Il contratto è in `lib/api-spec/openapi.yaml`; il client usa gli hook generati.
+
+Rigenerazione esplicita della fotografia distribuita con l'API:
+
+```sh
+python scripts/agronomy/export_app_catalogue.py \
+  attached_assets/Database_Colture_1794160273520.csv
+python scripts/agronomy/export_app_catalogue.py \
+  attached_assets/Database_Colture_1794160273520.csv --check
+```
+
+`artifacts/api-server/src/data/crop-catalogue.json` conserva le 488 righe e le
+24 colonne del CSV selezionato senza conversioni di valori o identificatori.
+`selected-catalogue-trace.json` conserva separatamente hash, esclusioni,
+integrazioni e tracciabilità per parametro (raggruppata senza perdita quando
+più parametri della stessa identità hanno la stessa evidenza).
+La tracciabilità non è inclusa nella risposta API o nella tabella principale.
+Il checkout può servire il catalogo anche senza l'allegato originale.
+
+I 548 profili di calcolo di grano duro, tabacco e pomodoro restano separati:
+non sono uniti, rinominati o sostituiti. Una futura unione richiede una verifica
+esplicita della coppia coltura/varietà, delle destinazioni e delle omonimie,
+non il solo confronto dei nomi. Non viene aggiunto alcun percorso dal catalogo
+al calcolatore né alcuna nuova coltura selezionabile per i rilievi.
+
 Questa procedura non importa colture nell'app e non apre connessioni di rete o
 database. Non modifica osservazioni, dati utente o Production. Nessun piano N/NDVI
 è validato dalla verifica dei nomi.

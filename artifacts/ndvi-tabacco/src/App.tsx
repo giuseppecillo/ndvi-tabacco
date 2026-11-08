@@ -7,6 +7,7 @@ import { buildObservationPdf } from "./utils/observationPdf";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { ObservationDistributionChart } from "./ObservationDistributionChart";
 import { ObservationList } from "./components/ObservationList";
+import { CropCatalogue } from "./components/CropCatalogue";
 import { PomodoroParameters, PomodoroResults } from "./components/PomodoroParameters";
 import { POMODORO_DB, PRIMO_POMODORO, calcolaPomodoro } from "@workspace/tomato-calculations";
 import { exportObservationsCsv } from "./utils/geoUtils";
@@ -157,10 +158,10 @@ export const PARAMETRI_AZIENDALI_DEFAULT: Record<string, ParametriAziendali> =
     ])
   );
 
-type ActiveTab = "calcolatore" | "elaborazioni" | "storico";
+type ActiveTab = "calcolatore" | "elaborazioni" | "storico" | "catalogo";
 function tabFromSearch(search: string): ActiveTab {
   const module = new URLSearchParams(search).get("module");
-  return module === "maps" ? "elaborazioni" : module === "history" ? "storico" : "calcolatore";
+  return module === "maps" ? "elaborazioni" : module === "history" ? "storico" : module === "catalogue" ? "catalogo" : "calcolatore";
 }
 
 export type Observation = {
@@ -343,7 +344,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   }, [search]);
   const language = useLanguage();
   useEffect(() => {
-    const title = activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : activeTab === "storico" ? "Storico Rilievi" : "Rilievo e dati";
+    const title = activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : activeTab === "storico" ? "Storico Rilievi" : activeTab === "catalogo" ? "Catalogo colture" : "Rilievo e dati";
     const previous = document.title;
     document.title = `${t(title)} — NitroCrop NDVI`;
     return () => { document.title = previous; };
@@ -747,9 +748,11 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       <div className="max-w-2xl mx-auto space-y-6">
 
         {/* Header */}
-        <ModuleHeading title={t(activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : activeTab === "storico" ? "Storico Rilievi" : "Rilievo e dati")}>
+        <ModuleHeading title={t(activeTab === "elaborazioni" ? "Elaborazioni e Mappe" : activeTab === "storico" ? "Storico Rilievi" : activeTab === "catalogo" ? "Catalogo colture" : "Rilievo e dati")}>
           <p className="text-amber-900 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
         </ModuleHeading>
+
+        {activeTab === "catalogo" && <CropCatalogue active />}
 
         <div hidden={activeTab !== "elaborazioni"}>
           <ElaborazioniMappe osservazioni={osservazioni} />

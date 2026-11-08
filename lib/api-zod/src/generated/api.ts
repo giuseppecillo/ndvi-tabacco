@@ -8,6 +8,15 @@
 import * as zod from 'zod';
 
 
+/**
+ * @summary Read-only selected crop catalogue, separate from calculation profiles
+ */
+export const GetCropCatalogueResponse = zod.object({
+  "columns": zod.array(zod.string()),
+  "rows": zod.array(zod.array(zod.string()))
+})
+
+
 export const GetAccessSetupResponse = zod.object({
   "activationAvailable": zod.boolean()
 })

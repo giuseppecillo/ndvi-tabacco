@@ -54,3 +54,14 @@ né indicazioni che distinguano dati specifici, medie o dati da letteratura.
 **How to apply:** mostrare colture, varietà e parametri senza colonne o etichette
 di provenienza nella tabella principale; conservare la tracciabilità nel materiale
 tecnico separato senza attribuire ai valori una validazione inesistente.
+
+Il catalogo selezionato è un ambito di sola consultazione distinto dai profili
+applicativi già usati per grano duro, tabacco e pomodoro. Non autorizza nuovi
+calcoli, fallback al tabacco, cambi di identificatori o riscritture dei rilievi.
+
+**Why:** la richiesta distingue esplicitamente i nuovi dati consultabili dai
+profili applicativi esistenti; un nome simile non prova l'identità agronomica.
+
+**How to apply:** mantenere indipendente la selezione consultabile anche durante
+l'allineamento del database. Prima di qualsiasi futura unione verificare la
+coppia coltura/varietà e la destinazione; non deduplicare solo per nome.
