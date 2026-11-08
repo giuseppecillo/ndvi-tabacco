@@ -1405,12 +1405,12 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         {/* Registro */}
         {osservazioni.length > 0 && (
           <div className="bg-white rounded-2xl shadow-md p-6 border border-stone-200">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-bold text-green-900">Registro Osservazioni</h2>
                 <span className="text-sm text-stone-400">{osservazioni.length} record</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <button
                   onClick={resetRegistro}
                   className="flex items-center gap-2 bg-white hover:bg-red-50 active:bg-red-100 text-red-600 border border-red-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"

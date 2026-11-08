@@ -20,3 +20,16 @@ Il collaudo non deve introdurre un accesso senza autenticazione nell'app reale.
 **How to apply:** Provare anche un prefisso non-root, seguire i nomi dei chunk
 effettivamente emessi anziché supporre il nome del pacchetto, e confermare che
 la build normale escluda entry e dati sintetici.
+
+Nei collaudi che montano direttamente componenti serviti da Vite, riusare gli
+URL esatti dei moduli di stato risolti dal componente, comprese le query HMR.
+Caricare anche gli stili normalmente forniti dal contenitore applicativo.
+
+**Why:** importare separatamente il modulo delle lingue senza la query HMR
+ha creato un secondo store: le funzioni traducevano ma l'interfaccia ascoltava
+lo store originale. Gli stili mancanti hanno inoltre falsato la resa mobile.
+
+**How to apply:** prima di diagnosticare un difetto confrontare gli import
+effettivi e gli stili della fixture con quelli dell'app. Se la fixture usa
+un preambolo HMR semplificato, ricaricare il documento dopo le modifiche:
+una vista rimasta montata può mostrare ancora le vecchie classi.
