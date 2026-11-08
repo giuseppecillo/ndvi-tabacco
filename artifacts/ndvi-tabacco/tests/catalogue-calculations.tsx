@@ -1,7 +1,9 @@
 import { createRoot } from "react-dom/client";
+import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App, { type Observation } from "../src/App";
-import { catalogueObservationError, cropCatalogue } from "@workspace/crop-calculations";
+import { catalogueObservationError, cropCatalogue, CROP_PROFILES, isCatalogueCrop, calculateCrop } from "@workspace/crop-calculations";
+import { CatalogueCropParameters } from "../src/components/CatalogueCropParameters";
 import { setLanguage, useLanguage, type Language } from "../src/i18n/runtime";
 import "../src/index.css";
 import "../src/security/security.css";
@@ -35,6 +37,32 @@ Object.defineProperty(navigator, "geolocation", { configurable: true, value: {
     success({ coords: { latitude: 45.123456, longitude: 12.345678 } } as GeolocationPosition);
   },
 } });
+/** Direct component view for cheap visual checks, without login or real data. */
+function DetailsPreview() {
+  const params = new URLSearchParams(location.search);
+  const requested = params.get("crop");
+  const crop = isCatalogueCrop(requested) ? requested : "Kiwi";
+  const first = CROP_PROFILES.find(p => p.crop === crop)!;
+  const [varieta, setVarieta] = useState(first.name);
+  const [resa, setResa] = useState(first.yield);
+  const [densita, setDensita] = useState(first.plants);
+  const [fase, setFase] = useState("F1");
+  const [confermata, setConfermata] = useState(true);
+  const [distribuito, setDistribuito] = useState(0);
+  const piano = calculateCrop({ crop, variety: varieta, phase: fase, confirmed: confermata,
+    yield: resa, applied: distribuito, readings: [.42, .38, .41, .39, .4] });
+  return <main className="mx-auto max-w-3xl p-4 sm:p-6">
+    <div className="grid min-w-0 grid-cols-2 rounded-2xl border border-stone-200 bg-white p-4 sm:p-6">
+      <CatalogueCropParameters crop={crop} varieta={varieta} onVarieta={name => {
+        setVarieta(name);
+        const profile = CROP_PROFILES.find(p => p.crop === crop && p.name === name)!;
+        setResa(profile.yield); setDensita(profile.plants); setFase("");
+      }} resa={resa} onResa={setResa} densita={densita} onDensita={setDensita}
+        fase={fase} onFase={setFase} confermata={confermata} onConferma={setConfermata}
+        distribuito={distribuito} onDistribuito={setDistribuito} piano={piano} />
+    </div>
+  </main>;
+}
 function Harness() {
   useLanguage();
   return <><nav className="flex flex-wrap gap-2 bg-green-100 p-3" aria-label="Synthetic test controls">
@@ -44,5 +72,7 @@ function Harness() {
   </nav><App storageScope="synthetic-catalogue" /></>;
 }
 createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={new QueryClient()}><Harness /></QueryClientProvider>,
+  <QueryClientProvider client={new QueryClient()}>
+    {new URLSearchParams(location.search).get("preview") === "details" ? <DetailsPreview /> : <Harness />}
+  </QueryClientProvider>,
 );

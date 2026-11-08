@@ -1,6 +1,9 @@
 import type { Translation } from "./runtime";
 
 export const catalogue: readonly Translation[] = [
+  ["Piano azoto per fase", "Nitrogen plan by stage", "Plan de nitrógeno por fase"],
+  ["N di riferimento (kg N/ha)", "Reference N (kg N/ha)", "N de referencia (kg N/ha)"],
+  ["Quota calcolata (kg N/ha)", "Calculated share (kg N/ha)", "Cuota calculada (kg N/ha)"],
   ["Dettagli della varietà", "Variety details", "Detalles de la variedad"],
   ["Fase osservata in campo", "Stage observed in the field", "Fase observada en campo"],
   ["modello di coltura", "crop model", "modelo de cultivo"],
