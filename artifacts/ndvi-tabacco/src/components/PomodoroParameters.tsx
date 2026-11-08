@@ -29,7 +29,7 @@ export function PomodoroParameters(p: Props) {
     <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold text-stone-700">
       {t("Varietà")}
       <select aria-label={t("Varietà pomodoro")} value={p.varieta} onChange={(e) => p.onVarieta(e.target.value)} className={inputClass}>
-        {opzioni.map((v) => <option value={v.id} key={v.id}>{v.nome} — {t(v.destinazione)} · {t(v.impiego)}</option>)}
+        {opzioni.map((v) => <option value={v.id} key={v.id}>{v.nome}</option>)}
       </select>
     </label>
     <p className="text-xs text-stone-600">{t("Profili trovati")}: {opzioni.length} / {Object.keys(POMODORO_DB).length}</p>

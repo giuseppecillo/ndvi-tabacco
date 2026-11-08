@@ -2,7 +2,11 @@
 
 ## Stato dell'attivazione
 
-Codice e SQL preparati; nessun SQL di questo aggiornamento viene eseguito automaticamente.
+Struttura applicata su Agri Precision dopo consenso esplicito del titolare,
+con COMMIT confermato e controlli su RLS, ACL e ruoli NOLOGIN.
+Rapporto senza credenziali: `generated-artifacts/user-plans-activation-result.json`.
+La tabella è stata creata vuota: nessun contratto è stato assegnato.
+Nessun SQL di questo aggiornamento viene eseguito automaticamente.
 L'applicazione controlla in sola lettura l'esistenza di `public.app_plan_state`.
 Se manca, mostra statistiche reali sui dati esistenti e l'avviso di attivazione
 in attesa, disabilita assegnazioni/inviti con piano e conserva il comportamento
@@ -20,11 +24,13 @@ La singola transazione crea una tabella vuota, una FK con cancellazione
 per account, un indice proprietario e tre policy, revoca accessi Data API
 solo alla nuova tabella e assegna i privilegi applicativi necessari.
 Verifica ACL/RLS prima del COMMIT; su errore ROLLBACK e arresto.
-Nessuna modifica alle cinque tabelle, utenti, rilievi o ruoli esistenti,
-né revoca globale o modifica ai privilegi predefiniti.
+Nessuna modifica a colonne o dati delle cinque tabelle, utenti, rilievi o ruoli esistenti;
+la nuova FK aggiunge la sola dipendenza verso l'account proprietario.
+Non sono previste revoche globali o modifiche ai privilegi predefiniti.
 
-SQL preparato e revisionato offline, **non ancora collaudato né applicato
-al Supabase reale**. L'applicazione non deve invocarlo all'avvio/post-merge
+SQL revisionato offline e applicato al Supabase reale con verifica delle protezioni.
+Non sono state eseguite prove CRUD su contratti reali o sintetici sul target.
+L'applicazione non deve invocarlo all'avvio/post-merge
 o con Drizzle push. Pubblicazione e attivazione sul sito pubblico restano
 operazioni separate che richiedono consenso.
 

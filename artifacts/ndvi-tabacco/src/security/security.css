@@ -148,3 +148,10 @@ html, body { overflow-x: clip; max-width: 100%; }
   .nc-signin-main { padding: 36% .5rem 1rem; }
 }
 @media (prefers-reduced-motion: reduce) { .nc-signin-panel, .nc-signin-brand, .nc-signin-lang { transition: none; } }
+
+/* Phone readability for data widgets */
+@media (max-width: 479px) {
+  .nc-sec table th, .nc-sec table td { padding-top: .5rem; padding-bottom: .5rem; }
+  .nc-sec dd, .nc-sec dt { overflow-wrap: anywhere; }
+}
+.nc-sec select { text-overflow: ellipsis; max-width: 100%; }

@@ -6,6 +6,7 @@
   "scripts": {
     "test:plans": "esbuild src/lib/plan-model.test.ts src/lib/plan-store.test.ts --bundle --platform=node --format=cjs --outdir=/tmp/nitrocrop-plan-tests && node --test /tmp/nitrocrop-plan-tests/plan-model.test.js /tmp/nitrocrop-plan-tests/plan-store.test.js",
     "test:catalogue": "esbuild src/routes/crop-catalogue.test.ts --bundle --platform=node --format=cjs --outfile=/tmp/nitrocrop-catalogue-tests.cjs && node --test /tmp/nitrocrop-catalogue-tests.cjs",
+    "test:catalogue-excel": "esbuild src/lib/catalogue-excel.test.ts --bundle --platform=node --format=cjs --outfile=/tmp/nitrocrop-excel-test.cjs && node --test /tmp/nitrocrop-excel-test.cjs",
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",

@@ -1,5 +1,11 @@
 # Catalogo persistente — preparazione INATTIVA
 
+> Questa pagina descrive la **precedente preparazione** a 488 profili.
+> Per il catalogo operativo successivamente autorizzato e applicato
+> (1.396 profili, tabella distinta `model_profiles`), vedere
+> [EXCEL_360_INTEGRATION.md](EXCEL_360_INTEGRATION.md).
+> Non eseguire i vecchi script per sostituire la nuova release operativa.
+
 **Nessuna applicazione al database eseguita.** Questa consegna prepara soltanto
 SQL manuale per l'unico Supabase **Agri Precision** esistente. Non aggiunge nuove
 colture operative, API, calcoli, migrazioni all'avvio o al post-merge. Clerk,

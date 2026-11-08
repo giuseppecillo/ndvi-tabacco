@@ -74,7 +74,7 @@ function Meter({ label, used, limit, testId }: { label: string; used: number | n
   const full = used != null && limit != null && used >= limit;
   return (
     <div data-testid={testId} className="min-w-0">
-      <div className="flex items-baseline justify-between gap-2 text-xs text-[var(--nc-muted)]"><span>{t(label)}</span>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-xs text-[var(--nc-muted)]"><span className="min-w-0">{t(label)}</span>
         {limit != null && used != null && <span className={full ? "font-semibold text-[var(--nc-danger)]" : ""}>{full ? t("Limite raggiunto") : t(`${num(Math.max(0, limit - used))} rimanenti`)}</span>}
       </div>
       <p className="nc-mono mt-0.5 text-sm font-semibold">
@@ -102,7 +102,7 @@ export function UsageDetails({ usage: u, showPeriods = true }: { usage: UserUsag
   const storagePct = u.storageLimitBytes ? Math.min(1, u.storageBytes / u.storageLimitBytes) : 0;
   return (
     <div className="space-y-3 text-sm">
-      {contract && <dl className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
+      {contract && <dl className="grid grid-cols-1 gap-x-4 gap-y-1 min-[360px]:grid-cols-2 sm:grid-cols-4">
         <div><dt className="text-xs text-[var(--nc-muted)]">{t("Inizio")}</dt><dd className="nc-mono" data-testid={`text-starts-${u.userId}`}>{fmtDay(u.startsOn)}</dd></div>
         <div><dt className="text-xs text-[var(--nc-muted)]">{t("Scadenza")}</dt><dd className="nc-mono" data-testid={`text-expires-${u.userId}`}>{fmtDay(u.expiresAt)}</dd></div>
       </dl>}
@@ -234,7 +234,7 @@ export function UsageOverview({ users }: { users: Account[] | undefined }) {
       <div className="mt-4">
         {q.isPending ? <Skeleton rows={2} /> : q.isError ? <ErrorNote error={q.error} onRetry={() => void q.refetch()} /> :
           q.data.length === 0 ? <p className="text-sm text-[var(--nc-muted)]">{t("Nessun dato di consumo.")}</p> : <>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="stats-usage">
+            <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4" data-testid="stats-usage">
               {[
                 ["Contratti attivi", q.data.filter(u => u.state === "active").length],
                 ["Utenti senza piano", q.data.filter(u => u.state === "unassigned").length],

@@ -86,7 +86,7 @@ export function AccountPage({ account }: { account: Account }) {
               <textarea value={msg} maxLength={2000} onChange={e => setMsg(e.target.value)} rows={4} required
                 placeholder="Descrivi la richiesta (ad esempio quali dati correggere)"
                 className="w-full rounded-xl border border-[var(--nc-line)] bg-[var(--nc-paper)] p-3 text-sm outline-none focus:border-[var(--nc-leaf)]" />
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="nc-mono text-xs text-[var(--nc-muted)]">{msg.length}/2000</span>
                 <Btn type="submit" disabled={!trimmed || create.isPending}>{create.isPending ? "Invio..." : "Invia richiesta"}</Btn>
               </div>
@@ -100,7 +100,7 @@ export function AccountPage({ account }: { account: Account }) {
                   <ul className="divide-y divide-[var(--nc-line)]">
                     {reqs.data.map(r => (
                       <li key={r.id} className="py-3 text-sm">
-                        <div className="flex justify-between gap-2"><span className="font-semibold">{REQ_LABEL[r.type] ?? r.type}</span><span className="nc-mono text-xs">{STATUS_LABEL[r.status] ?? r.status}</span></div>
+                        <div className="flex flex-wrap justify-between gap-x-2 gap-y-1"><span className="min-w-0 font-semibold [overflow-wrap:anywhere]">{REQ_LABEL[r.type] ?? r.type}</span><span className="nc-mono text-xs">{STATUS_LABEL[r.status] ?? r.status}</span></div>
                         <p className="mt-1 text-[var(--nc-muted)]">{r.message}</p>
                         {r.response && <p className="mt-1 border-l-2 border-[var(--nc-wheat)] pl-2">{r.response}</p>}
                         <p className="nc-mono mt-1 text-xs text-[var(--nc-muted)]">{fmtDate(r.createdAt)}</p>

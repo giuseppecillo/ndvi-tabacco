@@ -6,6 +6,7 @@
     "types": ["node"]
   },
   "include": ["src"],
+  "exclude": ["src/tools/apply-catalogue.ts", "src/tools/apply-user-plans.ts"],
   "references": [
     {
       "path": "../../lib/tobacco-calculations"

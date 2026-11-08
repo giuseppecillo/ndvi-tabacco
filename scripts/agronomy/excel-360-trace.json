@@ -1,0 +1,2180 @@
+{
+  "source_sha256": "e12fea3aec0cd4bb528417686a585bf5ff9de0041e18b0b1108652d65fb5c858",
+  "snapshot_sha256": "28addb25da41731555f787f8b3382ed46e4e3400519f20b9c62625488d3e5883",
+  "counts": {
+    "Aglio": 60,
+    "Cipolla": 60,
+    "Olivo": 60,
+    "Zucchino": 60,
+    "Melanzana": 60,
+    "Ciliegio": 60
+  },
+  "profiles": [
+    {
+      "crop": "Aglio",
+      "variety": "Rosso di Nubia",
+      "sheet": "Database_360",
+      "row": 2
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Bianco Napoletano",
+      "sheet": "Database_360",
+      "row": 3
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Rosso di Castelliri",
+      "sheet": "Database_360",
+      "row": 4
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Massafra",
+      "sheet": "Database_360",
+      "row": 5
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Primaticcio",
+      "sheet": "Database_360",
+      "row": 6
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Messidrome",
+      "sheet": "Database_360",
+      "row": 7
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Thermidrome",
+      "sheet": "Database_360",
+      "row": 8
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Germidour",
+      "sheet": "Database_360",
+      "row": 9
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Sabadrome",
+      "sheet": "Database_360",
+      "row": 10
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Printanor",
+      "sheet": "Database_360",
+      "row": 11
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Flavor",
+      "sheet": "Database_360",
+      "row": 12
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Cledor",
+      "sheet": "Database_360",
+      "row": 13
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Morado de Cuenca",
+      "sheet": "Database_360",
+      "row": 14
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Ajo Blanco",
+      "sheet": "Database_360",
+      "row": 15
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Ajo Violeta",
+      "sheet": "Database_360",
+      "row": 16
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Ajo Castano",
+      "sheet": "Database_360",
+      "row": 17
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Ajo Morado",
+      "sheet": "Database_360",
+      "row": 18
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Vivaldi",
+      "sheet": "Database_360",
+      "row": 19
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Edenrose",
+      "sheet": "Database_360",
+      "row": 20
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Carouge",
+      "sheet": "Database_360",
+      "row": 21
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Ramata di Milano",
+      "sheet": "Database_360",
+      "row": 22
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bianca di Como",
+      "sheet": "Database_360",
+      "row": 23
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa di Suasa",
+      "sheet": "Database_360",
+      "row": 24
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bionda di Cureggio",
+      "sheet": "Database_360",
+      "row": 25
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bianca di Pompei",
+      "sheet": "Database_360",
+      "row": 26
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Dorata di Voghera",
+      "sheet": "Database_360",
+      "row": 27
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa di Bassano",
+      "sheet": "Database_360",
+      "row": 28
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa di Acquaviva",
+      "sheet": "Database_360",
+      "row": 29
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Texas Early Grano",
+      "sheet": "Database_360",
+      "row": 30
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Yellow Sweet Spanish",
+      "sheet": "Database_360",
+      "row": 31
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Stuttgarter Riesen",
+      "sheet": "Database_360",
+      "row": 32
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Parris Island",
+      "sheet": "Database_360",
+      "row": 33
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Walla Walla",
+      "sheet": "Database_360",
+      "row": 34
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Vidalia",
+      "sheet": "Database_360",
+      "row": 35
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Ailsa Craig",
+      "sheet": "Database_360",
+      "row": 36
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Kelsae Sweet Giant",
+      "sheet": "Database_360",
+      "row": 37
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Red Baron",
+      "sheet": "Database_360",
+      "row": 38
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Sturon",
+      "sheet": "Database_360",
+      "row": 39
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Centurion",
+      "sheet": "Database_360",
+      "row": 40
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Hytech",
+      "sheet": "Database_360",
+      "row": 41
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Moraiolo",
+      "sheet": "Database_360",
+      "row": 42
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Pendolino",
+      "sheet": "Database_360",
+      "row": 43
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Maurino",
+      "sheet": "Database_360",
+      "row": 44
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Taggiasca",
+      "sheet": "Database_360",
+      "row": 45
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Itrana",
+      "sheet": "Database_360",
+      "row": 46
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Nocellara del Belice",
+      "sheet": "Database_360",
+      "row": 47
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Biancolilla",
+      "sheet": "Database_360",
+      "row": 48
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Cerasuola",
+      "sheet": "Database_360",
+      "row": 49
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Ogliarola",
+      "sheet": "Database_360",
+      "row": 50
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Bosana",
+      "sheet": "Database_360",
+      "row": 51
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Tonda Iblea",
+      "sheet": "Database_360",
+      "row": 52
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Picholine",
+      "sheet": "Database_360",
+      "row": 53
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Arbequina",
+      "sheet": "Database_360",
+      "row": 54
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Arbosana",
+      "sheet": "Database_360",
+      "row": 55
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Koroneiki",
+      "sheet": "Database_360",
+      "row": 56
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Hojiblanca",
+      "sheet": "Database_360",
+      "row": 57
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Picual",
+      "sheet": "Database_360",
+      "row": 58
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Manzanilla",
+      "sheet": "Database_360",
+      "row": 59
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Kalamata",
+      "sheet": "Database_360",
+      "row": 60
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Ascolana Tenera",
+      "sheet": "Database_360",
+      "row": 61
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Striato di Napoli",
+      "sheet": "Database_360",
+      "row": 62
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Tondo di Piacenza",
+      "sheet": "Database_360",
+      "row": 63
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Tondo di Nizza",
+      "sheet": "Database_360",
+      "row": 64
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Lungo Fiorentino",
+      "sheet": "Database_360",
+      "row": 65
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Alberello di Sarzana",
+      "sheet": "Database_360",
+      "row": 66
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Nero di Milano",
+      "sheet": "Database_360",
+      "row": 67
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Ortolano di Faenza",
+      "sheet": "Database_360",
+      "row": 68
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Custard White",
+      "sheet": "Database_360",
+      "row": 69
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Gold Rush",
+      "sheet": "Database_360",
+      "row": 70
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Dunja",
+      "sheet": "Database_360",
+      "row": 71
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Mutabile",
+      "sheet": "Database_360",
+      "row": 72
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Bolognese",
+      "sheet": "Database_360",
+      "row": 73
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Bianca di Trieste",
+      "sheet": "Database_360",
+      "row": 74
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Trombetta d'Albenga",
+      "sheet": "Database_360",
+      "row": 75
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Rugoso Friulano",
+      "sheet": "Database_360",
+      "row": 76
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Costates Romanesco",
+      "sheet": "Database_360",
+      "row": 77
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Cocozelle",
+      "sheet": "Database_360",
+      "row": 78
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Clarimore",
+      "sheet": "Database_360",
+      "row": 79
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Black Beauty",
+      "sheet": "Database_360",
+      "row": 80
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Grey Zucchini",
+      "sheet": "Database_360",
+      "row": 81
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Lunga Napoletana",
+      "sheet": "Database_360",
+      "row": 82
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Prosperosa",
+      "sheet": "Database_360",
+      "row": 83
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Bianca Sfumata di Rosa",
+      "sheet": "Database_360",
+      "row": 84
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Rossa di Rotonda",
+      "sheet": "Database_360",
+      "row": 85
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Lunga Nera",
+      "sheet": "Database_360",
+      "row": 86
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Perlina",
+      "sheet": "Database_360",
+      "row": 87
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Zebrina",
+      "sheet": "Database_360",
+      "row": 88
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Beatrice",
+      "sheet": "Database_360",
+      "row": 89
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Clara",
+      "sheet": "Database_360",
+      "row": 90
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Dalia",
+      "sheet": "Database_360",
+      "row": 91
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Galine",
+      "sheet": "Database_360",
+      "row": 92
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Florida Market",
+      "sheet": "Database_360",
+      "row": 93
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Pingtung Long",
+      "sheet": "Database_360",
+      "row": 94
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Rosa Bianca",
+      "sheet": "Database_360",
+      "row": 95
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Thai Green",
+      "sheet": "Database_360",
+      "row": 96
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Japanese Pickling",
+      "sheet": "Database_360",
+      "row": 97
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Antigua",
+      "sheet": "Database_360",
+      "row": 98
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Listada de Gandia",
+      "sheet": "Database_360",
+      "row": 99
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Black Magic",
+      "sheet": "Database_360",
+      "row": 100
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Imperial",
+      "sheet": "Database_360",
+      "row": 101
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Burlat",
+      "sheet": "Database_360",
+      "row": 102
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Bigarreau Moreau",
+      "sheet": "Database_360",
+      "row": 103
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Van",
+      "sheet": "Database_360",
+      "row": 104
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Stella",
+      "sheet": "Database_360",
+      "row": 105
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sweetheart",
+      "sheet": "Database_360",
+      "row": 106
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sunburst",
+      "sheet": "Database_360",
+      "row": 107
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sylvia",
+      "sheet": "Database_360",
+      "row": 108
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Samba",
+      "sheet": "Database_360",
+      "row": 109
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sandra",
+      "sheet": "Database_360",
+      "row": 110
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Skeena",
+      "sheet": "Database_360",
+      "row": 111
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sonata",
+      "sheet": "Database_360",
+      "row": 112
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Stark Hardy Giant",
+      "sheet": "Database_360",
+      "row": 113
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Summit",
+      "sheet": "Database_360",
+      "row": 114
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Tieton",
+      "sheet": "Database_360",
+      "row": 115
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Bing",
+      "sheet": "Database_360",
+      "row": 116
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Rainier",
+      "sheet": "Database_360",
+      "row": 117
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Napoleon",
+      "sheet": "Database_360",
+      "row": 118
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Brooks",
+      "sheet": "Database_360",
+      "row": 119
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Chelan",
+      "sheet": "Database_360",
+      "row": 120
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Santina",
+      "sheet": "Database_360",
+      "row": 121
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Rosso di Sulmona",
+      "sheet": "Database_360",
+      "row": 122
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Bianco Piacentino",
+      "sheet": "Database_360",
+      "row": 123
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Rosso di Nubia",
+      "sheet": "Database_360",
+      "row": 124
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio di Vessalico",
+      "sheet": "Database_360",
+      "row": 125
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio dell'Ufita",
+      "sheet": "Database_360",
+      "row": 126
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio di Resia",
+      "sheet": "Database_360",
+      "row": 127
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio di Voghiera",
+      "sheet": "Database_360",
+      "row": 128
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio di Caraglio",
+      "sheet": "Database_360",
+      "row": 129
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Maremmano",
+      "sheet": "Database_360",
+      "row": 130
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Rosso di Procida",
+      "sheet": "Database_360",
+      "row": 131
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Piacentino",
+      "sheet": "Database_360",
+      "row": 132
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio di Molino dei Torti",
+      "sheet": "Database_360",
+      "row": 133
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio di Trezzo",
+      "sheet": "Database_360",
+      "row": 134
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio dell'Asinara",
+      "sheet": "Database_360",
+      "row": 135
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio di Papaglionti",
+      "sheet": "Database_360",
+      "row": 136
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Rosso di Paceco",
+      "sheet": "Database_360",
+      "row": 137
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Sprint",
+      "sheet": "Database_360",
+      "row": 138
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Garcua",
+      "sheet": "Database_360",
+      "row": 139
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Vallelado",
+      "sheet": "Database_360",
+      "row": 140
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Gardacho",
+      "sheet": "Database_360",
+      "row": 141
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Galiat",
+      "sheet": "Database_360",
+      "row": 142
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Garpek",
+      "sheet": "Database_360",
+      "row": 143
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Garlimax",
+      "sheet": "Database_360",
+      "row": 144
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Dario",
+      "sheet": "Database_360",
+      "row": 145
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Cristo",
+      "sheet": "Database_360",
+      "row": 146
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Blanc de la Drome",
+      "sheet": "Database_360",
+      "row": 147
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Rose de Lautrec",
+      "sheet": "Database_360",
+      "row": 148
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Rouge de Tournon",
+      "sheet": "Database_360",
+      "row": 149
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Violet de Cadours",
+      "sheet": "Database_360",
+      "row": 150
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Blanc de Lomagne",
+      "sheet": "Database_360",
+      "row": 151
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Corail",
+      "sheet": "Database_360",
+      "row": 152
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Arno",
+      "sheet": "Database_360",
+      "row": 153
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Iberico",
+      "sheet": "Database_360",
+      "row": 154
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Vigor",
+      "sheet": "Database_360",
+      "row": 155
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Garbancito",
+      "sheet": "Database_360",
+      "row": 156
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio di Sulmona",
+      "sheet": "Database_360",
+      "row": 157
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Primaticcio",
+      "sheet": "Database_360",
+      "row": 158
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Messidrome",
+      "sheet": "Database_360",
+      "row": 159
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Thermidrome",
+      "sheet": "Database_360",
+      "row": 160
+    },
+    {
+      "crop": "Aglio",
+      "variety": "Aglio Germidour",
+      "sheet": "Database_360",
+      "row": 161
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bianca di Barletta",
+      "sheet": "Database_360",
+      "row": 162
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bianca di Maggio",
+      "sheet": "Database_360",
+      "row": 163
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Giarratana",
+      "sheet": "Database_360",
+      "row": 164
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa di Certaldo",
+      "sheet": "Database_360",
+      "row": 165
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bionda delle Cevenne",
+      "sheet": "Database_360",
+      "row": 166
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa di Milano",
+      "sheet": "Database_360",
+      "row": 167
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Dorata di Bologna",
+      "sheet": "Database_360",
+      "row": 168
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bianca Musona",
+      "sheet": "Database_360",
+      "row": 169
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Ramata di Montoro",
+      "sheet": "Database_360",
+      "row": 170
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa di Breme",
+      "sheet": "Database_360",
+      "row": 171
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Piatta di Bergamo",
+      "sheet": "Database_360",
+      "row": 172
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bionda di Drôme",
+      "sheet": "Database_360",
+      "row": 173
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa di Toscana",
+      "sheet": "Database_360",
+      "row": 174
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Bianca di Sicilia",
+      "sheet": "Database_360",
+      "row": 175
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Gialla di Stoccarda",
+      "sheet": "Database_360",
+      "row": 176
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "White Lisbon",
+      "sheet": "Database_360",
+      "row": 177
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Evergreen",
+      "sheet": "Database_360",
+      "row": 178
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Red Creole",
+      "sheet": "Database_360",
+      "row": 179
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Red Burgermaster",
+      "sheet": "Database_360",
+      "row": 180
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Tropea Tonda",
+      "sheet": "Database_360",
+      "row": 181
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Tropea Lunga",
+      "sheet": "Database_360",
+      "row": 182
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa Savonese",
+      "sheet": "Database_360",
+      "row": 183
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Piatta di Alife",
+      "sheet": "Database_360",
+      "row": 184
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Vatolla",
+      "sheet": "Database_360",
+      "row": 185
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Cannara",
+      "sheet": "Database_360",
+      "row": 186
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Suasa",
+      "sheet": "Database_360",
+      "row": 187
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Cavasso",
+      "sheet": "Database_360",
+      "row": 188
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Banari",
+      "sheet": "Database_360",
+      "row": 189
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Brunate",
+      "sheet": "Database_360",
+      "row": 190
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Isernia",
+      "sheet": "Database_360",
+      "row": 191
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Gialla di Milano",
+      "sheet": "Database_360",
+      "row": 192
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Gialla Piatta",
+      "sheet": "Database_360",
+      "row": 193
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Borettana Lunga",
+      "sheet": "Database_360",
+      "row": 194
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Vernina di Firenze",
+      "sheet": "Database_360",
+      "row": 195
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Agostana",
+      "sheet": "Database_360",
+      "row": 196
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Rossa Lunga di Firenze",
+      "sheet": "Database_360",
+      "row": 197
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Alghero",
+      "sheet": "Database_360",
+      "row": 198
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Cipolla di Andria",
+      "sheet": "Database_360",
+      "row": 199
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Texas Grano 502",
+      "sheet": "Database_360",
+      "row": 200
+    },
+    {
+      "crop": "Cipolla",
+      "variety": "Crystal White Wax",
+      "sheet": "Database_360",
+      "row": 201
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Nocellara Etnea",
+      "sheet": "Database_360",
+      "row": 202
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Nocellara Messinese",
+      "sheet": "Database_360",
+      "row": 203
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Ogliarola Barese",
+      "sheet": "Database_360",
+      "row": 204
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Ogliarola Garganica",
+      "sheet": "Database_360",
+      "row": 205
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Ogliarola Salentina",
+      "sheet": "Database_360",
+      "row": 206
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Peranzana",
+      "sheet": "Database_360",
+      "row": 207
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Maiatica",
+      "sheet": "Database_360",
+      "row": 208
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Casaliva",
+      "sheet": "Database_360",
+      "row": 209
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Grignano",
+      "sheet": "Database_360",
+      "row": 210
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Favarol",
+      "sheet": "Database_360",
+      "row": 211
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Trepp",
+      "sheet": "Database_360",
+      "row": 212
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Sbresa",
+      "sheet": "Database_360",
+      "row": 213
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Piantone di Mogliano",
+      "sheet": "Database_360",
+      "row": 214
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Piantone di Falerone",
+      "sheet": "Database_360",
+      "row": 215
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Ascolana Dura",
+      "sheet": "Database_360",
+      "row": 216
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Mignola",
+      "sheet": "Database_360",
+      "row": 217
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Raggia",
+      "sheet": "Database_360",
+      "row": 218
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Rosciola",
+      "sheet": "Database_360",
+      "row": 219
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Caninese",
+      "sheet": "Database_360",
+      "row": 220
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Carboncella",
+      "sheet": "Database_360",
+      "row": 221
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Ottobratica",
+      "sheet": "Database_360",
+      "row": 222
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Sinopolese",
+      "sheet": "Database_360",
+      "row": 223
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Grossa di Cassano",
+      "sheet": "Database_360",
+      "row": 224
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Tonda di Strongoli",
+      "sheet": "Database_360",
+      "row": 225
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Nera di Colletorto",
+      "sheet": "Database_360",
+      "row": 226
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Gentile di Chieti",
+      "sheet": "Database_360",
+      "row": 227
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Dritta",
+      "sheet": "Database_360",
+      "row": 228
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Toccolana",
+      "sheet": "Database_360",
+      "row": 229
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Giarraffa",
+      "sheet": "Database_360",
+      "row": 230
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Santagatese",
+      "sheet": "Database_360",
+      "row": 231
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Minuta",
+      "sheet": "Database_360",
+      "row": 232
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Verdello",
+      "sheet": "Database_360",
+      "row": 233
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Moresca",
+      "sheet": "Database_360",
+      "row": 234
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Zaituna",
+      "sheet": "Database_360",
+      "row": 235
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Cipressino",
+      "sheet": "Database_360",
+      "row": 236
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Don Carlo",
+      "sheet": "Database_360",
+      "row": 237
+    },
+    {
+      "crop": "Olivo",
+      "variety": "FS17",
+      "sheet": "Database_360",
+      "row": 238
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Lecciana",
+      "sheet": "Database_360",
+      "row": 239
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Giulia",
+      "sheet": "Database_360",
+      "row": 240
+    },
+    {
+      "crop": "Olivo",
+      "variety": "Borgiona",
+      "sheet": "Database_360",
+      "row": 241
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Cora",
+      "sheet": "Database_360",
+      "row": 242
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Afrodite",
+      "sheet": "Database_360",
+      "row": 243
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Tosca",
+      "sheet": "Database_360",
+      "row": 244
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Milena",
+      "sheet": "Database_360",
+      "row": 245
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Velia",
+      "sheet": "Database_360",
+      "row": 246
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Zefiro",
+      "sheet": "Database_360",
+      "row": 247
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Albatros",
+      "sheet": "Database_360",
+      "row": 248
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Arles",
+      "sheet": "Database_360",
+      "row": 249
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Tarzan",
+      "sheet": "Database_360",
+      "row": 250
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Xara",
+      "sheet": "Database_360",
+      "row": 251
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Syros",
+      "sheet": "Database_360",
+      "row": 252
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Yago",
+      "sheet": "Database_360",
+      "row": 253
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Zodiac",
+      "sheet": "Database_360",
+      "row": 254
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Zodiaco",
+      "sheet": "Database_360",
+      "row": 255
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Star",
+      "sheet": "Database_360",
+      "row": 256
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Sole",
+      "sheet": "Database_360",
+      "row": 257
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Luna",
+      "sheet": "Database_360",
+      "row": 258
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Marte",
+      "sheet": "Database_360",
+      "row": 259
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Venere",
+      "sheet": "Database_360",
+      "row": 260
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Giove",
+      "sheet": "Database_360",
+      "row": 261
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Saturno",
+      "sheet": "Database_360",
+      "row": 262
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Urano",
+      "sheet": "Database_360",
+      "row": 263
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Nettuno",
+      "sheet": "Database_360",
+      "row": 264
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Plutone",
+      "sheet": "Database_360",
+      "row": 265
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Apollo",
+      "sheet": "Database_360",
+      "row": 266
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Diana",
+      "sheet": "Database_360",
+      "row": 267
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Minerva",
+      "sheet": "Database_360",
+      "row": 268
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Bacco",
+      "sheet": "Database_360",
+      "row": 269
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Cerere",
+      "sheet": "Database_360",
+      "row": 270
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Vesta",
+      "sheet": "Database_360",
+      "row": 271
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Giunone",
+      "sheet": "Database_360",
+      "row": 272
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Mercurio",
+      "sheet": "Database_360",
+      "row": 273
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Vulcano",
+      "sheet": "Database_360",
+      "row": 274
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Ercole",
+      "sheet": "Database_360",
+      "row": 275
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Teseo",
+      "sheet": "Database_360",
+      "row": 276
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Perseo",
+      "sheet": "Database_360",
+      "row": 277
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Achille",
+      "sheet": "Database_360",
+      "row": 278
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Ulisse",
+      "sheet": "Database_360",
+      "row": 279
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Enea",
+      "sheet": "Database_360",
+      "row": 280
+    },
+    {
+      "crop": "Zucchino",
+      "variety": "Ghibellino",
+      "sheet": "Database_360",
+      "row": 281
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Miraval",
+      "sheet": "Database_360",
+      "row": 282
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Aragon",
+      "sheet": "Database_360",
+      "row": 283
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Classic",
+      "sheet": "Database_360",
+      "row": 284
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Epic",
+      "sheet": "Database_360",
+      "row": 285
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Falcon",
+      "sheet": "Database_360",
+      "row": 286
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Hansel",
+      "sheet": "Database_360",
+      "row": 287
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Kamo",
+      "sheet": "Database_360",
+      "row": 288
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Nadia",
+      "sheet": "Database_360",
+      "row": 289
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Orient Express",
+      "sheet": "Database_360",
+      "row": 290
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Shikou",
+      "sheet": "Database_360",
+      "row": 291
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Snowy",
+      "sheet": "Database_360",
+      "row": 292
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Tango",
+      "sheet": "Database_360",
+      "row": 293
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Traviata",
+      "sheet": "Database_360",
+      "row": 294
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Vittoria",
+      "sheet": "Database_360",
+      "row": 295
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Luciana",
+      "sheet": "Database_360",
+      "row": 296
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Martina",
+      "sheet": "Database_360",
+      "row": 297
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Serena",
+      "sheet": "Database_360",
+      "row": 298
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Valentina",
+      "sheet": "Database_360",
+      "row": 299
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Giulia",
+      "sheet": "Database_360",
+      "row": 300
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Sofia",
+      "sheet": "Database_360",
+      "row": 301
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Aurora",
+      "sheet": "Database_360",
+      "row": 302
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Ginevra",
+      "sheet": "Database_360",
+      "row": 303
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Letizia",
+      "sheet": "Database_360",
+      "row": 304
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Camilla",
+      "sheet": "Database_360",
+      "row": 305
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Ludovica",
+      "sheet": "Database_360",
+      "row": 306
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Eleonora",
+      "sheet": "Database_360",
+      "row": 307
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Lucrezia",
+      "sheet": "Database_360",
+      "row": 308
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Isabella",
+      "sheet": "Database_360",
+      "row": 309
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Costanza",
+      "sheet": "Database_360",
+      "row": 310
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Margherita",
+      "sheet": "Database_360",
+      "row": 311
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Caterina",
+      "sheet": "Database_360",
+      "row": 312
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Francesca",
+      "sheet": "Database_360",
+      "row": 313
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Lunga Olandese",
+      "sheet": "Database_360",
+      "row": 314
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Tonda Comune",
+      "sheet": "Database_360",
+      "row": 315
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Violetta Lunga 2",
+      "sheet": "Database_360",
+      "row": 316
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Nera di Pechino",
+      "sheet": "Database_360",
+      "row": 317
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Sfumata di Baggio",
+      "sheet": "Database_360",
+      "row": 318
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Rossa Cinese",
+      "sheet": "Database_360",
+      "row": 319
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Bianca Ovale",
+      "sheet": "Database_360",
+      "row": 320
+    },
+    {
+      "crop": "Melanzana",
+      "variety": "Verde Mela",
+      "sheet": "Database_360",
+      "row": 321
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Adriana",
+      "sheet": "Database_360",
+      "row": 322
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Celeste",
+      "sheet": "Database_360",
+      "row": 323
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Durone Nero",
+      "sheet": "Database_360",
+      "row": 324
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Durone della Marca",
+      "sheet": "Database_360",
+      "row": 325
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Early Lory",
+      "sheet": "Database_360",
+      "row": 326
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Vittoria",
+      "sheet": "Database_360",
+      "row": 327
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Zuccherina",
+      "sheet": "Database_360",
+      "row": 328
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Amarena di Cantiano",
+      "sheet": "Database_360",
+      "row": 329
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Amarena di Pescara",
+      "sheet": "Database_360",
+      "row": 330
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Amarena di Modena",
+      "sheet": "Database_360",
+      "row": 331
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Visciola",
+      "sheet": "Database_360",
+      "row": 332
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Marasca",
+      "sheet": "Database_360",
+      "row": 333
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Lari",
+      "sheet": "Database_360",
+      "row": 334
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Marostica",
+      "sheet": "Database_360",
+      "row": 335
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Vignola",
+      "sheet": "Database_360",
+      "row": 336
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Giuliano",
+      "sheet": "Database_360",
+      "row": 337
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Turi",
+      "sheet": "Database_360",
+      "row": 338
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Conversano",
+      "sheet": "Database_360",
+      "row": 339
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Sammichele",
+      "sheet": "Database_360",
+      "row": 340
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Acquaviva",
+      "sheet": "Database_360",
+      "row": 341
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Gioia",
+      "sheet": "Database_360",
+      "row": 342
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Noci",
+      "sheet": "Database_360",
+      "row": 343
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Putignano",
+      "sheet": "Database_360",
+      "row": 344
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Castellana",
+      "sheet": "Database_360",
+      "row": 345
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Monopoli",
+      "sheet": "Database_360",
+      "row": 346
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Polignano",
+      "sheet": "Database_360",
+      "row": 347
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Mola",
+      "sheet": "Database_360",
+      "row": 348
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Ciliegia di Rutigliano",
+      "sheet": "Database_360",
+      "row": 349
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Grace Star",
+      "sheet": "Database_360",
+      "row": 350
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Black Star",
+      "sheet": "Database_360",
+      "row": 351
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Big Star",
+      "sheet": "Database_360",
+      "row": 352
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Carmen",
+      "sheet": "Database_360",
+      "row": 353
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Pony",
+      "sheet": "Database_360",
+      "row": 354
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Royal Dawn",
+      "sheet": "Database_360",
+      "row": 355
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sweet Aryana",
+      "sheet": "Database_360",
+      "row": 356
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sweet Lorenz",
+      "sheet": "Database_360",
+      "row": 357
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sweet Gabriel",
+      "sheet": "Database_360",
+      "row": 358
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sweet Valina",
+      "sheet": "Database_360",
+      "row": 359
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sweet Saretta",
+      "sheet": "Database_360",
+      "row": 360
+    },
+    {
+      "crop": "Ciliegio",
+      "variety": "Sweet Stephany",
+      "sheet": "Database_360",
+      "row": 361
+    }
+  ],
+  "criteria": [
+    "Valori forniti dal titolare; non certificazione sperimentale indipendente.",
+    "Esclusi fosforo, potassio, acqua e note.",
+    "Etichette di fase coerenti con coltura e BBCH; codici a due cifre.",
+    "N, NDVI, resa e densità conservati a 15 cifre significative."
+  ]
+}

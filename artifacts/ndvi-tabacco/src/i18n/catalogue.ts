@@ -1,6 +1,22 @@
 import type { Translation } from "./runtime";
 
 export const catalogue: readonly Translation[] = [
+  ["Catalogo temporaneamente non disponibile. Riprova.", "Catalogue temporarily unavailable. Please try again.", "Catálogo temporalmente no disponible. Inténtalo de nuevo."],
+  ["Aglio", "Garlic", "Ajo"],
+  ["Cipolla", "Onion", "Cebolla"],
+  ["Olivo", "Olive", "Olivo"],
+  ["Olio", "Oil", "Aceite"],
+  ["Zucchino", "Courgette", "Calabacín"],
+  ["Melanzana", "Aubergine", "Berenjena"],
+  ["Ciliegio", "Sweet cherry", "Cerezo"],
+  ["Sviluppo vegetativo", "Vegetative growth", "Desarrollo vegetativo"],
+  ["Formazione del bulbo", "Bulb formation", "Formación del bulbo"],
+  ["Ingrossamento del bulbo", "Bulb enlargement", "Engrosamiento del bulbo"],
+  ["Maturazione del bulbo", "Bulb maturation", "Maduración del bulbo"],
+  ["Bottoni fiorali e fioritura", "Flower buds and flowering", "Botones florales y floración"],
+  ["Accrescimento delle drupe", "Drupe growth", "Crecimiento de las drupas"],
+  ["Accrescimento dei frutti", "Fruit growth", "Crecimiento de los frutos"],
+  ["Invaiatura e maturazione", "Veraison and ripening", "Envero y maduración"],
   ["Piano azoto per fase", "Nitrogen plan by stage", "Plan de nitrógeno por fase"],
   ["N di riferimento (kg N/ha)", "Reference N (kg N/ha)", "N de referencia (kg N/ha)"],
   ["Quota calcolata (kg N/ha)", "Calculated share (kg N/ha)", "Cuota calculada (kg N/ha)"],

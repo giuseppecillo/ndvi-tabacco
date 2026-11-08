@@ -17,7 +17,7 @@ export function NitrogenSavings({ result }: { result: PolyIdwResult }) {
       className="overflow-hidden rounded-xl border border-emerald-200 bg-white"
       aria-labelledby="nitrogen-comparison-title"
     >
-      <div className="bg-emerald-50 px-4 py-3">
+      <div className="bg-emerald-50 px-3 py-3 sm:px-4">
         <h4 id="nitrogen-comparison-title" className="font-bold text-emerald-950">
           Risparmio di azoto sull’intero poligono
         </h4>
@@ -33,13 +33,13 @@ export function NitrogenSavings({ result }: { result: PolyIdwResult }) {
       <dl className="grid grid-cols-1 gap-px bg-emerald-100 sm:grid-cols-2">
         <div className="bg-[#fff8ea] px-4 py-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Azoto risparmiato sul poligono</dt>
-          <dd data-testid="summary-saved-kg" className="mt-1 text-2xl font-bold tabular-nums text-green-900 sm:text-3xl">
+          <dd data-testid="summary-saved-kg" className="mt-1 [overflow-wrap:anywhere] text-2xl font-bold tabular-nums text-green-900 sm:text-3xl">
             {summary ? <>{fmt(summary.savedTotalKg)} kg N</> : <span aria-label="non disponibile">—</span>}
           </dd>
         </div>
         <div className="bg-[#fff8ea] px-4 py-3">
           <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Risparmio %</dt>
-          <dd data-testid="summary-saved-percent" className="mt-1 text-2xl font-bold tabular-nums text-green-900 sm:text-3xl">
+          <dd data-testid="summary-saved-percent" className="mt-1 [overflow-wrap:anywhere] text-2xl font-bold tabular-nums text-green-900 sm:text-3xl">
             {summary ? <>{fmt(summary.savedPercent)}%</> : <span aria-label="non disponibile">—</span>}
           </dd>
         </div>
@@ -52,7 +52,7 @@ export function NitrogenSavings({ result }: { result: PolyIdwResult }) {
             {rows.map((row, i) => (
               <div key={i} className={`px-4 py-3 ${row.strong ? "bg-green-50 text-green-950" : ""}`}>
                 <dt className={`text-sm ${row.strong ? "font-bold" : "font-semibold text-stone-800"}`}>{row.label}</dt>
-                <dd className="mt-1 grid grid-cols-2 gap-2 text-sm">
+                <dd className="mt-1 grid grid-cols-1 gap-2 text-sm min-[360px]:grid-cols-2">
                   <span>
                     <span className="block text-xs text-stone-500">kg N/ha</span>
                     <span className={`tabular-nums ${row.strong ? "font-bold" : ""}`}>{fmt(row.perHa)}</span>

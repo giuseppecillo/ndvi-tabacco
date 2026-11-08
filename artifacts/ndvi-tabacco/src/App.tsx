@@ -807,11 +807,11 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         {activeTab === "calcolatore" && <>
 
         {/* Input Card */}
-        <div className="bg-white rounded-2xl shadow-md p-6 space-y-5 border border-stone-200">
+        <div className="nc-ndvi-form min-w-0 bg-white rounded-2xl shadow-md p-4 sm:p-6 space-y-5 border border-stone-200">
 
           {/* — Anagrafica — */}
           <h2 className="text-lg font-bold text-green-900 border-b border-stone-100 pb-2">Anagrafica</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-4">
             <TextInput label="ID Osservazione" value={obsId}
               onChange={(v) => { setObsId(v); setErrors((e) => ({ ...e, id: "" })); }}
               placeholder="es. 1, OBS-01…" error={errors.id} />
@@ -879,9 +879,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
               <select value={varieta} onChange={(e) => setVarieta(e.target.value)} className={inputCls}>
                 {(isGranoDuro ? Object.values(GRANO_DURO_DB) : Object.values(VARIETA_DB)).map((v) => (
                   <option key={v.label} value={v.label}>
-                    {isGranoDuro
-                      ? v.label
-                      : `${v.label} — ${(v as VarietaDati).categoria} · resa ${(v as VarietaDati).resaMin}–${(v as VarietaDati).resaMax} t/ha`}
+                    {v.label}
                   </option>
                 ))}
               </select>
@@ -1194,11 +1192,11 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
               <label className="text-sm font-semibold text-stone-700">
                 Età Piantina al Trapianto
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 min-[400px]:grid-cols-3 gap-2">
                 {(Object.keys(ETA_PIANTINA_LABELS) as EtaPiantina[]).map((key) => (
                   <label
                     key={key}
-                    className={`flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors text-center
+                    className={`flex flex-col items-center gap-0.5 px-3 py-2.5 min-h-11 min-w-0 rounded-lg border cursor-pointer transition-colors text-center
                       ${etaPiantina === key
                         ? "bg-green-800 text-white border-green-800"
                         : "bg-white text-stone-700 border-stone-300 hover:border-green-700"}`}
@@ -1255,7 +1253,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
           {isGranoDuro && <p className="text-xs text-stone-500 -mt-3">
             Inserisci cinque letture rappresentative del punto. La media modula prudentemente la quota BBCH, ma non diagnostica da sola una carenza di azoto.
           </p>}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             <NumberInput label="Misura 1" value={n1} onChange={setN1} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 2" value={n2} onChange={setN2} step={0.01} min={0} max={1} />
             <NumberInput label="Misura 3" value={n3} onChange={setN3} step={0.01} min={0} max={1} />
@@ -1266,7 +1264,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
           </>
 
           {/* — Risultati — */}
-          {isCatalogo ? <CatalogueCropResults piano={risultatiCatalogo} /> : isPomodoro ? <PomodoroResults piano={risultatiPomodoro} /> : !isGranoDuro ? <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-3">
+          {isCatalogo ? <CatalogueCropResults piano={risultatiCatalogo} /> : isPomodoro ? <PomodoroResults piano={risultatiPomodoro} /> : !isGranoDuro ? <div className="min-w-0 bg-green-50 border-l-4 border-green-700 rounded-xl p-4 sm:p-5 space-y-3">
             <h2 className="text-base font-bold text-green-900 mb-1">Risultati</h2>
             <div className="text-xs text-green-800 bg-green-100 rounded-lg px-3 py-2 space-y-1">
               <div className="font-semibold">📐 {ndviOttimaleNote}</div>
@@ -1285,7 +1283,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                 })}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-2 text-sm">
               <ResultRow label="Media NDVI" value={risultati.media.toFixed(3)} />
               <ResultRow label="NDVI Ottimale" value={risultati.ottimale.toFixed(3)} highlight />
               <ResultRow label="Deficit NDVI" value={risultati.discostamento.toFixed(3)} />
@@ -1368,7 +1366,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                 <h2 className="text-base font-bold text-green-900">Piano azoto del punto · grano duro</h2>
                 <p className="text-xs text-green-800 mt-1">Resa e densità stimano il piano; il deficit tra NDVI medio e riferimento determina la quota N indicata nel punto. Il risultato è un consiglio da validare in campo.</p>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+              <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                 <ResultRow label="Fabbisogno base" value={`${risultatiGrano.fabbisognoBase} kg N/ha`} />
                 <ResultRow label="Fabbisogno corretto" value={`${risultatiGrano.fabbisognoN} kg N/ha`} highlight />
                 <ResultRow label="N già distribuito" value={`${azotoGiaDistribuito} kg N/ha`} />
@@ -1420,7 +1418,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                   </p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-2 text-xs">
                 {fasiGrano.map((fase) => {
                   const attiva = fase.label === faseGrano?.label;
                   return <div key={fase.label} className={`rounded-lg border p-2 ${attiva ? "border-green-600 bg-green-100 text-green-950 font-semibold" : "border-stone-200 bg-white text-stone-600"}`}>

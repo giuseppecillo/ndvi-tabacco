@@ -224,9 +224,9 @@ export function ObservationList({ osservazioni }: { osservazioni: Observation[] 
           {groups.map(g => (
             <li key={g.key} data-testid="observation-list-item" className="min-w-0 rounded-xl border border-stone-200 bg-[#fffdf7]">
               <details className="group">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 sm:px-4 [&::-webkit-details-marker]:hidden">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-stone-900">{g.cliente || "—"}</p>
+                    <p className="line-clamp-2 break-words text-sm font-bold text-stone-900 [overflow-wrap:anywhere] sm:line-clamp-1">{g.cliente || "—"}</p>
                     <p className="text-xs text-stone-500">
                       <time dateTime={g.date}>{formatDay(g.date, locale) ?? g.date}</time>
                     </p>

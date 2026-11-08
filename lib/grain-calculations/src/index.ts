@@ -49,7 +49,7 @@ export function calcolaQuotaNGrano(fabbisognoN: number, fase: FaseGrano): number
   return Math.max(fase.azotoMin, Math.min(fase.azotoMax, quotaScalata));
 }
 
-const NDVI_GRANO_CURVA: Array<{ das: number; ottimale: number }> = [
+export const NDVI_GRANO_CURVA: Array<{ das: number; ottimale: number }> = [
   { das: 0, ottimale: 0.20 },
   { das: 20, ottimale: 0.34 },
   { das: 50, ottimale: 0.40 },

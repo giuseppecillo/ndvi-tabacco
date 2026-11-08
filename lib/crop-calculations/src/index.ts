@@ -1,8 +1,10 @@
 import source from "./catalogue.json";
+import additional from "./extra-catalogue.json";
 
-export const cropCatalogue = source;
+export const cropCatalogue = {columns: source.columns, rows: [...source.rows, ...additional.rows]};
 export const CATALOGUE_CROPS = ["Kiwi", "Vite da vino", "Vite da tavola", "Pere", "Mele",
-  "Lattuga", "Spinacio", "Spinacino (4 gamma)", "Broccoli"] as const;
+  "Lattuga", "Spinacio", "Spinacino (4 gamma)", "Broccoli",
+  "Aglio", "Cipolla", "Olivo", "Zucchino", "Melanzana", "Ciliegio"] as const;
 export type CatalogueCrop = typeof CATALOGUE_CROPS[number];
 export const isCatalogueCrop = (value: unknown): value is CatalogueCrop =>
   typeof value === "string" && (CATALOGUE_CROPS as readonly string[]).includes(value);
@@ -64,7 +66,7 @@ export function resolveReference(profile: CropProfile, profiles: readonly CropPr
   return candidates[0] ? { selected: profile, reference: candidates[0], kind: "affine" as const } : null;
 }
 
-export const CROP_PROFILES = parseProfiles(source.rows);
+export const CROP_PROFILES = parseProfiles(cropCatalogue.rows);
 const byIdentity = new Map(CROP_PROFILES.map(p => [JSON.stringify([p.crop, p.name]), p]));
 export function getCropReference(crop: string, variety: string) {
   const profile = byIdentity.get(JSON.stringify([crop, variety]));

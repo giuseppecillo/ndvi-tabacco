@@ -18,7 +18,7 @@ CREATE TABLE public.app_plan_state (
 CREATE INDEX app_plan_state_owner_idx ON public.app_plan_state(owner_id);
 
 -- Protect the new table before COMMIT makes it visible to the Data API.
-REVOKE ALL ON TABLE public.app_plan_state FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON TABLE public.app_plan_state FROM PUBLIC, anon, authenticated, service_role, app_runtime, app_readonly;
 ALTER TABLE public.app_plan_state ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_plan_state FORCE ROW LEVEL SECURITY;
 CREATE POLICY app_plan_state_runtime ON public.app_plan_state

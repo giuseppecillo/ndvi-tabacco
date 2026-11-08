@@ -42,7 +42,7 @@ export function CatalogueCropParameters(p: Props) {
           disabled={varieties.length === 0}
           onChange={e => { p.onVarieta(e.target.value); p.onConferma(false); }} className={inputClass}>
           {!sel && <option value="">{t("Seleziona la varietà")}</option>}
-          {varieties.map(v => <option key={v.name} value={v.name}>{v.name} — {t(v.destination)} · {t(v.use)}</option>)}
+          {varieties.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
         </select>
       </label>
       <p className="text-xs text-stone-600" data-testid="text-catalogue-variety-count">{t("Varietà disponibili")}: {varieties.length}</p>
@@ -55,7 +55,7 @@ export function CatalogueCropParameters(p: Props) {
         </p>
       ) : (
         <section key={sel.name} className="min-w-0 rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-950" aria-label={t("Dettagli della varietà")}>
-          <p className="break-words"><strong data-testid="text-catalogue-variety">{sel.name}</strong> · {t(sel.destination)} · {t(sel.use)} · {t(sel.earliness)}</p>
+          <p className="break-words [overflow-wrap:anywhere]"><strong data-testid="text-catalogue-variety">{sel.name}</strong> · {t(sel.destination)} · {t(sel.use)} · {t(sel.earliness)}</p>
           <p className="mt-1 break-words" data-testid="text-catalogue-reference">
             {t("Riferimento del catalogo")}: {num(ref.plants)} {t("piante/ha")} · {num(ref.yield)} t/ha · {num(ref.nitrogen)} kg N/ha.
           </p>
@@ -88,9 +88,9 @@ export function CatalogueCropParameters(p: Props) {
             {ref?.phases.map(ph => <option key={ph.id} value={ph.id}>{ph.id} · {t(ph.label)} · BBCH {ph.bbch}</option>)}
           </select>
         </label>
-        <label className="flex items-start gap-2 text-sm text-green-950">
+        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm text-green-950">
           <input type="checkbox" data-testid="confirm-catalogue-phase" checked={p.confermata} disabled={!p.fase}
-            onChange={e => p.onConferma(e.target.checked)} className="mt-1" />
+            onChange={e => p.onConferma(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-green-800" />
           {t("Confermo la fase osservata in campo")}
         </label>
         <p className="text-xs text-green-900">{t("La fase non viene dedotta automaticamente: va osservata e confermata in campo.")}</p>
@@ -116,7 +116,7 @@ export function CatalogueCropParameters(p: Props) {
             return <tr key={ph.id} data-testid={`row-catalogue-stage-${ph.id}`}
               aria-current={p.fase === ph.id ? "true" : undefined}
               className={`border-b border-stone-100 last:border-0 ${p.fase === ph.id ? "bg-green-100 text-green-950" : "text-stone-700"}`}>
-              <th scope="row" className="max-w-48 px-2 py-2 font-medium">{ph.id} · {t(ph.label)}</th>
+              <th scope="row" className="min-w-36 max-w-48 px-2 py-2 font-medium">{ph.id} · {t(ph.label)}</th>
               <td className="whitespace-nowrap px-2 py-2 tabular-nums">{ph.bbch}</td>
               <td className="px-2 py-2 tabular-nums">{num(ph.azoto)}</td>
               <td className="px-2 py-2 font-semibold tabular-nums">{p.piano.valida && quota !== undefined ? num(quota) : "—"}</td>
@@ -145,12 +145,12 @@ export function CatalogueCropResults({ piano }: { piano: Piano }) {
     ["Quota della fase", piano.attiva && piano.valida ? `${num(piano.quota)} kg N/ha` : "—"],
   ];
   return (
-    <section className="space-y-3 rounded-xl border-l-4 border-green-700 bg-green-50 p-5" data-testid="catalogue-crop-results">
+    <section className="min-w-0 space-y-3 rounded-xl border-l-4 border-green-700 bg-green-50 p-4 sm:p-5" data-testid="catalogue-crop-results">
       <h2 className="font-bold text-green-950">{t("Risultati coltura del catalogo")}</h2>
       {piano.resolved?.kind === "affine" && (
         <p className="text-xs text-amber-900">{t("Riferimento affine della stessa coltura")}: <strong>{piano.resolved.reference.name}</strong></p>
       )}
-      <dl className="grid grid-cols-2 gap-3 text-sm">
+      <dl className="grid grid-cols-1 gap-3 text-sm min-[380px]:grid-cols-2">
         {items.map(([label, value]) => (
           <div key={label} className="min-w-0"><dt className="text-stone-700">{t(label)}</dt><dd className="nc-mono break-words font-semibold">{value}</dd></div>
         ))}

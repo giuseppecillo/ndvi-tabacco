@@ -18,7 +18,7 @@ function Body({ usage, account, compact }: { usage: UserUsage; account: Account;
     <section aria-label={t("Stato contratto")} data-testid={`summary-plan-${usage.userId}`} className={`rounded-xl border px-4 py-3 text-[var(--nc-ink)] ${TONE[usage.state]} ${compact ? "text-sm" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <PlanBadge usage={usage} />
-        {usage.state === "active" && <span className="nc-mono text-xs">{fmtDay(usage.startsOn)} – {fmtDay(usage.expiresAt)}{left != null && <strong data-testid={`text-days-left-${usage.userId}`}> · {left === 1 ? t("1 giorno rimanente") : t(`${Math.max(0, left)} giorni rimanenti`)}</strong>}</span>}
+        {usage.state === "active" && <span className="nc-mono min-w-0 text-xs [overflow-wrap:anywhere]">{fmtDay(usage.startsOn)} – {fmtDay(usage.expiresAt)}{left != null && <strong data-testid={`text-days-left-${usage.userId}`}> · {left === 1 ? t("1 giorno rimanente") : t(`${Math.max(0, left)} giorni rimanenti`)}</strong>}</span>}
       </div>
       {usage.state === "unassigned" && !account.subscriptionExempt && <p className="nc-mono mt-1 text-xs" data-testid={`text-legacy-expiry-${usage.userId}`}>{t("Accesso legacy")}: {account.subscriptionExpiresAt ? `${t("Scadenza")} ${fmtDay(account.subscriptionExpiresAt)}${account.subscriptionDaysRemaining != null ? ` · ${account.subscriptionExpired ? t("Scaduto") : t(`${account.subscriptionDaysRemaining} giorni rimanenti`)}` : ""}` : t("Scadenza non configurata.")}</p>}
       {sentence && <p className={`mt-2 text-sm ${usage.state === "expired" ? "font-medium text-[var(--nc-danger)]" : ""}`}>{sentence}</p>}

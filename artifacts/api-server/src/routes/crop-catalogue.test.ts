@@ -26,7 +26,7 @@ test("catalogue GET is protected, read-only and returns exactly the selected dis
       json(value: unknown) { payload = value; },
     } as Response, () => {});
     assert.deepEqual(GetCropCatalogueResponse.parse(payload), snapshot);
-    assert.equal(snapshot.rows.length, 488);
+    assert.equal(snapshot.rows.length, 848);
     assert.equal(snapshot.columns.length, 24);
     assert.equal(query.mock.calls.length, 0);
     assert.deepEqual(Object.keys(payload as object).sort(), ["columns", "rows"]);
@@ -73,7 +73,7 @@ test("incomplete catalogue observations cannot reach storage or fall back to tob
   }
 });
 
-test("all nine calculation crops save and reload with exact identities, N doses, phases and GPS (mocked storage only)", async () => {
+test("all operational catalogue crops save and reload with exact identities, N doses, phases and GPS (mocked storage only)", async () => {
   const post = observationsRouter.stack.find(layer => layer.route?.path === "/osservazioni"
     && layer.route.stack.some(handler => handler.method === "post"))!.route!.stack[0].handle;
   const get = observationsRouter.stack.find(layer => layer.route?.path === "/osservazioni"
@@ -134,6 +134,6 @@ test("all nine calculation crops save and reload with exact identities, N doses,
       assert.equal(forged.status(), 400);
       assert.equal(writes, before);
     }
-    assert.equal(writes, 9);
+    assert.equal(writes, CATALOGUE_CROPS.length);
   } finally { query.mock.restore(); }
 });

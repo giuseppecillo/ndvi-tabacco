@@ -7,7 +7,7 @@ export const ETA_GIORNI_EQUIVALENTI: Readonly<Record<EtaPiantina, number>> = {
   extra: 14,
 };
 
-const NDVI_CURVA = [
+export const NDVI_CURVA = [
   { giorni: 0, ottimale: 0.28 },
   { giorni: 14, ottimale: 0.34 },
   { giorni: 28, ottimale: 0.48 },

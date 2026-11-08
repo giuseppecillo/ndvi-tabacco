@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { erroreOsservazionePomodoro } from "@workspace/tomato-calculations";
 import { isCatalogueCrop, catalogueObservationError } from "@workspace/crop-calculations";
+import {operationalCatalogue} from "../lib/catalogue-storage";
 import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
 import { saveWithUsage } from "../lib/plan-store";
@@ -219,6 +220,10 @@ router.post("/osservazioni", async (req, res) => {
   if (!isCatalogueCrop(coltura) && coltura !== "tabacco" && coltura !== "grano duro" && coltura !== "pomodoro") {
     res.status(400).json({ error: "Coltura non supportata." });
     return;
+  }
+  if(isCatalogueCrop(coltura)) {
+    try { await operationalCatalogue(); }
+    catch { res.status(503).json({error:"Catalogo temporaneamente non disponibile. Riprova."}); return; }
   }
   const errore = isCatalogueCrop(coltura)
     ? catalogueObservationError({ ...o, coltura })

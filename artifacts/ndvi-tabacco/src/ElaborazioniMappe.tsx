@@ -229,9 +229,9 @@ export function MapView({ result }: { result: PolyIdwResult }) {
           <p className="text-stone-600">Tocca o fai clic su un punto del poligono per fissare la dose interpolata.</p>
         ) : selected.cell ? (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Cella della griglia interpolata (IDW), non un rilievo GPS</p>
-              <p className="text-2xl font-bold tabular-nums text-green-900">
+              <p className="text-2xl font-bold tabular-nums text-green-900 [overflow-wrap:anywhere]">
                 {selected.cell.dose.toFixed(1)} <span className="text-base font-semibold">kg N/ha</span>
               </p>
               <p className="font-mono text-xs text-stone-600">
@@ -496,16 +496,16 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
       </div>
 
       {/* ── Step 1: Polygon import (KML / KMZ / Shapefile ZIP) ──────────────── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-5">
-        <h3 className="font-bold text-green-900 mb-3 flex items-center gap-2">
-          <span className="bg-green-800 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center font-bold">1</span>
+      <div className="min-w-0 bg-white rounded-2xl shadow-sm border border-stone-200 p-4 sm:p-5">
+        <h3 className="font-bold text-green-900 mb-3 flex flex-wrap items-center gap-2">
+          <span className="bg-green-800 text-white rounded-full w-6 h-6 text-xs flex shrink-0 items-center justify-center font-bold">1</span>
           Importa Poligoni <span className="font-normal text-stone-400 text-sm ml-1">KML · KMZ · Shapefile ZIP</span>
         </h3>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <span className="flex-1 text-sm text-stone-500 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 truncate">
+        <label className="flex flex-col gap-2 cursor-pointer min-[420px]:flex-row min-[420px]:items-center min-[420px]:gap-3">
+          <span className="min-w-0 flex-1 text-sm text-stone-500 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 [overflow-wrap:anywhere]">
             {kmlName || "Nessun file selezionato"}
           </span>
-          <span className="bg-green-800 hover:bg-green-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap">
+          <span className="bg-green-800 hover:bg-green-900 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap text-center">
             📂 Sfoglia
           </span>
           <input type="file" accept=".kml,.kmz,.zip" className="hidden" onChange={handlePolygonFile} />
@@ -527,13 +527,13 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
               <button
                 key={i}
                 onClick={() => { setSelPolyIdx(i); setResults(prev => new Map(prev)); }}
-                className={`w-full flex items-center justify-between text-sm px-3 py-2 rounded-lg border transition-colors ${
+                className={`w-full min-h-11 flex items-center justify-between gap-2 text-left text-sm px-3 py-2 rounded-lg border transition-colors ${
                   selPolyIdx === i
                     ? "bg-green-800 text-white border-green-700"
                     : "bg-stone-50 text-stone-700 border-stone-200 hover:bg-green-50"
                 }`}
               >
-                <span className="font-medium truncate">{p.name}{p.sourceLayer != null && <small className="block">{p.sourceLayer} · ID {p.sourceId}</small>}</span>
+                <span className="min-w-0 font-medium [overflow-wrap:anywhere]">{p.name}{p.sourceLayer != null && <small className="block">{p.sourceLayer} · ID {p.sourceId}</small>}</span>
                 <span className={`text-xs ml-2 shrink-0 ${selPolyIdx === i ? "text-green-200" : "text-stone-400"}`}>
                   {gpsObs.length} oss. GPS
                 </span>
@@ -544,19 +544,19 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
       </div>
 
       {/* ── Step 2: Control points ──────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-5">
-        <h3 className="font-bold text-green-900 mb-3 flex items-center gap-2">
-          <span className="bg-green-800 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center font-bold">2</span>
+      <div className="min-w-0 bg-white rounded-2xl shadow-sm border border-stone-200 p-4 sm:p-5">
+        <h3 className="font-bold text-green-900 mb-3 flex flex-wrap items-center gap-2">
+          <span className="bg-green-800 text-white rounded-full w-6 h-6 text-xs flex shrink-0 items-center justify-center font-bold">2</span>
           Punti di Controllo IDW
         </h3>
 
         {/* Source toggle */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-col gap-2 mb-4 min-[420px]:flex-row">
           {(["db", "shp"] as const).map(src => (
             <button
               key={src}
               onClick={() => { if (src !== pointSource) clearPointResults(); setPointSource(src); }}
-              className={`flex-1 text-sm font-semibold py-2 rounded-lg border transition-colors ${
+              className={`flex-1 min-h-11 px-3 text-sm font-semibold py-2 rounded-lg border transition-colors ${
                 pointSource === src
                   ? "bg-green-800 text-white border-green-700"
                   : "bg-stone-50 text-stone-600 border-stone-200 hover:bg-green-50"
@@ -619,7 +619,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
               <span className="flex-1 text-sm text-stone-500 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 truncate">
                 {shpFileName || "Nessun file selezionato (.zip)"}
               </span>
-              <span className="bg-green-800 hover:bg-green-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap">
+              <span className="bg-green-800 hover:bg-green-900 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap text-center">
                 📂 Sfoglia SHP
               </span>
               <input type="file" accept=".zip" className="hidden" onChange={handleShp} />
