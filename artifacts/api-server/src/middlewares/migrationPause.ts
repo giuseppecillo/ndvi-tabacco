@@ -1,4 +1,4 @@
-// PREPARED, NOT REGISTERED in app.ts. No queries or changes to Clerk accounts.
+// Registered after Clerk, before account routes. Default-off; no database queries.
 import type { RequestHandler, Request } from "express";
 
 export function createMigrationPause(

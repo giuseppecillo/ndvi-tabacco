@@ -1,8 +1,10 @@
-# Checklist unica: preparazione completata, attivazioni non autorizzate
+# Checklist unica: release preliminare preparata, pubblicazione non avviata
 
 Data: 2026-11-08. Unico target: Supabase Agri Precision, Ireland.
-Nessuna connessione SQL, importazione, attivazione di manutenzione, modifica
-dei Secrets o pubblicazione eseguita durante questa preparazione.
+Fase preliminare autorizzata. Codice collegato e verificato; tre parametri
+non segreti impostati esclusivamente in Production. Nessuna importazione,
+manutenzione, modifica dei Secrets o pubblicazione eseguita dall'agente.
+Stato corrente e istruzioni: `PRELIMINARY_RELEASE_READY.md`.
 
 ## Evidenze e limiti
 
@@ -18,12 +20,13 @@ dei Secrets o pubblicazione eseguita durante questa preparazione.
 - Percorso proposto: mantenere il deployment pubblicato, applicando
   manutenzione alle API. Questo evita di dipendere da un riavvio non
   verificato o da effetti non attestati di Unpublish sul collegamento DB.
-- Le nuove funzioni sono INATTIVE: `lib/db/src/index.ts`,
-  `artifacts/api-server/src/app.ts` e `src/index.ts` non sono stati modificati.
-  Il collegamento futuro è compilato virtualmente da `prepared-wiring.mjs`.
-- 12 nuovi test offline superati; TypeScript librerie/API superato;
-  candidata compilata, non eseguita né pubblicata. Nessuna ripetizione
-  dei 95 controlli SQL positivi già accettati.
+- Il wiring è ora applicato ai sorgenti DB/API; manutenzione di default
+  disattivata. Preflight separato attivabile soltanto in Production;
+  non è stato eseguito con credenziali reali nello sviluppo.
+- 18 test offline della release e 3 test di sicurezza dell'avvio superati;
+  TypeScript librerie/API e compilazione API superati. Workflow API
+  riavviato: schema verificato in lettura, health 200, accesso pubblico
+  renderizzato. Nessuna ripetizione dei 95 controlli SQL già accettati.
 - Nessuna nuova certificazione live dei nuovi controlli SQL: essi saranno
   eseguiti soltanto nell'importazione autorizzata e devono fallire chiuso.
 
@@ -77,32 +80,32 @@ la variante che modifica il logging; il precedente blocco su tale garanzia
 non è più un prerequisito. Percorso scelto: configurazione standard del
 solo app_runtime tramite Dashboard amministrativa Supabase e inserimento
 manuale della connessione esclusivamente nei Production app secrets.
-La password rimane al titolare. Prima di queste operazioni è richiesta
-un'unica autorizzazione esplicita; non implica consenso a Publish,
-importazione, manutenzione o modifica di DATABASE_URL.
+La password rimane al titolare. Il titolare ha autorizzato la configurazione
+e ne ha dichiarato il completamento, indicando la presenza del Secret nei
+Deployment secrets. Il login reale resta da attestare nella pubblicazione.
+È stata inoltre autorizzata la fase preliminare: codice, collaudo READ ONLY
+in Production e successiva pubblicazione manuale senza cambio backend.
+Nessun consenso a importazione, manutenzione o modifica di DATABASE_URL.
 
 ### A. Prima della finestra: credenziali e collaudo della connessione
 
 Stima: 5–15 minuti, applicazione ancora su Replit.
 
-- [ ] Autorizzare attivazione LOGIN del SOLO `app_runtime` e impostazione
-  sicura della sua password dedicata. Privilegi/RLS esistenti invariati;
-  `app_readonly` e `app_migrator` restano NOLOGIN.
-- [ ] Collocare l'URL runtime nel Secret **solo Production**
-  `NITROCROP_RUNTIME_DATABASE_URL`. Non usare il flusso Shared per il
-  Secret permanente. Non mostrare password/URL in chat o negli argomenti CLI.
+- [x] Autorizzata configurazione LOGIN/password del solo app_runtime;
+  completamento dichiarato dal titolare. Non ancora collaudato il login.
+  Privilegi/RLS non ampliati dall'agente; altri due ruoli invariati.
+- [x] Il titolare riferisce l'URL runtime nei Deployment secrets Production.
+  Valore mai acquisito dall'agente, non copiato in Shared o Development.
+  I metadati generici non lo rilevavano: il preflight deve fallire se manca.
 - [ ] VINCOLO SUCCESSIVO DEL TITOLARE: il collegamento runtime deve esistere
   soltanto in Production. L'opzione precedente con un Secret QA temporaneo
   nello workspace è esclusa. Non usare il wrapper `verify-runtime.ts` attuale,
   né la sua copia compilata, che dipendono da quell'opzione.
-- [ ] Individuare un'esecuzione del diagnostico nel solo ambiente Production.
-  Non è attualmente verificato un canale una-tantum senza pubblicazione.
-  Le nuove impostazioni Production diventano operative con Publish:
-  pubblicazione o rinvio della prova richiedono nuova conferma del titolare.
-  Fino a tale verifica, il collaudo runtime è BLOCCATO, non superato.
-  La prova prevista controlla socket TLS, CA/hostname, ruolo realmente
-  autenticato e transazione READ ONLY; termina con ROLLBACK e chiusura.
-  Nessuna riga applicativa deve essere letta.
+- [x] Diagnostico Production preparato per l'avvio della release preliminare,
+  su connessione Supabase separata. TLS/CA/hostname, identità, READ ONLY,
+  ROLLBACK e chiusura; nessuna riga applicativa. Nessun uso del wrapper QA.
+- [ ] Eseguire il diagnostico nella nuova pubblicazione autorizzata:
+  il collaudo live è ancora PENDENTE, non superato.
 - [ ] Non iniziare la finestra se il login effettivo tramite Session pooler
   non supera il preflight. Le precedenti prove SET ROLE non sostituiscono
   questa prova delle nuove credenziali.
@@ -115,10 +118,9 @@ Stima: 5–15 minuti, applicazione ancora su Replit.
 
 Stima: 5–15 minuti, dipendente da Publish.
 
-- [ ] Autorizzare applicazione del wiring già compilato:
-  factory connessione nell'indice DB; guardia identità prima di
-  `verifySecuritySchema`; middleware manutenzione dopo Clerk e prima di
-  tutti i router/account sync. Nessuna modifica a Clerk o agli utenti.
+- [x] Autorizzato, applicato e verificato il wiring DB/startup/middleware.
+  Manutenzione dopo Clerk e prima dei router; disattivata in questa fase.
+  Nessuna modifica a configurazione Clerk o account.
 - [ ] Pubblicare questa release solo dopo autorizzazione, con backend
   `replit`, manutenzione `0`, stessa connessione Replit gestita.
 - [ ] Controllare il SQL previsto da Replit Publish: deve essere vuoto.

@@ -1,12 +1,13 @@
 import express, { type Express } from "express";
 import cors from "cors";
-import { clerkMiddleware } from "@clerk/express";
+import { clerkMiddleware, getAuth } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middlewares/clerkProxyMiddleware";
 import { requireSameOrigin } from "./middlewares/access";
+import { createMigrationPause } from "./middlewares/migrationPause";
 
 const app: Express = express();
 
@@ -42,6 +43,7 @@ app.use(clerkMiddleware((req) => ({
     process.env.CLERK_PUBLISHABLE_KEY,
   ),
 })));
+app.use(createMigrationPause(process.env, (req) => getAuth(req).userId));
 app.use("/api", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Content-Type-Options", "nosniff");

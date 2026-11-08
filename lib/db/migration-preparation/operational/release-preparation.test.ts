@@ -8,6 +8,7 @@ import {createMigrationPause} from "../../../../artifacts/api-server/src/middlew
 import {preparedAppSource,preparedDatabaseSource} from "./prepared-wiring.mjs";
 import {verifyRuntimeIdentity} from "../../src/runtime-identity";
 import {TLSSocket} from "node:tls";
+import {verifyProductionRuntimePreflight} from "../../src/production-runtime-preflight";
 
 const runtimeUrl=`postgresql://app_runtime.${RUNTIME_PROJECT}:synthetic-password@${RUNTIME_HOST}:5432/postgres`;
 test("source mode preserves the existing connection and ignores inactive target credentials",()=>{
@@ -74,10 +75,88 @@ test("candidate wiring is exact, default-off and after Clerk but before account 
   const wired=preparedAppSource(source);
   assert.ok(wired.indexOf("app.use(createMigrationPause")>wired.indexOf("app.use(clerkMiddleware"));
   assert.ok(wired.indexOf("app.use(createMigrationPause")<wired.indexOf('app.use("/api", router)'));
-  assert.doesNotMatch(source,/app\.use\(createMigrationPause/);
+  assert.equal(wired,source);
   const db=readFileSync(new URL("../../src/index.ts",import.meta.url),"utf8");
   assert.match(preparedDatabaseSource(db),/new Pool\(runtimeConnectionConfig\(process\.env\)\)/);
-  assert.match(db,/new Pool\(\{ connectionString: process\.env\.DATABASE_URL \}\)/);
+  assert.equal(preparedDatabaseSource(db),db);
+});
+
+const productionEnv = {
+  NODE_ENV: "production", REPLIT_DEPLOYMENT: "1",
+  NITROCROP_RUNTIME_PREFLIGHT: "1", NITROCROP_DB_BACKEND: "replit",
+  DATABASE_URL: "synthetic-source", NITROCROP_RUNTIME_DATABASE_URL: runtimeUrl,
+};
+test("Production diagnostic is default-off and never touches inactive credentials",async()=>{
+  const unexpected=()=>{throw Error("must not create a pool");};
+  assert.equal(await verifyProductionRuntimePreflight({},unexpected),"disabled");
+  assert.equal(await verifyProductionRuntimePreflight({
+    ...productionEnv,NITROCROP_RUNTIME_PREFLIGHT:"0",
+  },unexpected),"disabled");
+});
+test("Production diagnostic rejects development, flag mistakes and premature backend switch",async()=>{
+  const unexpected=()=>{throw Error("must not create a pool");};
+  for(const env of [
+    {...productionEnv,NODE_ENV:"development"},
+    {...productionEnv,REPLIT_DEPLOYMENT:undefined},
+    {...productionEnv,NITROCROP_RUNTIME_PREFLIGHT:"true"},
+    {...productionEnv,NITROCROP_DB_BACKEND:"supabase"},
+  ]) await assert.rejects(verifyProductionRuntimePreflight(env,unexpected),/RUNTIME_PREFLIGHT_/);
+});
+test("Production diagnostic fails closed on missing or admin credentials, without making a pool",async()=>{
+  for(const url of ["",runtimeUrl.replace("app_runtime.","postgres.")]) {
+    let calls=0;
+    await assert.rejects(verifyProductionRuntimePreflight({
+      ...productionEnv,NITROCROP_RUNTIME_DATABASE_URL:url,
+    },()=>{calls++;throw Error("must not create a pool");}),/RUNTIME_PREFLIGHT_FAILED/);
+    assert.equal(calls,0);
+  }
+});
+test("Production diagnostic authenticates separately, rolls back and closes without changing the app backend",async()=>{
+  const env={...productionEnv};
+  const queries:string[]=[];
+  let closed=0;
+  const socket=Object.assign(Object.create(TLSSocket.prototype),{
+    encrypted:true,authorized:true,authorizationError:null,
+    getProtocol:()=>"TLSv1.3",
+    getPeerCertificate:()=>({raw:Buffer.from("offline fixture"),subjectaltname:`DNS:${RUNTIME_HOST}`}),
+  });
+  const result=await verifyProductionRuntimePreflight(env,config=>{
+    assert.equal(config.user,`app_runtime.${RUNTIME_PROJECT}`);
+    assert.equal(config.connectionString,undefined);
+    assert.equal(config.max,1);
+    return {end:async()=>{closed++;},connect:async()=>({
+      connection:{stream:socket},release(){},
+      async query(sql:string){
+        queries.push(sql);
+        return {rows:sql.includes("pg_catalog.pg_roles")?[{
+          role:"app_runtime",session_role:"app_runtime",database:"postgres",readonly:"on",
+          rolsuper:false,rolcreaterole:false,rolcreatedb:false,rolbypassrls:false,
+        }]:[{readonly:"on"}]};
+      },
+    })} as never;
+  });
+  assert.equal(result,"passed");
+  assert.equal(closed,1);
+  assert.equal(queries[0],"BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+  assert.equal(queries.at(-1),"ROLLBACK");
+  assert.ok(queries.every(sql=>/^(BEGIN|SELECT|ROLLBACK)/.test(sql)));
+  assert.equal(env.NITROCROP_DB_BACKEND,"replit");
+  assert.equal(env.DATABASE_URL,"synthetic-source");
+});
+test("Production diagnostic strips provider errors and always closes its pool",async()=>{
+  let closed=0;
+  const error=await verifyProductionRuntimePreflight(productionEnv,()=>({
+    connect:async()=>{throw Error(runtimeUrl);},end:async()=>{closed++;},
+  }) as never).catch(error=>error);
+  assert.equal(error.message,"RUNTIME_PREFLIGHT_FAILED");
+  assert.doesNotMatch(String(error.stack),/synthetic-password|postgresql:\/\//);
+  assert.equal(closed,1);
+});
+test("Production diagnostic does not report success when pool closure fails",async()=>{
+  await assert.rejects(verifyProductionRuntimePreflight(productionEnv,()=>({
+    connect:async()=>{throw Error("synthetic connection failure");},
+    end:async()=>{throw Error(runtimeUrl);},
+  }) as never),/RUNTIME_PREFLIGHT_CLOSE_FAILED/);
 });
 test("import gates restored FORCE and ACL/integrity checks before sending commit",()=>{
   const source=readFileSync(new URL("./import.ts",import.meta.url),"utf8");

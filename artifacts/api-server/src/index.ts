@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { verifySecuritySchema } from "./lib/security-db";
+import { pool, verifyRuntimeIdentity, verifyProductionRuntimePreflight } from "@workspace/db";
 
 const rawPort = process.env["PORT"];
 
@@ -16,6 +17,16 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
+try {
+  const preflight = await verifyProductionRuntimePreflight(process.env);
+  logger.info({ status: preflight }, "Supabase Production READ ONLY preflight");
+  await verifyRuntimeIdentity(pool, process.env.NITROCROP_DB_BACKEND === "supabase");
+} catch {
+  // Never log driver errors, connection strings, SQL or credentials.
+  logger.error("Database connection preflight failed; startup aborted without schema changes");
+  await pool.end();
+  process.exit(1);
+}
 await verifySecuritySchema();
 logger.info("Read-only application schema verification passed; automatic migrations disabled");
 app.listen(port, (err) => {

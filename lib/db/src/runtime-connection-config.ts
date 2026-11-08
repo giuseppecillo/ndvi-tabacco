@@ -1,4 +1,4 @@
-// PREPARED, NOT WIRED into index.ts. Pure config: no env mutation or connection.
+// Application pool configuration. Pure: no env mutation or connection.
 import { X509Certificate } from "node:crypto";
 import type { PoolConfig } from "pg";
 import { SUPABASE_RUNTIME_CA } from "./supabase-runtime-ca";
