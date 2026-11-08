@@ -19,6 +19,7 @@
 - [Pomodoro](tomato-agronomy.md) — Media degli intervalli NDVI; mantenere Roma VF industria e Gardener's Delight ciliegino nei profili omonimi.
 - [IDW nitrogen savings](idw-nitrogen-savings.md) — Savings compare total planned N with already-applied N plus the IDW dose across the full polygon area.
 - [Accesso riservato](access-control.md) — Solo utenti autorizzati dall’amministratore; rilievi privati per account, senza visibilità trasversale amministrativa implicita.
+- [Piani e consumi](subscription-plans.md) — Standard: 50 rilievi e 50 mappe; Pro: «50 Gb»; assegnazione amministrativa e contratto annuale.
 - [Lingue e supporto](localization.md) — Italiano, inglese e spagnolo per accesso e app; tradurre la visualizzazione, mai gli identificatori agronomici o i dati dei clienti.
 - [Navigazione dei moduli](navigation.md) — Pulsante NitroCrop NDVI per elenco verticale a sinistra e ritorno a Rilievo e dati; intestazione giallo-arancio.
 - [Fedeltà degli import PowerPoint](pptx-import-fidelity.md) — Un import riuscito può omettere riempimenti SVG: confrontare con il file originale prima di considerare completa la grafica.
