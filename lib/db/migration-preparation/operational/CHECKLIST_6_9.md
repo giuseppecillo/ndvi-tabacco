@@ -39,14 +39,18 @@ Stima: 5–15 minuti, applicazione ancora su Replit.
 - [ ] Collocare l'URL runtime nel Secret **solo Production**
   `NITROCROP_RUNTIME_DATABASE_URL`. Non usare il flusso Shared per il
   Secret permanente. Non mostrare password/URL in chat o negli argomenti CLI.
-- [ ] Se autorizzato separatamente come accesso QA temporaneo, inserire lo
-  stesso URL nel Secret operativo `NITROCROP_RUNTIME_QA_URL`, eseguire
-  `node generated-artifacts/migration-tools/verify-runtime.mjs --authorized-runtime-readonly-check`,
-  quindi rimuovere il Secret temporaneo con autorizzazione esplicita.
-  Il programma non usa DATABASE_URL né credenziali amministrative.
-  Verifica socket TLS, CA/hostname, ruolo realmente autenticato,
-  assenza dei privilegi amministrativi e transazione READ ONLY;
-  termina con ROLLBACK e chiusura del pool. Nessuna riga applicativa letta.
+- [ ] VINCOLO SUCCESSIVO DEL TITOLARE: il collegamento runtime deve esistere
+  soltanto in Production. L'opzione precedente con un Secret QA temporaneo
+  nello workspace è esclusa. Non usare il wrapper `verify-runtime.ts` attuale,
+  né la sua copia compilata, che dipendono da quell'opzione.
+- [ ] Individuare un'esecuzione del diagnostico nel solo ambiente Production.
+  Non è attualmente verificato un canale una-tantum senza pubblicazione.
+  Le nuove impostazioni Production diventano operative con Publish:
+  pubblicazione o rinvio della prova richiedono nuova conferma del titolare.
+  Fino a tale verifica, il collaudo runtime è BLOCCATO, non superato.
+  La prova prevista controlla socket TLS, CA/hostname, ruolo realmente
+  autenticato e transazione READ ONLY; termina con ROLLBACK e chiusura.
+  Nessuna riga applicativa deve essere letta.
 - [ ] Non iniziare la finestra se il login effettivo tramite Session pooler
   non supera il preflight. Le precedenti prove SET ROLE non sostituiscono
   questa prova delle nuove credenziali.
@@ -191,9 +195,11 @@ Preparativi attivabili prima della finestra: circa 10–30 minuti, senza fermo.
 Finestra indicativa: 15–35 minuti, non una garanzia; attese del provider,
 volumi o controlli falliti possono aumentarla.
 
-1. Consenso preliminare A/B: credenziali runtime e relativo preflight,
-   gestione/rimozione dei Secrets QA temporanei, applicazione del wiring
-   e pubblicazione sicura ancora su Replit, SOLO con SQL vuoto.
+1. Il titolare ha circoscritto il consenso successivo al solo A e richiede
+   conferma dei comandi prima di modifiche SQL o creazione di credenziali.
+   Non comprende B, nuove pubblicazioni o copie QA del Secret runtime.
+   Il limite di esecuzione Production sopra indicato va risolto senza
+   considerare autorizzato B implicitamente.
 2. Dopo successo A/B, unico consenso operativo specifico C–H: pausa,
    esportazione reale finale, importazione reale, confronti,
    cambio selettore runtime, pubblicazioni controllate, collaudo approvato,

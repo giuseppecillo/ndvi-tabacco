@@ -9,6 +9,19 @@ Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL:
 
 **How to apply:** non rendere disponibili nello sviluppo ordinario credenziali scrivibili di produzione o amministrative. Esplicitare che i test di salvataggio non sono possibili con la sola lettura; qualsiasi accesso QA aggiuntivo o database temporaneo richiede approvazione, non una deroga implicita.
 
+Il Secret della connessione app_runtime deve essere disponibile esclusivamente
+in Production di Replit, mai nello sviluppo ordinario, nel repository o nei
+log. Non creare copie QA del collegamento nello workspace per aggirare questo
+vincolo.
+
+**Why:** il titolare ha richiesto esplicitamente questo isolamento anche
+durante la preparazione della connessione runtime.
+
+**How to apply:** non usare un modulo Secrets che salvi in Shared per tale
+collegamento. Se il collaudo non è eseguibile nel solo ambiente Production
+senza una pubblicazione non autorizzata, segnalarlo come bloccato e chiedere
+conferma prima di cambiare il perimetro.
+
 Il titolare non vuole installare PostgreSQL o altri strumenti sul proprio PC
 per questa migrazione. Vuole procedere esclusivamente tramite Replit e il
 progetto Supabase Agri Precision; per identificare il primario ha scelto un
