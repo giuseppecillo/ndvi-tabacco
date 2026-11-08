@@ -34,6 +34,19 @@ normale riga di log non copre necessariamente errori e statistiche.
 non usare il reset della password postgres per configurare un ruolo
 applicativo e non introdurre silenziamenti dei log come ripiego implicito.
 
+Non presumere che l'amministratore postgres del Supabase gestito possa
+disattivare i log, neppure con SET LOCAL: sul progetto effettivo i permessi
+necessari sono risultati negati.
+
+**Why:** la lettura autorizzata dei metadati ha escluso la praticabilità
+del fallback di logging locale. Una transazione non scavalca le ACL
+dei parametri e il nome postgres non equivale a superuser.
+
+**How to apply:** non riproporre tale variante senza un cambiamento
+significativo del contesto; non concedere permessi per aggirarla.
+Il titolare ha chiesto di segnalare il blocco, senza continuare a preparare
+ulteriori alternative complesse.
+
 Il titolare non vuole installare PostgreSQL o altri strumenti sul proprio PC
 per questa migrazione. Vuole procedere esclusivamente tramite Replit e il
 progetto Supabase Agri Precision; per identificare il primario ha scelto un

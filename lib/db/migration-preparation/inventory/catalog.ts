@@ -6,6 +6,7 @@
  */
 import { InventoryBlocked } from "./guard";
 import { POINT1_QUERIES } from "./point1-queries";
+import { LOGGING_QUERIES } from "./logging-queries";
 
 export const METADATA_QUERIES = Object.freeze({
   identity: `SELECT pg_catalog.current_database() AS database,
@@ -124,6 +125,22 @@ export async function withReadOnlyCatalog<T>(
   read: (select: CatalogSelect) => Promise<T>,
 ): Promise<T> {
   return withAllowedReadOnlyCatalog(client, read, authorizedSelects);
+}
+
+/** Separate, narrow mode: never resumes either previous inventory. */
+export async function readLoggingMetadata(client: CatalogClient) {
+  const allowed = new Set([METADATA_QUERIES.identity, ...Object.values(LOGGING_QUERIES)]);
+  return withAllowedReadOnlyCatalog(client, async select => {
+    const identity = (await select(METADATA_QUERIES.identity)).rows;
+    if (identity.length !== 1 || identity[0].database !== "postgres" ||
+        identity[0].current_user !== "postgres" || identity[0].session_user !== "postgres") {
+      throw new InventoryBlocked("SERVER_IDENTITY_OR_READONLY_MISMATCH");
+    }
+    const permissions = (await select(LOGGING_QUERIES.permissions)).rows;
+    const extensions = (await select(LOGGING_QUERIES.extensions)).rows;
+    if (permissions.length !== 5) throw new InventoryBlocked("METADATA_LIMIT_EXCEEDED");
+    return { identity: identity[0], permissions, extensions };
+  }, allowed);
 }
 
 /** Not exported: callers cannot supply an arbitrary query allowlist. */

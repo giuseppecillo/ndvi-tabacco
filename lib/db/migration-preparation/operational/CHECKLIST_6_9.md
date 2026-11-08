@@ -64,6 +64,13 @@ in sola lettura, eventuali protezioni locali da collaudare con canary non
 segreti, esecutore Production isolato ancora non attestato.
 Non costituisce autorizzazione a nessuna di tali operazioni.
 
+È stata poi autorizzata ed eseguita soltanto la verifica READ ONLY dei
+permessi di logging: tutti i cinque controlli SET per postgres sono false.
+La variante è non praticabile con i permessi attuali; fermata senza
+impostazioni, canary o password. Esito completo in
+`LOGGING_PERMISSIONS_RESULT.md`. Non preparare altre varianti complesse
+automaticamente; la predisposizione runtime resta bloccata.
+
 ### A. Prima della finestra: credenziali e collaudo della connessione
 
 Stima: 5–15 minuti, applicazione ancora su Replit.

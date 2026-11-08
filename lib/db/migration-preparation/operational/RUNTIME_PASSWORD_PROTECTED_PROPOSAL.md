@@ -1,6 +1,12 @@
 # Proposta alternativa: credenziali runtime e protezione dei log
 
-**Stato: proposta soltanto. Non eseguita e non ancora attestata su Supabase.**
+**Stato: verifica preliminare READ ONLY completata; percorso operativo non applicato.**
+
+**Aggiornamento conclusivo:** è stata autorizzata ed eseguita soltanto la
+lettura dei metadati. Tutti i cinque controlli SET sono risultati false
+per postgres. La variante di protezione locale è BLOCCATA con i permessi
+attuali: non procedere alle prove canary o alle credenziali.
+Rapporto: `LOGGING_PERMISSIONS_RESULT.md`.
 
 Destinazione unica: Supabase Agri Precision, progetto
 `bhnaarbzpmcniesxyldx`, Session pooler già approvato.
