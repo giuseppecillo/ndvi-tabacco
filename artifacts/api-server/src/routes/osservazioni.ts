@@ -69,7 +69,10 @@ export function erroreOsservazioneTabacco(o: Record<string, unknown>): string | 
   if (Math.abs(discostamento - discostamentoAtteso) > 0.0001) {
     return "Il deficit NDVI del tabacco non è coerente con media e riferimento.";
   }
-  if (Math.abs(dose - doseAttesa) > 0.01) {
+  // The comparison tolerance must never authorize extra N, even near zero.
+  if (dose > Math.max(0, azotoTotale - azotoGiaDistribuito)
+    || (doseAttesa === 0 && dose !== 0)
+    || Math.abs(dose - doseAttesa) > 0.01) {
     return "La dose tabacco non corrisponde alla quota ricalcolata da NDVI e fabbisogno N.";
   }
   return null;
@@ -141,10 +144,13 @@ export function erroreOsservazioneGrano(o: Record<string, unknown>): string | nu
     fabbisognoN: azotoTotale, azotoGiaDistribuito, fase,
     media, ndviOttimale: ottimale, valoriValidi: true,
   });
-  if (Math.abs(dose - quotaAttesa) > 0.01) {
+  const residuoReale = Math.max(0, Math.min(azotoTotale, totaleAtteso) - azotoGiaDistribuito);
+  if (dose > residuoReale || quotaAzoto > residuoReale
+    || (quotaAttesa === 0 && (dose !== 0 || quotaAzoto !== 0))
+    || Math.abs(dose - quotaAttesa) > 0.01) {
     return "La dose non corrisponde alla quota ricalcolata da BBCH, NDVI e azoto residuo.";
   }
-  if (dose > residuo + 0.01 || dose > quotaBase + 0.01) {
+  if (dose > residuo || dose > quotaBase + 0.01) {
     return "La dose supera il residuo del piano o la quota N ottimale della fase.";
   }
   return null;

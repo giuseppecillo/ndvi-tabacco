@@ -449,7 +449,7 @@ test("preserves tobacco quota rounding and rejects altered doses", () => {
   const cases = [
     { reading: 0.5, azotoTotale: 120, azotoGiaDistribuito: 0, dose: 26.3 },
     { reading: 0.5, azotoTotale: 120.04, azotoGiaDistribuito: 100, dose: 20 },
-    { reading: 0.5, azotoTotale: 120.06, azotoGiaDistribuito: 100, dose: 20.1 },
+    { reading: 0.5, azotoTotale: 120.06, azotoGiaDistribuito: 100, dose: 20 },
     { reading: 0, azotoTotale: 120, azotoGiaDistribuito: 0, dose: 120 },
     { reading: 0.5, azotoTotale: 120, azotoGiaDistribuito: 125, dose: 0 },
     { reading: 0.64, azotoTotale: 120, azotoGiaDistribuito: 0, dose: 0 },
@@ -507,6 +507,79 @@ test("caps the tobacco indication at the residual nitrogen plan", () => {
 
   piano.dose = 26.3;
   assert.match(erroreOsservazioneTabacco(piano) ?? "", /dose tabacco/);
+});
+
+test("fractional residuals accept independent app expectations and reject the former rounded-up doses", () => {
+  for (const [applied, expected, unsafe] of [
+    [119.94, 0, .1], [119.96, 0, .1], [119.875, .1, .2],
+    [119.4, .5, .6], [118.75, 1.2, 1.3], [119.5, .5, .6],
+  ]) {
+    const tobacco = { ...pianoTabaccoValido(), azotoGiaDistribuito: applied, dose: expected };
+    assert.equal(erroreOsservazioneTabacco(tobacco), null);
+    assert.match(erroreOsservazioneTabacco({ ...tobacco, dose: unsafe }) ?? "", /dose tabacco/);
+  }
+  for (const [applied, expected, unsafe] of [
+    [149.4, 0, 1], [149.6, 0, 1], [149.5, 0, 1], [148.75, 1, 2], [149, 1, 2],
+  ]) {
+    const grain = { ...pianoGranoValido(), azotoGiaDistribuito: applied, dose: expected, quotaAzoto: expected };
+    assert.equal(erroreOsservazioneGrano(grain), null);
+    assert.match(erroreOsservazioneGrano({ ...grain, dose: unsafe, quotaAzoto: unsafe }) ?? "", /quota ricalcolata/);
+  }
+});
+
+test("API numeric tolerance never permits a residual overrun or a nonzero zero-N dose", () => {
+  // Overruns smaller than the old .01 tolerance; the expected rounded dose is valid.
+  for (const body of [
+    { ...pianoTabaccoValido(), azotoGiaDistribuito: 119.9, dose: .1 },
+    { ...pianoTabaccoValido(), azotoTotale: 0, dose: .001 },
+    { ...pianoTabaccoValido(), fabbisognoN: 0, dose: .001 },
+    { ...pianoTabaccoValido(), azotoGiaDistribuito: 120, dose: .001 },
+    { ...pianoTabaccoValido(), azotoGiaDistribuito: 125, dose: .001 },
+    { ...pianoTabaccoValido(), n1: .8, n2: .8, n3: .8, n4: .8, n5: .8,
+      media: .8, discostamento: 0, dose: .001 },
+  ]) assert.match(erroreOsservazioneTabacco(body) ?? "", /dose tabacco/);
+  for (const change of [
+    { azotoGiaDistribuito: 149, dose: 1.005, quotaAzoto: 1.005 },
+    { azotoGiaDistribuito: 149, dose: 1, quotaAzoto: 1.005 },
+    { azotoGiaDistribuito: 150, dose: .001, quotaAzoto: .001 },
+    { azotoGiaDistribuito: 151, dose: .001, quotaAzoto: .001 },
+    { n1: .6, n2: .6, n3: .6, n4: .6, n5: .6,
+      media: .6, discostamento: -.05882352941176472, dose: .001, quotaAzoto: .001 },
+  ]) assert.match(erroreOsservazioneGrano({ ...pianoGranoValido(), ...change }) ?? "", /quota ricalcolata/);
+});
+
+test("fractional legacy doses remain readable unchanged; unsafe new POSTs never reach storage", async () => {
+  const legacy = [
+    { ...pianoTabaccoValido(), id: "legacy-tobacco", azotoGiaDistribuito: 119.94, dose: .1 },
+    { ...pianoGranoValido(), id: "legacy-grain", azotoGiaDistribuito: 149.4, dose: 1, quotaAzoto: 1 },
+  ];
+  const post = router.stack.find(layer => layer.route?.path === "/osservazioni"
+    && layer.route.stack.some(handler => handler.method === "post"))!.route!.stack[0].handle;
+  const get = router.stack.find(layer => layer.route?.path === "/osservazioni"
+    && layer.route.stack.some(handler => handler.method === "get"))!.route!.stack[0].handle;
+  const calls: string[] = [];
+  const query = mock.method(pool, "query", async (sql: string) => {
+    calls.push(sql);
+    return { rows: legacy };
+  });
+  let status = 0;
+  let payload: unknown;
+  const res = {
+    locals: { account: { id: "synthetic-owner" } },
+    status(value: number) { status = value; return this; },
+    json(value: unknown) { payload = value; return this; },
+  } as unknown as Response;
+  try {
+    for (const body of legacy) {
+      await post({ body } as Request, res, () => {});
+      assert.equal(status, 400);
+    }
+    assert.equal(calls.length, 0);
+    await get({} as Request, res, () => {});
+    assert.equal(calls.length, 1);
+    assert.match(calls[0], /^\s*SELECT/);
+    assert.deepEqual((payload as { dose: number }[]).map(row => row.dose), [.1, 1]);
+  } finally { query.mock.restore(); }
 });
 
 test("uses the revised tobacco peak and flowering reference in API validation", () => {

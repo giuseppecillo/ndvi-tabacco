@@ -220,20 +220,60 @@ test("candidate interpolation uses calendar day and paired dose changes have han
   assert.equal(result.bySensor[0].samples,1);
 });
 
-test("real rounding of native model residuals is flagged rather than hidden or clamped by the evaluator",()=>{
+test("pure native doses round residual caps down while retaining their existing precision",()=>{
+  const fase=faseGranoDaBbch("20–29");
+  for(const [total,applied,tobaccoExpected,grainExpected] of [
+    [120,119.94,0,0], [120,119.96,0,0],
+    [120,119.4,.5,0], // actual JS subtraction is slightly below .6
+    [120,118.75,1.2,1], [120,119.875,.1,0],
+    [120,119.5,.5,0], [120,119,1,1],
+    [120,120,0,0], [120,125,0,0], [0,0,0,0],
+  ]) {
+    const tobacco=calcolaDoseNTabacco({media:0,ottimale:.64,
+      fabbisognoN:120,azotoTotale:total,azotoGiaDistribuito:applied});
+    const grain=calcolaDoseNGrano({media:0,ndviOttimale:.64,
+      fabbisognoN:total,azotoGiaDistribuito:applied,fase,valoriValidi:true});
+    assert.equal(tobacco.dose,tobaccoExpected);
+    assert.equal(grain.quotaProposta,grainExpected);
+    assert.ok(tobacco.dose<=Math.max(0,total-applied));
+    assert.ok(grain.quotaProposta<=Math.max(0,total-applied));
+  }
+  // Sweep near decimal/integer boundaries with strict, unrounded comparisons.
+  for(let i=0;i<=20000;i++) {
+    const applied=120-i/10000;
+    for(const media of [0,.64,.9]) {
+      const t=calcolaDoseNTabacco({media,ottimale:.64,fabbisognoN:120,
+        azotoTotale:120,azotoGiaDistribuito:applied});
+      const g=calcolaDoseNGrano({media,ndviOttimale:.64,fabbisognoN:120,
+        azotoGiaDistribuito:applied,fase,valoriValidi:true});
+      assert.ok(t.dose>=0 && t.dose<=120-applied);
+      assert.ok(g.quotaProposta>=0 && g.quotaProposta<=120-applied);
+      assert.equal(Number(t.dose.toFixed(1)),t.dose);
+      assert.equal(Math.trunc(g.quotaProposta),g.quotaProposta);
+      if(media>=.64) { assert.equal(t.dose,0); assert.equal(g.quotaProposta,0); }
+    }
+  }
+  assert.equal(calcolaDoseNTabacco({media:0,ottimale:.64,fabbisognoN:0,
+    azotoTotale:120,azotoGiaDistribuito:0}).dose,0);
+  for(const change of [{fase:null},{valoriValidi:false}]) {
+    assert.equal(calcolaDoseNGrano({media:0,ndviOttimale:.64,fabbisognoN:120,
+      azotoGiaDistribuito:0,fase,valoriValidi:true,...change}).quotaProposta,0);
+  }
+});
+
+test("real rounding of native models respects fractional residuals without evaluator clamping",()=>{
   const {dataset,candidate}=fixture();
   for(const row of dataset.rows) {
     row.crop="tabacco"; row.modelInput={applied:0,totalN:120,phaseN:30,seedlingAge:"standard",planEvidence:"test"};
   }
   candidate.curves[0].crop="tabacco";
   const result=evaluate(dataset,candidate);
-  // Current tobacco model rounds 0.06 kg remaining up to 0.1 kg.
-  assert.equal(result.status,"SAFETY_FAILED");
-  assert.ok(result.safety.baseline.violations.residual>0);
-  assert.ok(result.safety.candidate.violations.residual>0);
+  // Native tobacco model now rounds the available tenths down.
+  assert.notEqual(result.status,"SAFETY_FAILED");
+  assert.equal(result.safety.baseline.violations.residual,0);
+  assert.equal(result.safety.candidate.violations.residual,0);
   assert.equal(result.safety.baseline.violations.aboveReference,0);
   assert.equal(result.safety.candidate.violations.zeroNPhase,0);
-  assert.equal(result.decision,"DO_NOT_ACTIVATE");
   const varieties=Object.keys(GRANO_DURO_DB).filter(v=>v!=="RGT NATUR");
   dataset.rows.forEach((row,i)=>{
     row.crop="grano duro";row.variety=varieties[i];row.phase="Accestimento";row.bbch="20–29";
@@ -241,10 +281,10 @@ test("real rounding of native model residuals is flagged rather than hidden or c
   });
   Object.assign(candidate.curves[0],{crop:"grano duro",phase:"Accestimento",bbch:"20–29"});
   const grainResult=evaluate(dataset,candidate);
-  // Current grain model rounds 0.6 kg remaining up to 1 kg.
-  assert.equal(grainResult.status,"SAFETY_FAILED");
-  assert.ok(grainResult.safety.baseline.violations.residual>0);
-  assert.ok(grainResult.safety.candidate.violations.residual>0);
+  // Native grain model now rounds the available whole kg down.
+  assert.notEqual(grainResult.status,"SAFETY_FAILED");
+  assert.equal(grainResult.safety.baseline.violations.residual,0);
+  assert.equal(grainResult.safety.candidate.violations.residual,0);
 });
 
 test("CLI refuses implicit local reads and reports unreadable files without echoing paths",()=>{

@@ -53,9 +53,14 @@ export function calcolaDoseNTabacco(input: {
   const { media, ottimale, fabbisognoN, azotoTotale, azotoGiaDistribuito } = input;
   const discostamento = Math.max(0, ottimale - media);
   const deficitRelativo = ottimale > 0 ? Math.min(1, discostamento / ottimale) : 0;
-  // Round both quotas before applying the residual cap, preserving one decimal.
+  // Preserve dose rounding, but never round the available N upwards.
+  // Work in whole tenths; no epsilon may increase the unrounded residual.
   const quotaDaDeficitNdvi = Math.round(fabbisognoN * deficitRelativo * 10) / 10;
-  const residuoPiano = Math.max(0, Math.round((azotoTotale - azotoGiaDistribuito) * 10) / 10);
+  const residuoReale = Math.max(0, azotoTotale - azotoGiaDistribuito);
+  let decimiResidui = Math.floor(residuoReale * 10);
+  // Multiplication itself can round up at a floating-point boundary.
+  if (decimiResidui / 10 > residuoReale) decimiResidui--;
+  const residuoPiano = decimiResidui / 10;
   return {
     discostamento,
     deficitRelativo,

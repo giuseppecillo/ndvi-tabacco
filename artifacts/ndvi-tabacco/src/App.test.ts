@@ -44,6 +44,26 @@ import {
 
 const EPSILON = 1e-9;
 
+describe("limiti frazionari del piano N nell'app", () => {
+  it("mantiene dosi rappresentabili senza superare il residuo reale", () => {
+    // Independent expectations, not values calculated by the shared modules.
+    for (const [applied, tobaccoDose, grainDose] of [
+      [119.94, 0, 0], [119.4, .5, 0], [118.75, 1.2, 1],
+      [119.875, .1, 0], [119.5, .5, 0], [119, 1, 1], [120, 0, 0], [121, 0, 0],
+    ]) {
+      const tobacco = calcola(4.5, 120, 42, 0, 0, 0, 0, 0, 120, "standard", applied);
+      const grain = calcolaPianoNGrano({
+        fabbisognoN: 120, azotoGiaDistribuito: applied,
+        fase: faseGranoDaBbch("20–29"), das: 130, lettureNdvi: [0, 0, 0, 0, 0],
+      });
+      assert.equal(tobacco.dose, tobaccoDose);
+      assert.equal(grain.quotaProposta, grainDose);
+      assert.ok(tobacco.dose <= Math.max(0, 120 - applied));
+      assert.ok(grain.quotaProposta <= Math.max(0, 120 - applied));
+    }
+  });
+});
+
 function idwExportFixture(): PolyIdwResult {
   return computeIdwGrid({
     name: "Campo export prova",
@@ -1639,8 +1659,8 @@ describe("grano duro nitrogen planning", () => {
       das: 100,
       lettureNdvi: [0.2, 0.2, 0.2, 0.2, 0.2],
     });
-    assert.equal(decimalResidual.residuoPiano, 10);
-    assert.equal(decimalResidual.quotaProposta, 10);
+    assert.equal(decimalResidual.residuoPiano, 9);
+    assert.equal(decimalResidual.quotaProposta, 9);
 
     const aboveReference = calcolaPianoNGrano({
       fabbisognoN: 150,
@@ -1763,7 +1783,7 @@ describe("tobacco calculations", () => {
     const cases = [
       { reading: 0.5, total: 120, applied: 0, quota: 26.3, residual: 120, dose: 26.3 },
       { reading: 0.5, total: 120.04, applied: 100, quota: 26.3, residual: 20, dose: 20 },
-      { reading: 0.5, total: 120.06, applied: 100, quota: 26.3, residual: 20.1, dose: 20.1 },
+      { reading: 0.5, total: 120.06, applied: 100, quota: 26.3, residual: 20, dose: 20 },
       { reading: 0, total: 120, applied: 0, quota: 120, residual: 120, dose: 120 },
       { reading: 0.5, total: 120, applied: 125, quota: 26.3, residual: 0, dose: 0 },
       { reading: 0.64, total: 120, applied: 0, quota: 0, residual: 120, dose: 0 },

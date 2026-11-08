@@ -93,7 +93,8 @@ export function calcolaDoseNGrano(input: {
     ? Math.min(1, deficitNdvi / input.ndviOttimale)
     : 0;
   const quotaBase = input.fase ? calcolaQuotaNGrano(input.fabbisognoN, input.fase) : 0;
-  const residuoPiano = Math.max(0, Math.round(input.fabbisognoN - input.azotoGiaDistribuito));
+  // Doses stay in whole kg N/ha: the available plan must never round up.
+  const residuoPiano = Math.max(0, Math.floor(input.fabbisognoN - input.azotoGiaDistribuito));
   // Nessun minimo di fase sulla dose: a NDVI adeguato non si indica N.
   const quotaDaDeficitNdvi = input.valoriValidi && input.fase && deficitNdvi > 0
     ? Math.round(quotaBase * deficitRelativo)
