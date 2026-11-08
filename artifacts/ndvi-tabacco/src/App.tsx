@@ -883,6 +883,9 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                   </option>
                 ))}
               </select>
+              <p className="text-xs text-stone-600" data-testid="text-native-variety-count">
+                {t("Varietà disponibili")}: {Object.keys(isGranoDuro ? GRANO_DURO_DB : VARIETA_DB).length}
+              </p>
               {isGranoDuro ? (
                 <p className="text-xs text-stone-400">Seleziona la varietà e inserisci la quantità di seme da valutare.</p>
               ) : (
