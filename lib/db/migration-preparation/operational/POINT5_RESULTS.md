@@ -1,8 +1,10 @@
 # Punto 5 — risultati del collaudo autorizzato
 
 La distinzione tra blocco dell'accesso SQL readonly e prosecuzione possibile
-del trasferimento è motivata in POINT5_RISK_ASSESSMENT.md. La variante
-proposta non è stata approvata e non cambia l'esito o i gate del collaudo.
+del trasferimento è motivata in POINT5_RISK_ASSESSMENT.md. Il titolare ha
+accettato la variante e considera concluso il punto 5 con tali limitazioni.
+L'accettazione non cambia gli esiti tecnici o i gate del runner e non
+autorizza automaticamente le fasi successive.
 
 ## Esito
 

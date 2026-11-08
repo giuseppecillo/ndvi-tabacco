@@ -3,6 +3,11 @@
 Nessuno script è collegato ad avvio, build o post-merge. Nessuna installazione
 sul PC, nessun nuovo database/progetto, nessuna modifica Netlify o Clerk.
 
+Aggiornamento vincolante: punto 5 concluso con variante accettata in
+POINT5_RISK_ASSESSMENT.md; accesso SQL sviluppo rinviato, niente revoche globali.
+Il punto 6 attuale (fermo/drenaggio/backup finale, SENZA import) è descritto in
+POINT6_PLAN.md. La numerazione operativa storica sotto non amplia i consensi.
+
 ## Percorso rapido, con condizioni di arresto
 
 1. **Ora: identità sorgente.** Secret temporaneo REPLIT_PROD_BACKUP_URL, diverso
@@ -68,8 +73,8 @@ sul PC, nessun nuovo database/progetto, nessuna modifica Netlify o Clerk.
    admin mapping assente, FK/orfani inattesi bloccano il passaggio.
    NULL owner va valutato, mai riparato automaticamente.
 8. **Autorizzazione connessione e pubblicazione separate.** Credenziali LOGIN
-   del runtime solo nel deployment; readonly nello sviluppo ordinario,
-   migrator non disponibile all'app. Cambiare DATABASE_URL solo per l'ambiente
+   del runtime solo nel deployment; accesso SQL sviluppo rinviato e readonly
+   non attivato, migrator non disponibile all'app. Cambiare DATABASE_URL solo per l'ambiente
    esplicitamente approvato, senza sincronizzare schema managed→external.
    Valutare in anticipo il piano mostrato da Replit Publish: non autorizzare
    implicitamente modifiche al database Replit residuo. Non pubblicare da solo.

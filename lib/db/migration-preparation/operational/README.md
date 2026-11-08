@@ -91,7 +91,7 @@ Non sono certificati i futuri GRANT/modifiche fuori dal perimetro applicato.
    sono state avviate. LOGIN/credenziali e isolamento effettivo globale dei ruoli
    si verificano prima di esporli all'app e allo sviluppo ordinario.
 
-## Punto 5 — collaudo eseguito, isolamento globale non superato
+## Punto 5 — concluso con limitazioni accettate
 
 Perimetro in [POINT5_PREPARATION.md](POINT5_PREPARATION.md);
 risultati in [POINT5_RESULTS.md](POINT5_RESULTS.md).
@@ -102,3 +102,9 @@ READ ONLY; membership temporanee annullate e ruoli ancora NOLOGIN.
 11 test offline e TypeScript superati prima dell'esecuzione.
 Il runner restituisce exit 2 sui finding: non rilanciarlo automaticamente.
 Correzioni globali e seguito verso backup finale/import non autorizzati né avviati.
+
+Il titolare ha accettato il rinvio dell'accesso SQL di sviluppo: nessuna
+revoca globale, runtime solo backend e credenziali privilegiate non usate
+nello sviluppo ordinario. Gli esiti tecnici dei finding restano invariati.
+Il punto 6 è preparato in POINT6_PLAN.md, non attivato. Il nuovo verificatore
+di quiescenza ha 5 test offline superati e non è stato collegato a Production.

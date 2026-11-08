@@ -1,4 +1,4 @@
-- [Migrazione protetta](migration-safety.md) — Unico Supabase, tre ruoli separati e Replit in sola lettura; continuità Clerk da verificare prima di procedere.
+- [Migrazione protetta](migration-safety.md) — Unico Supabase, Clerk invariato; accesso SQL sviluppo rinviato e nessuna revoca globale TEMP/large object.
 - [TLS Supabase](supabase-tls.md) — CA ufficiale del pooler e TLS del socket: pg_stat_ssl non prova il trasporto client.
 - [TLS Replit/Neon](replit-neon-tls.md) — Dietro il proxy pg_stat_ssl non prova il TLS del client: verificare socket, catena e hostname prima dell’SQL.
 - [Sessioni Supabase](supabase-session-options.md) — Misurare il read-only effettivo della transazione, distinto dal default richiesto nelle opzioni di avvio.

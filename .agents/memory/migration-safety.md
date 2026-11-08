@@ -3,7 +3,7 @@ name: Vincoli di migrazione e sviluppo
 description: Vincoli richiesti dal titolare per Supabase, sviluppo su Replit e continuità delle identità Clerk.
 ---
 
-Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL: app_runtime per l'applicazione Replit pubblicata, app_readonly per controlli di sviluppo in sola lettura e app_migrator per modifiche strutturali autorizzate. Netlify è escluso dalla fase attuale; sviluppo, esecuzione e pubblicazione restano su Replit con Clerk invariato. Per i prossimi passi di questa migrazione non creare altri database o progetti, nemmeno per il collaudo.
+Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL: app_runtime esclusivamente per il backend dell'applicazione Replit pubblicata, app_readonly riservato ma con accesso SQL diretto dello sviluppo rinviato, app_migrator per modifiche strutturali autorizzate. app_readonly deve restare NOLOGIN e non assumibile da credenziali di sviluppo. Non introdurre revoche globali TEMP/large object. Le credenziali amministrative e di migrazione non devono essere utilizzate nello sviluppo ordinario. Netlify è escluso dalla fase attuale; sviluppo, esecuzione e pubblicazione restano su Replit con Clerk invariato. Per i prossimi passi di questa migrazione non creare altri database o progetti, nemmeno per il collaudo.
 
 **Why:** evitare che Replit Agent possa modificare accidentalmente i dati di produzione.
 
@@ -66,11 +66,11 @@ privilegi DML sulle tabelle applicative.
 readonly globale, ma non dimostra che backup/import o backend fidato siano
 intrinsecamente insicuri. TEMP comporta anche shadowing dei nomi non qualificati.
 
-**How to apply:** classificare separatamente i due requisiti. Un eventuale
-rinvio dell'accesso SQL di sviluppo richiede accettazione esplicita, nessuna
-credenziale amministrativa/scrivibile nello sviluppo ordinario e nessuna
-delega per assumere il ruolo; NOLOGIN da solo non garantisce l'esclusione.
-Non considerare tale variante già approvata e non cambiare i gate dei test.
+**How to apply:** classificare separatamente i due requisiti. Il titolare ha
+accettato il rinvio dell'accesso SQL di sviluppo. Non usare credenziali amministrative/
+scrivibili nello sviluppo ordinario né deleghe per assumere readonly;
+NOLOGIN da solo non garantisce l'esclusione. Non cambiare i gate dei test
+per trasformare i finding in successi e non ripetere i controlli superati.
 
 Per collaudare i ruoli NOLOGIN su Supabase, ADMIN OPTION non implica
 la possibilità di SET ROLE: verificare separatamente l'opzione SET.

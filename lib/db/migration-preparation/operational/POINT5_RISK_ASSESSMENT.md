@@ -1,5 +1,11 @@
 # Valutazione conclusiva delle sei criticità residue
 
+Variante accettata dal titolare: punto 5 concluso con limitazioni documentate.
+Nessuna revoca globale. Accesso SQL dello sviluppo rinviato; readonly resta
+NOLOGIN e non deve essere assumibile da credenziali di sviluppo. Runtime
+riservato al backend; credenziali amministrative/migrator escluse dall'uso
+ordinario di sviluppo. Nessun nuovo intervento SQL eseguito per l'accettazione.
+
 Basata sul collaudo già eseguito. Nessuna nuova connessione, nessun test
 ripetuto, nessuna correzione applicata. Il risultato tecnico del runner resta
 invariato: protezioni applicative superate, isolamento globale non superato.
@@ -42,7 +48,7 @@ Revocare al solo ruolo non elimina un privilegio ancora ereditato da PUBLIC.
 Bloccare solo le due funzioni provate non certifica l'assenza di altre
 interfacce di scrittura large object.
 
-## Variante circoscritta proposta, NON approvata né applicata
+## Variante circoscritta accettata; niente nuove modifiche SQL implicite
 
 È possibile separare la migrazione dei dati dall'attivazione SQL dello
 sviluppo, senza creare altri database o toccare privilegi gestiti:
@@ -62,9 +68,10 @@ sviluppo, senza creare altri database o toccare privilegi gestiti:
    finché la garanzia readonly non è risolta.
 
 Questa variante cambia temporaneamente il piano di accesso allo sviluppo:
-richiede accettazione esplicita e non equivale al completamento della
-protezione globale readonly. Non modificare i gate dei runner per far
-apparire superati i sei finding.
+ha ricevuto accettazione esplicita e non equivale al completamento della
+protezione globale readonly. Separazione delle credenziali da finalizzare
+prima dell'uso ordinario del target, con le autorizzazioni necessarie.
+Non modificare i gate dei runner per far apparire superati i sei finding.
 
 Conclusione: quattro criticità NON BLOCCANTI; due BLOCCANTI per l'attivazione
 SQL readonly prevista dal piano completo. Nessuna delle sei obbliga di per sé
