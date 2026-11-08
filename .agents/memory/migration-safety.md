@@ -19,6 +19,15 @@ Secret temporaneo dedicato, da rimuovere soltanto dopo sua autorizzazione.
 **How to apply:** non riproporre installazioni locali o ulteriori database.
 Riutilizzare i controlli già superati; esportazioni reali, scritture sul target,
 cambio DATABASE_URL e blocco delle scritture richiedono conferme specifiche.
+Completare importazione predisposta, confronti, credenziali runtime e percorso
+di ritorno prima di qualsiasi finestra di manutenzione.
+
+**Why:** il titolare non vuole fermare l'applicazione per poi attendere altre
+preparazioni operative.
+
+**How to apply:** chiudere i prerequisiti prima del fermo; non interpretare
+l'autorizzazione alla preparazione come consenso a pubblicare, bloccare
+le scritture o trasferire dati.
 
 Il titolare ha creato il progetto Supabase “Agri Precision” nella regione
 West EU (Ireland). Questa è la destinazione dichiarata per la fase successiva;

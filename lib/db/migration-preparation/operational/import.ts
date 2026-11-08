@@ -12,6 +12,7 @@ import { applicationCopy, countAssertions, TABLES } from "./data.mjs";
 const children: ReturnType<typeof spawn>[] = [];
 let client: ReturnType<typeof targetClient> | undefined;
 let watchdog: ReturnType<typeof setTimeout> | undefined;
+let commitSent = false;
 try {
   if (process.argv.length !== 8 || process.argv[2] !== "--authorized-import-frozen-source" ||
       process.argv[3] !== "--source-writes-confirmed-frozen" ||
@@ -73,7 +74,7 @@ try {
       ]);
     }
   }
-  await write("BEGIN;\nSET LOCAL ROLE app_migrator;\n");
+  await write("BEGIN ISOLATION LEVEL REPEATABLE READ READ WRITE;\nSET LOCAL ROLE app_migrator;\n");
   // Locks only the five empty TARGET tables, not the source or provider tables.
   for (const table of Object.keys(TABLES)) {
     await write(`LOCK TABLE public."${table}" IN ACCESS EXCLUSIVE MODE;\n`);
@@ -92,13 +93,17 @@ try {
   for (const table of Object.keys(TABLES)) {
     await write(`ALTER TABLE public."${table}" FORCE ROW LEVEL SECURITY;\n`);
   }
+  await write(readFileSync(new URL("./import-final-checks.sql", import.meta.url), "utf8") + "\n");
+  commitSent = true;
   await write("COMMIT;\n");
   psql.child.stdin!.end();
   await psql.done;
   console.log(JSON.stringify({ status: "IMPORTED_NOT_CUT_OVER", counts }));
 } catch {
   for (const child of children) child.kill("SIGTERM");
-  console.error("IMPORT_BLOCKED; no cutover; failed transaction rolls back on disconnect.");
+  console.error(commitSent
+    ? "IMPORT_COMMIT_OUTCOME_REQUIRES_READONLY_CHECK; no retry, cleanup or cutover."
+    : "IMPORT_BLOCKED_BEFORE_COMMIT; no cutover; transaction rolls back on disconnect.");
   process.exitCode = 1;
 } finally {
   clearTimeout(watchdog);
