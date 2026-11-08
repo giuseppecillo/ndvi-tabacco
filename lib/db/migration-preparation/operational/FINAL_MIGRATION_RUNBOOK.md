@@ -104,6 +104,26 @@ l'aggiornamento, lo elimina e ne verifica l'assenza.
 I 7 nuovi test offline di sicurezza dello script sono superati.
 Lo script NON è ancora stato eseguito in Production. Nessuna riapertura.
 
+### Collaudo concluso — riapertura predisposta, non ancora LIVE
+
+Il titolare ha confermato «Collaudo completato» per lo script di
+aggiornamento/rilettura/eliminazione. La verifica successiva diretta sul
+solo Supabase, in transazione READ ONLY con TLS verificato e ROLLBACK,
+ha restituito PILOT_CLEANUP_CONFIRMED: 22 osservazioni totali e zero
+record con observation_id QA-MIGRAZIONE-20261108.
+Nessuna ripetizione di backup, importazione o confronto integrale.
+Questo controllo non certifica cancellazione da log o backup del provider.
+
+Tutti i gate applicativi previsti risultano ora superati, con le prove
+manuali del titolare chiaramente distinte dai controlli SQL dell'Agent.
+Predisposta solo in Production la configurazione finale: backend supabase,
+pausa 0, preflight aggiuntivo 0, allowlist piloti vuota.
+DATABASE_URL e Secret runtime invariati. Nessuna pubblicazione automatica.
+La release LIVE resta quella con manutenzione finché il titolare non
+completa l'ultimo Republish. Dopo il clic verificare nuova revisione LIVE,
+runtimeIdentity passed, maintenance false, pilotAccounts 0 e health 200.
+Solo allora attestare la riapertura effettiva.
+
 ### Accesso al collaudo durante la manutenzione
 
 Dopo il secondo Republish e la verifica del pool operativo Supabase,
