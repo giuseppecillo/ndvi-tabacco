@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import { FASI_POMODORO, POMODORO_DB, type calcolaPomodoro } from "@workspace/tomato-calculations";
 import { getLocale, t } from "../i18n/runtime";
 
@@ -16,12 +15,9 @@ type Props = {
 };
 const inputClass = "w-full min-w-0 rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm";
 const number = (value: number) => Number.isFinite(value) ? value.toLocaleString(getLocale(), { maximumFractionDigits: 2 }) : "—";
+const opzioni = Object.values(POMODORO_DB);
 
 export function PomodoroParameters(p: Props) {
-  const [destinazione, setDestinazione] = useState("");
-  const opzioni = useMemo(() => Object.values(POMODORO_DB).filter((v) =>
-    !destinazione || v.destinazione === destinazione),
-  [destinazione]);
   const profilo = POMODORO_DB[p.varieta];
   const numeric = (label: string, value: number, onChange: (value: number) => void, min = 0) =>
     <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold text-stone-700">
@@ -30,20 +26,9 @@ export function PomodoroParameters(p: Props) {
         onChange={(event) => onChange(event.target.value === "" ? NaN : Number(event.target.value))} className={inputClass} />
     </label>;
   return <div className="col-span-2 min-w-0 space-y-4" data-testid="pomodoro-parameters">
-    <div>
-      <label className="flex flex-col gap-1 text-sm font-semibold text-stone-700">
-        {t("Destinazione")}
-        <select aria-label={t("Destinazione")} value={destinazione} onChange={(e) => setDestinazione(e.target.value)} className={inputClass}>
-          <option value="">{t("Tutte le destinazioni")}</option>
-          <option value="Industria">{t("Industria")}</option>
-          <option value="Mensa">{t("Mensa")}</option>
-        </select>
-      </label>
-    </div>
     <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold text-stone-700">
       {t("Varietà")}
       <select aria-label={t("Varietà pomodoro")} value={p.varieta} onChange={(e) => p.onVarieta(e.target.value)} className={inputClass}>
-        {!opzioni.some((v) => v.id === p.varieta) && profilo && <option value={profilo.id}>{profilo.nome} — {t(profilo.destinazione)} · {t(profilo.impiego)}</option>}
         {opzioni.map((v) => <option value={v.id} key={v.id}>{v.nome} — {t(v.destinazione)} · {t(v.impiego)}</option>)}
       </select>
     </label>
