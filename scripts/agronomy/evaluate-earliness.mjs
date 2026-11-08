@@ -8,6 +8,9 @@ import {CROP_PROFILES} from "../../lib/crop-calculations/src/index.ts";
 import {POMODORO_DB, FASI_POMODORO} from "../../lib/tomato-calculations/src/index.ts";
 import {resolve} from "node:path";
 import {fileURLToPath} from "node:url";
+import {readFileSync} from "node:fs";
+import {blockedFieldReport, evaluateFieldCampaigns} from "./field-earliness.mjs";
+export {blockedFieldReport, evaluateFieldCampaigns} from "./field-earliness.mjs";
 
 const normalize = value => value.trim().normalize("NFC").toLocaleLowerCase("it-IT").replace(/\s+/g," ");
 const mean = values => values.reduce((sum,v)=>sum+v,0)/values.length;
@@ -81,7 +84,27 @@ export function report(){
     decision:"DO_NOT_REPLACE_KNOWN_VARIETAL_REFERENCES_OR_CHANGE_DOSES",
     reason:"No independent field validation, numeric stage timing, or sensor-specific calibration supplied; categorical precocity cannot establish a causal NDVI offset.",
     applicationChanged:false,supabaseWrites:false,customerDataRead:false,
+    independentFieldValidation:blockedFieldReport(),
   };
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))
-  console.log(JSON.stringify(report(),null,2));
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
+  try {
+    const args=process.argv.slice(2);
+    let result;
+    if(!args.length) result=report();
+    else {
+      if(args.length!==5||args[0]!=="--field"||args[2]!=="--candidate"
+        ||args[4]!=="--authorized-reference-data")
+        throw new Error("USAGE: --field local-reference.json --candidate frozen-curves.json --authorized-reference-data");
+      result=evaluateFieldCampaigns(JSON.parse(readFileSync(args[1],"utf8")),
+        JSON.parse(readFileSync(args[3],"utf8")),{authorizedReferenceData:true});
+    }
+    console.log(JSON.stringify(result,null,2));
+    if(result.status==="BLOCKED"||result.status==="SAFETY_FAILED")process.exitCode=2;
+  } catch(error) {
+    // Do not echo data, local paths, raw JSON or parser errors into shared logs.
+    console.error(JSON.stringify({status:"ERROR",reason:error instanceof SyntaxError
+      ? "INVALID_JSON" : error.code ? "LOCAL_FILE_UNREADABLE" : error.message}));
+    process.exitCode=1;
+  }
+}

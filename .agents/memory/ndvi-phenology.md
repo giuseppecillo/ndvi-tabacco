@@ -22,3 +22,16 @@ not an automatically transferable NDVI increment.
 adequate-nitrogen reference measurements before activating such adjustments.
 Preserve the arithmetic midpoint rule and never silently recalculate historical
 observations to match a new reference.
+
+**Rule:** Independent earliness validation must keep cultivar, site and campaign
+each disjoint between calibration and evaluation, not merely their combined
+identity. Ordinary nitrogen-deficient observations are not optimal references.
+
+**Why:** The user requires independent field evidence with verified adequate N;
+reusing a cultivar, site or campaign can leak calibration context and falsely
+suggest an agronomic improvement. Catalogue reconstruction is not such evidence.
+
+**How to apply:** Require authorized, documented reference experiments, freeze
+candidate curves before consulting evaluation results, and report missing
+evidence as blocked. Offline comparisons never authorize automatic activation
+or rewriting historical data.
