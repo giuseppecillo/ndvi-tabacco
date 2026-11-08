@@ -11,6 +11,9 @@ import io
 import json
 from collections import Counter
 from pathlib import Path
+from catalogue_identity import (
+    EVIDENCE_PATH, apply_identity_review, load_evidence, render_identity_report,
+)
 
 BBCH_SOURCE = "https://www.julius-kuehn.de/media/Veroeffentlichungen/bbch%20epaper%20en/page.pdf"
 KIWI_SOURCE = "https://www.iniav.pt/images/publicacoes/livros-manuais/manual_de_fruticultura_Kiwi_9.pdf"
@@ -117,13 +120,25 @@ def main():
     parser.add_argument("source", type=Path)
     parser.add_argument("--output", type=Path, default=Path("generated-artifacts/crop-review"))
     args = parser.parse_args()
+    source_path = args.source.resolve()
+    output_path = args.output.resolve()
+    # Avoid overwriting the input (even under a different spelling/symlink).
+    output_names = (
+        "colture_revisionate.csv", "controlli_catalogo.json",
+        "revisione_agronomica.html", "verifica_identita.html",
+    )
+    if any((output_path / name).resolve() in {source_path, EVIDENCE_PATH.resolve()}
+           for name in output_names):
+        raise ValueError("La destinazione sovrascriverebbe un input della revisione")
     source = args.source.read_bytes()
     try:
         text = source.decode("utf-8-sig")
     except UnicodeDecodeError:
         text = source.decode("cp1252")
     rows = list(csv.DictReader(io.StringIO(text), delimiter=";"))
+    evidence = load_evidence(source, rows)
     reviewed, audit = review(rows)
+    identity_summary = apply_identity_review(reviewed, audit, evidence)
     counts = Counter(row["Coltura"] for row in reviewed)
     args.output.mkdir(parents=True, exist_ok=True)
     with (args.output / "colture_revisionate.csv").open("w", encoding="utf-8-sig", newline="") as stream:
@@ -137,10 +152,14 @@ def main():
         "calcolo_automatico_abilitato": 0,
         "esclusi": ["P2O5", "K2O", "Acqua", "Note"],
         "fonti": [BBCH_SOURCE, KIWI_SOURCE, ROOTSTOCK_SOURCE, MODEL_SOURCE],
+        "revisione_identita": identity_summary,
+        "evidence_sha256": hashlib.sha256(EVIDENCE_PATH.read_bytes()).hexdigest(),
         "revisioni": audit,
     }
     (args.output / "controlli_catalogo.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    (args.output / "verifica_identita.html").write_text(
+        render_identity_report(reviewed, identity_summary), encoding="utf-8")
     table = "".join(f"<tr><td>{html.escape(crop)}</td><td>{count}</td></tr>"
                     for crop, count in counts.items())
     links = "".join(f'<li><a href="{url}">{name}</a></li>' for name, url in [
@@ -157,6 +176,10 @@ table{{border-collapse:collapse;width:100%}}td,th{{text-align:left;padding:8px;b
 a{{color:#175634;overflow-wrap:anywhere}}.warning{{border-left:5px solid #b87320}}</style>
 <main><h1>Revisione agronomica preliminare</h1>
 <p>{len(rows)} profili · {len(counts)} colture · file originale conservato invariato.</p>
+<section><h2>Verifica separata delle identità</h2>
+<p><a href="verifica_identita.html">Esiti nominativi, fonti e relazioni di tutti i 493 profili</a>.
+La conferma di un nome non valida i parametri agronomici.
+Nessun nome è stato rinominato e nessuna riga accorpata.</p></section>
 <section><h2>Contenuto</h2><table><tr><th>Coltura</th><th>Profili</th></tr>{table}</table>
 <p>Esclusi potassio, fosforo, acqua e note del file originale.</p></section>
 <section><h2>Correzioni documentate</h2><ul>
@@ -175,7 +198,11 @@ a{{color:#175634;overflow-wrap:anywhere}}.warning{{border-left:5px solid #b87320
 <p>Le fonti documentano ruoli e significato delle fasi; non convalidano i 493 piani N/NDVI del file.</p></section></main></html>"""
     (args.output / "revisione_agronomica.html").write_text(document, encoding="utf-8")
     print(json.dumps({key: value for key, value in report.items()
-                      if key not in {"revisioni", "fonti"}}, ensure_ascii=False))
+                      if key not in {"revisioni", "fonti", "revisione_identita"}},
+                     ensure_ascii=False))
+    print(json.dumps({"identita": identity_summary["esiti"],
+                      "relazioni": len(identity_summary["relazioni"])},
+                     ensure_ascii=False))
 
 
 if __name__ == "__main__":

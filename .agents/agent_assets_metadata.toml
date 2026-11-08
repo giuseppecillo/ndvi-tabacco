@@ -61,14 +61,14 @@ content_type = "text/html"
 id = "O3E7Tze3aKUn6_vg9ttbr"
 uri = "file://generated-artifacts/crop-review/colture_revisionate.csv"
 type = "table"
-title = "Catalogo colture revisionato"
-description = "493 profili; esclusi fosforo, potassio, acqua e note. Corretti ruoli e fasi documentabili; valori N/NDVI non certificati e calcolo automatico non abilitato."
+title = "Catalogo revisionato — 493 profili"
+description = "CSV con classificazione dei nomi, esiti, fonti e relazioni. Nessun accorpamento; calcolo automatico disabilitato."
 logical_id = "67d81579-d924-4da6-913c-5a6b682286fd"
-content_hash = "sha256:a0dddc6c61270b0ddaa8eb888a32a433086106a686ebc5e82eb302594474a833"
-size = 136213
-mtime_ms = 1794161296774
-storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/67d81579-d924-4da6-913c-5a6b682286fd/6ec803c2-c698-47c4-ae12-aa84a6dba9d7"
-storage_version_token = "1794161325261484"
+content_hash = "sha256:b9cf6e360899c10a0b5206eca66a4bff5999622576ca1eb09c561bfc019d18ba"
+size = 475399
+mtime_ms = 1794162229664
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/67d81579-d924-4da6-913c-5a6b682286fd/b0cb3e75-e31e-42d9-8b06-eb0b13114d32"
+storage_version_token = "1794162272002197"
 content_type = "text/csv"
 
 [[outputs]]
@@ -84,3 +84,31 @@ mtime_ms = 1794161296781
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/e35e4527-835a-4d90-8c2e-f0c2a39ec25b/99fcf11e-2b96-4c92-90f5-24ab2b533c54"
 storage_version_token = "1794161325778799"
 content_type = "text/html"
+
+[[outputs]]
+id = "53HKP8sxujl9xaFIrE1tQ"
+uri = "file://generated-artifacts/crop-review/verifica_identita.html"
+type = "html"
+title = "Rapporto sulle identità varietali"
+description = "Esiti per tutti i profili, 25 relazioni, fonti verificabili e limiti della consultazione. 274 nomi restano non verificati, non dichiarati inesistenti."
+logical_id = "7086df04-9a5c-464c-be01-93c148425edf"
+content_hash = "sha256:4c0e801dfa935c0e8ca4215080827f3718d95767b4375e3ea1b56935e93c27e0"
+size = 497599
+mtime_ms = 1794162229675
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/7086df04-9a5c-464c-be01-93c148425edf/b86af1e6-ebf3-476f-8d67-c4945c772528"
+storage_version_token = "1794162272456492"
+content_type = "text/html"
+
+[[outputs]]
+id = "H-Xq1LH25sMAdDznLN6VG"
+uri = "file://generated-artifacts/crop-review/controlli_catalogo.json"
+type = "unspecified"
+title = "Registro verificabile dei controlli"
+description = "Esiti nominativi, fonti, hash degli input e conteggi riproducibili offline."
+logical_id = "2f2ba404-93bc-4e4b-9b50-6a85ec605900"
+content_hash = "sha256:62f3236817bb904276db1049f7b650b5c63270b69d2d6cc7000fe6006e45488c"
+size = 428260
+mtime_ms = 1794162229668
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/2f2ba404-93bc-4e4b-9b50-6a85ec605900/8f2d9f7c-8afe-494b-84dd-5865e64aad04"
+storage_version_token = "1794162272924578"
+content_type = "application/octet-stream"
