@@ -16,13 +16,14 @@ async function main() {
   let client:Client|undefined; let transaction=false;let stage="approval";
   let rollbackConfirmed=false;let commitConfirmed=false;
   try {
-    if(process.argv.length!==3||process.argv[2]!=="--apply-approved-excel-catalogue")
+    const verifyOnly=process.argv.length===3&&process.argv[2]==="--verify-catalogue-only";
+    if(!verifyOnly&&(process.argv.length!==3||process.argv[2]!=="--apply-approved-excel-catalogue"))
       throw new Error("EXPLICIT_CATALOGUE_APPROVAL_REQUIRED");
     if(process.env.NODE_TLS_REJECT_UNAUTHORIZED==="0")throw new Error("TLS_DISABLED");
     const secret=process.env.SUPABASE_QA_ADMIN_URL;
     if(!secret)throw new Error("DEDICATED_ADMIN_SECRET_MISSING");
     const config=inventoryConfig(secret,{projectRef:PROJECT,host:HOST},SUPABASE_RUNTIME_CA);
-    config.application_name="nitrocrop_approved_catalogue_import";
+    config.application_name=verifyOnly?"nitrocrop_catalogue_readonly_check":"nitrocrop_approved_catalogue_import";
     client=new Client(config);client.on("error",()=>{});
     stage="connection";await client.connect();
     const socket=(client as unknown as {connection:{stream:TLSSocket}}).connection.stream;
@@ -30,13 +31,31 @@ async function main() {
       checkServerIdentity(HOST,socket.getPeerCertificate())||
       !["TLSv1.2","TLSv1.3"].includes(socket.getProtocol()??""))
       throw new Error("VERIFIED_TLS_REQUIRED");
-    await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ WRITE");transaction=true;
+    await client.query(`BEGIN ISOLATION LEVEL REPEATABLE READ ${verifyOnly?"READ ONLY":"READ WRITE"}`);transaction=true;
     await client.query("SET LOCAL lock_timeout='5s'");
     await client.query("SET LOCAL statement_timeout='30s'");
+    const assertReadOnly=async()=>{
+      const state=await client!.query("SELECT current_setting('transaction_read_only') AS ro");
+      if(state.rows[0]?.ro!=="on")throw new Error("READ_ONLY_TRANSACTION_REQUIRED");
+    };
+    if(verifyOnly)await assertReadOnly();
     stage="identity";
     const identity=await client.query("SELECT current_database() AS db,current_user::text AS role,pg_is_in_recovery() AS replica");
     if(identity.rows[0]?.db!=="postgres"||identity.rows[0]?.role!=="postgres"||identity.rows[0]?.replica!==false)
       throw new Error("SUPABASE_PRIMARY_ADMIN_IDENTITY_REQUIRED");
+    if(verifyOnly){
+      stage="readonly_full_catalogue_comparison";
+      await assertReadOnly();
+      const stored=await client.query("SELECT crop,variety,model,parameters,record_hash FROM agronomy_catalogue.model_profiles WHERE version=$1",[catalogueVersion]);
+      assertCatalogueRows(stored.rows);
+      await client.query("ROLLBACK");transaction=false;rollbackConfirmed=true;
+      const report={status:"verified-without-changes",version:catalogueVersion,profiles:catalogueRecords.length,
+        tls:{ca:true,hostname:true,protocol:socket.getProtocol()},readOnly:true,rollbackConfirmed:true,
+        supabaseWrites:false,existingClientData:"not-read-or-modified",applicationConnection:"unchanged",published:false};
+      writeFileSync(resolve("generated-artifacts/catalogue-readonly-result.json"),JSON.stringify(report,null,2)+"\n");
+      console.log(JSON.stringify(report));
+      return;
+    }
     await client.query("SELECT pg_advisory_xact_lock(hashtextextended('nitrocrop:agronomy-catalogue',0))");
     stage="existing_objects";
     const namespace=await client.query(`SELECT pg_get_userbyid(nspowner) AS owner FROM pg_namespace WHERE nspname='agronomy_catalogue'`);
