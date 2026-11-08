@@ -57,6 +57,13 @@ La predisposizione operativa resta bloccata sul canale password; il rinvio
 del collaudo non risolve questo blocco. Non eseguire neppure il solo ALTER
 LOGIN prima di chiudere la condizione sul canale protetto.
 
+Il titolare ha successivamente autorizzato soltanto la preparazione di
+un'alternativa, senza applicarla. La proposta è in
+`RUNTIME_PASSWORD_PROTECTED_PROPOSAL.md`: permessi di logging da verificare
+in sola lettura, eventuali protezioni locali da collaudare con canary non
+segreti, esecutore Production isolato ancora non attestato.
+Non costituisce autorizzazione a nessuna di tali operazioni.
+
 ### A. Prima della finestra: credenziali e collaudo della connessione
 
 Stima: 5–15 minuti, applicazione ancora su Replit.
