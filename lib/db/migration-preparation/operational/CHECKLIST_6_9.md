@@ -29,6 +29,34 @@ dei Secrets o pubblicazione eseguita durante questa preparazione.
 
 ## Sequenza e autorizzazioni
 
+### Aggiornamento del consenso e del canale password
+
+Il titolare ha confermato la sola predisposizione del prerequisito A,
+accettando il rinvio del collaudo live al prerequisito B/3. Non ha autorizzato
+Publish, copie del Secret in Shared/Development o aggiramenti delle
+protezioni della password.
+
+La verifica delle fonti Supabase ha individuato un blocco: la funzione
+Dashboard per le password dei ruoli personalizzati usa una mutation che
+genera SQL. La modifica Studio che pre-calcola SCRAM nel browser riduce
+l'esposizione della password ASCII, ma invia comunque un verificatore in SQL;
+sono inoltre documentati fallback in chiaro. Non costituisce prova di
+assenza di materiale di autenticazione nei log/statistiche.
+
+Fonti pubbliche consultate:
+- https://supabase.com/kb/troubleshooting/provisioning-credentials-without-log-exposure
+- https://github.com/supabase/supabase/pull/52506
+- https://github.com/supabase/supabase/pull/52544
+
+Non è stato attestato un endpoint protetto specifico per la password del
+solo app_runtime. Il reset della password del progetto/postgres NON è
+un'alternativa autorizzata.
+
+Di conseguenza NON sono stati impostati password, LOGIN o nuovi Secrets.
+La predisposizione operativa resta bloccata sul canale password; il rinvio
+del collaudo non risolve questo blocco. Non eseguire neppure il solo ALTER
+LOGIN prima di chiudere la condizione sul canale protetto.
+
 ### A. Prima della finestra: credenziali e collaudo della connessione
 
 Stima: 5–15 minuti, applicazione ancora su Replit.

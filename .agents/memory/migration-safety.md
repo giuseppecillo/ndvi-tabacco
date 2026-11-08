@@ -22,6 +22,18 @@ collegamento. Se il collaudo non è eseguibile nel solo ambiente Production
 senza una pubblicazione non autorizzata, segnalarlo come bloccato e chiedere
 conferma prima di cambiare il perimetro.
 
+Per impostare password di ruoli PostgreSQL, una schermata protetta non prova
+che l'implementazione eviti SQL contenente password o verificatori SCRAM.
+Anche un verificatore va trattato come materiale di autenticazione sensibile.
+
+**Why:** l'analisi del percorso Studio dei ruoli personalizzati ha mostrato
+la generazione di SQL anche dalle finestre password; la mascheratura della
+normale riga di log non copre necessariamente errori e statistiche.
+
+**How to apply:** attestare il percorso effettivo prima di creare credenziali,
+non usare il reset della password postgres per configurare un ruolo
+applicativo e non introdurre silenziamenti dei log come ripiego implicito.
+
 Il titolare non vuole installare PostgreSQL o altri strumenti sul proprio PC
 per questa migrazione. Vuole procedere esclusivamente tramite Replit e il
 progetto Supabase Agri Precision; per identificare il primario ha scelto un
