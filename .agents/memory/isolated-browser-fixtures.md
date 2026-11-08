@@ -33,3 +33,15 @@ lo store originale. Gli stili mancanti hanno inoltre falsato la resa mobile.
 effettivi e gli stili della fixture con quelli dell'app. Se la fixture usa
 un preambolo HMR semplificato, ricaricare il documento dopo le modifiche:
 una vista rimasta montata può mostrare ancora le vecchie classi.
+
+Quando un collaudo deve vietare tutte le API reali, simulare anche lo stato
+di autenticazione nel solo contesto browser, senza completare un login esterno.
+Non introdurre un accesso di prova nel codice dell'app.
+
+**Why:** l'accesso programmatico del tester può richiedere uno scambio esterno
+con Clerk, incompatibile con un collaudo che vieta esplicitamente ogni API reale.
+Un adattatore statico della dipendenza nel browser mantiene il percorso reale
+dei componenti, ma non verifica il funzionamento dell'autenticazione.
+
+**How to apply:** dichiarare questo limite nel report; intercettare le dipendenze
+prima della navigazione e mantenere API, scritture e WebSocket bloccati.

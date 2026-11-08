@@ -78,7 +78,7 @@ export function ErrorNote({ error, onRetry }: { error: unknown; onRetry?: () => 
   return (
     <div role="alert" className="rounded-xl border border-[var(--nc-danger)]/40 bg-[#f7e3dc] px-4 py-3 text-sm text-[var(--nc-danger)] flex items-start justify-between gap-3">
       <span>{errText(error)}</span>
-      {onRetry && <button onClick={onRetry} className="font-semibold underline shrink-0">Riprova</button>}
+      {onRetry && <button onClick={onRetry} className="font-semibold underline shrink-0">{t("Riprova")}</button>}
     </div>
   );
 }
@@ -89,7 +89,7 @@ export function OkNote({ children }: { children: ReactNode }) {
 
 export function Skeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="space-y-3" aria-busy="true" aria-label="Caricamento">
+    <div className="space-y-3" aria-busy="true" aria-label={t("Caricamento…")}>
       {Array.from({ length: rows }).map((_, i) => <div key={i} className="nc-skel h-12" />)}
     </div>
   );
