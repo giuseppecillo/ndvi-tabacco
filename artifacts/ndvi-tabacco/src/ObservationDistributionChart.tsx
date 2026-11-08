@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { t } from "./i18n/runtime";
+import { CATALOGUE_CROPS } from "@workspace/crop-calculations";
 import {
   CartesianGrid,
   Legend,
@@ -108,6 +109,11 @@ export function ObservationDistributionChart({
           <Scatter name="Tabacco" data={tabacco} fill="#15803d" />
           <Scatter name="Grano duro" data={grano} fill="#2563eb" />
           <Scatter name={t("Pomodoro")} data={pomodoro} fill="#dc2626" />
+          {CATALOGUE_CROPS.map((crop, i) => {
+            const data = punti.filter(p => p.coltura === crop);
+            return data.length ? <Scatter key={crop} name={t(crop)} data={data}
+              fill={["#4d7c0f", "#7e22ce", "#a21caf", "#a16207", "#b91c1c", "#059669", "#0d9488", "#0284c7", "#475569"][i]} /> : null;
+          })}
         </ScatterChart>
       </ChartContainer>
       <p className="mt-3 text-xs text-stone-500">

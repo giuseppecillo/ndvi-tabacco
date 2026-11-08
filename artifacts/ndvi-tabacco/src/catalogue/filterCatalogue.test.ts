@@ -15,7 +15,7 @@ test("filters by crop and accent-insensitive terms, keeps values intact", () => 
 });
 
 test("the actual catalogue is searchable in all languages without changing its identities or numeric values", () => {
-  const catalogue = JSON.parse(readFileSync(new URL("../../../api-server/src/data/crop-catalogue.json", import.meta.url), "utf8")) as { columns: string[]; rows: string[][] };
+  const catalogue = JSON.parse(readFileSync(new URL("../../../../lib/crop-calculations/src/catalogue.json", import.meta.url), "utf8")) as { columns: string[]; rows: string[][] };
   const before = JSON.stringify(catalogue);
   const displayIndexes = [0, 2, 3, 4, ...catalogue.columns.flatMap((c, i) => c.startsWith("Fase ") ? [i] : [])];
   for (const column of catalogue.columns) assert.ok(hasTranslation(column), column);

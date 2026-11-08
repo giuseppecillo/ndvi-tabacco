@@ -11,7 +11,7 @@ from catalogue_expansion import csv_bytes, digest, load_additions, ADDITIONS
 from catalogue_selection import DISPLAY_COLUMNS, generate
 
 ROOT = Path(__file__).resolve().parents[2]
-SNAPSHOT = ROOT / "artifacts/api-server/src/data/crop-catalogue.json"
+SNAPSHOT = ROOT / "lib/crop-calculations/src/catalogue.json"
 TRACE = ROOT / "scripts/agronomy/selected-catalogue-trace.json"
 
 

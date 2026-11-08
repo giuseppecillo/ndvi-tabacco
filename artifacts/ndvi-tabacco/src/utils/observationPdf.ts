@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import type { Observation } from "../App";
+import { isCatalogueCrop } from "@workspace/crop-calculations";
 import { getLocale, t } from "../i18n/runtime";
 
 /** Date-only values are calendar dates: do not shift them through UTC. */
@@ -18,7 +19,7 @@ export function buildObservationPdfRows(observations: readonly Observation[], lo
   });
   return observations.map(o => [
     o.id, reportDate(o.data, locale), reportDate(o.dataSemina || o.dataTrapianto, locale),
-    o.cliente, o.appezzamento, o.giorni,
+    o.cliente, o.appezzamento, isCatalogueCrop(o.coltura) ? "—" : o.giorni,
     number(o.n1, 2), number(o.n2, 2), number(o.n3, 2), number(o.n4, 2), number(o.n5, 2),
     number(o.media, 3), number(o.ottimale, 3), number(o.discostamento, 3), number(o.dose, 1),
     o.lat != null ? number(o.lat, 6) : "—", o.lng != null ? number(o.lng, 6) : "—",

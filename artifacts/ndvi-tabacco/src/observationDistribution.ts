@@ -1,4 +1,5 @@
 import type { Coltura } from "./calculations";
+import { isCatalogueCrop } from "@workspace/crop-calculations";
 
 export type ObservationDistributionSource = {
   id: string;
@@ -32,7 +33,8 @@ export function serieDistribuzioneOsservazioni(
   osservazioni: ObservationDistributionSource[],
 ): ObservationDistributionPoint[] {
   return osservazioni.flatMap((osservazione) => {
-    const coltura = osservazione.coltura === "pomodoro" ? "pomodoro" : osservazione.coltura === "grano duro" ? "grano duro" : "tabacco";
+    const coltura = isCatalogueCrop(osservazione.coltura) ? osservazione.coltura
+      : osservazione.coltura === "pomodoro" ? "pomodoro" : osservazione.coltura === "grano duro" ? "grano duro" : "tabacco";
     const scostamento = osservazione.ottimale - osservazione.media;
     const azotoIndicato = coltura === "grano duro"
       ? osservazione.quotaAzoto ?? osservazione.dose

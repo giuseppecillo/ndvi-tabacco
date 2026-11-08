@@ -1,3 +1,4 @@
+import { isCatalogueCrop } from "@workspace/crop-calculations";
 import JSZip from "jszip";
 import type { Observation } from "../App";
 import { ndviDeviation, type ObservationGroup } from "./observationHistory";
@@ -30,7 +31,7 @@ const columns: Column[] = [
   })),
   { title: "Data Trapianto", value: o => o.dataTrapianto },
   { title: "Data semina", value: o => o.dataSemina },
-  { title: "Giorni", value: o => o.giorni },
+  { title: "Giorni", value: o => isCatalogueCrop(o.coltura) ? null : o.giorni },
   { title: "Fase fenologica", value: o => o.faseFenologica },
   { title: "BBCH", value: o => o.bbch },
   { title: "Fonte della fase", value: o => o.faseFonte },

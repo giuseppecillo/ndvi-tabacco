@@ -19,6 +19,7 @@
     "@clerk/shared": "^4.42.0",
     "@types/pg": "^8.20.0",
     "@workspace/api-zod": "workspace:*",
+    "@workspace/crop-calculations": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/grain-calculations": "workspace:*",
     "@workspace/tobacco-calculations": "workspace:*",

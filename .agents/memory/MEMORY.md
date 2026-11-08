@@ -1,3 +1,4 @@
+- [Varietà affini](crop-affinity-models.md) — Completare i riferimenti prima dell'integrazione; per parametri mancanti usare varietà affini della stessa coltura.
 - [Ambito dati colture](crop-data-scope.md) — Escludere potassio, fosforo, acqua e note dall'integrazione richiesta.
 - [Catalogo persistente](catalogue-persistence-scope.md) — Preparazione offline, applicazione autorizzata e attivazione dei calcoli sono passaggi distinti; mai modificare rilievi.
 - [Affidabilità delle fonti varietali](variety-source-trust.md) — I vecchi domini possono cambiare editore: verificare contenuto e provenienza dopo i reindirizzamenti.

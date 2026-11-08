@@ -56,7 +56,7 @@ export function t(source: string): string {
     for (const pattern of patterns) {
       const match = key.match(pattern.regex);
       if (!match) continue;
-      const preserveData = ["Durata abbonamento di {0}", 'ID "{0}" già utilizzato.'].includes(pattern.entry[0]);
+      const preserveData = ["Durata abbonamento di {0}", 'ID "{0}" già utilizzato.', "Riferimento: {0}", "Varietà affine: {0}"].includes(pattern.entry[0]);
       translated = pattern.entry[language === "en" ? 1 : 2].replace(/\{(\d+)\}/g, (_m, i) => {
         const captured = match[Number(i) + 1] ?? "";
         return preserveData ? captured : t(captured);

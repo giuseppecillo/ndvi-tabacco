@@ -8,6 +8,8 @@ import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { ObservationDistributionChart } from "./ObservationDistributionChart";
 import { ObservationList } from "./components/ObservationList";
 import { CropCatalogue } from "./components/CropCatalogue";
+import { CatalogueCropParameters, CatalogueCropResults } from "./components/CatalogueCropParameters";
+import { CROP_PROFILES, CATALOGUE_CROPS, cropPhaseSource, isCatalogueCrop, getCropReference, calculateCrop } from "@workspace/crop-calculations";
 import { PomodoroParameters, PomodoroResults } from "./components/PomodoroParameters";
 import { POMODORO_DB, PRIMO_POMODORO, calcolaPomodoro } from "@workspace/tomato-calculations";
 import { exportObservationsCsv } from "./utils/geoUtils";
@@ -370,6 +372,8 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   const [bbchGranoConfermato, setBbchGranoConfermato] = useState(false);
   const [fasePomodoro, setFasePomodoro] = useState("");
   const [fasePomodoroConfermata, setFasePomodoroConfermata] = useState(false);
+  const [faseCatalogo, setFaseCatalogo] = useState("");
+  const [faseCatalogoConfermata, setFaseCatalogoConfermata] = useState(false);
   const [azotoGiaDistribuito, setAzotoGiaDistribuito] = useState(0);
   const [finestreDasGrano, setFinestreDasGrano] = useState<FinestraDasLocale[]>(() => caricaFinestreDasGrano(storageScope, migrateLegacySettings));
   const [n1, setN1] = useState(0.42);
@@ -385,6 +389,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   );
   const isGranoDuro = coltura === "grano duro";
   const isPomodoro = coltura === "pomodoro";
+  const isCatalogo = isCatalogueCrop(coltura);
   const datiGrano = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
   const fasiGrano = fasiGranoPerVarieta(varieta);
   const pianoVarietaleGrano = !!datiGrano.fasiAzoto;
@@ -434,6 +439,17 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
 
   // Auto-fill resa, azoto e densità quando cambia la varietà.
   useEffect(() => {
+    if (isCatalogueCrop(coltura)) {
+      const profile = getCropReference(coltura, varieta)?.reference;
+      if (profile) {
+        setResa(profile.yield);
+        setDensitaValore(profile.plants);
+        setDensitaUnita("piante/ha");
+      }
+      setFaseCatalogo("");
+      setFaseCatalogoConfermata(false);
+      return;
+    }
     if (isPomodoro) {
       const profilo = POMODORO_DB[varieta];
       if (profilo) {
@@ -465,7 +481,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       setAzotoTot(dati.azotoDefault);
       setDensitaValore(densitaUnita === "piante/ha" ? riferimento.densitaPianteHa : riferimento.kgSemiHa);
     }
-  }, [varieta, isGranoDuro, isPomodoro]);
+  }, [varieta, isGranoDuro, isPomodoro, coltura]);
 
   const densita = useMemo(
     () => calcolaDensita(densitaValore, densitaUnita, datiVarieta),
@@ -490,7 +506,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     : resa > datiVarieta.resaMax
     ? fabbisognoN
     : Math.min(datiVarieta.azotoMax, Math.max(datiVarieta.azotoMin, fabbisognoN));
-  const azotoAsportazioni = !isPomodoro && !isGranoDuro && resa > datiVarieta.resaMax ? azotoConsigliato : null;
+  const azotoAsportazioni = !isCatalogo && !isPomodoro && !isGranoDuro && resa > datiVarieta.resaMax ? azotoConsigliato : null;
   const aggiornaFinestraDasGrano = useCallback((
     fase: FinestraDasLocale["fase"],
     campo: "dasMin" | "dasMax",
@@ -570,10 +586,17 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     varieta, fase: fasePomodoro, confermata: fasePomodoroConfermata,
     resa, azotoGiaDistribuito, letture: [n1, n2, n3, n4, n5],
   });
+  const risultatiCatalogo = calculateCrop({
+    crop: coltura, variety: varieta, phase: faseCatalogo, confirmed: faseCatalogoConfermata,
+    yield: resa, applied: azotoGiaDistribuito, readings: [n1, n2, n3, n4, n5],
+  });
 
   const salvaOsservazione = useCallback(() => {
     const newErrors: Record<string, string> = {};
     const trimmedId = obsId.trim();
+    if (isCatalogo && (!risultatiCatalogo.pronta || !Number.isFinite(densitaValore) || densitaValore <= 0)) {
+      newErrors.catalogue = "Conferma la fase e verifica tutti i parametri prima di calcolare la dose.";
+    }
     if (isPomodoro && (!risultatiPomodoro.pronta || !Number.isFinite(densitaValore) || densitaValore <= 0
       || !Number.isInteger(giorni) || giorni < 0)) {
       newErrors.pomodoro = "Conferma la fase e verifica tutti i parametri prima di salvare il pomodoro.";
@@ -584,14 +607,14 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     if (!cliente.trim()) newErrors.cliente = "Campo obbligatorio.";
     if (!appezzamento.trim()) newErrors.appezzamento = "Campo obbligatorio.";
     if (densitaValore <= 0) newErrors.densita = "Inserisci una densità maggiore di zero.";
-    if (dataTrapiantoFutura) newErrors.dataTrapianto = `La data di ${isGranoDuro ? "semina" : "trapianto"} è successiva al rilevamento.`;
+    if (!isCatalogo && dataTrapiantoFutura) newErrors.dataTrapianto = `La data di ${isGranoDuro ? "semina" : "trapianto"} è successiva al rilevamento.`;
     if (isGranoDuro && !dataTrapianto) newErrors.dataTrapianto = "Inserisci la data di semina per calcolare i DAS.";
     if (isGranoDuro && !faseGrano) {
       newErrors.bbch = faseGranoSelezionata
         ? "Conferma il rilievo BBCH in campo prima di salvare."
         : "Seleziona e conferma la fase BBCH rilevata in campo.";
     }
-    if (!(isPomodoro ? risultatiPomodoro.valida : isGranoDuro ? risultatiGrano.valoriValidi : risultati.valoriValidi)) {
+    if (!(isCatalogo ? [n1, n2, n3, n4, n5].every(v => Number.isFinite(v) && v >= 0 && v <= 1) : isPomodoro ? risultatiPomodoro.valida : isGranoDuro ? risultatiGrano.valoriValidi : risultati.valoriValidi)) {
       newErrors.ndvi = "Ogni lettura NDVI deve essere compresa tra 0 e 1.";
     }
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
@@ -608,26 +631,31 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         id: trimmedIdFinal,
         coltura,
         data,
-        dataTrapianto: isGranoDuro ? "" : dataTrapianto,
+        dataTrapianto: isCatalogo || isGranoDuro ? "" : dataTrapianto,
         dataSemina: isGranoDuro ? dataTrapianto : "",
-        giorni,
+        giorni: isCatalogo ? 0 : giorni,
         etaPiantina,
-        faseFenologica: isPomodoro ? fasePomodoro : isGranoDuro ? risultatiGrano.fase?.label : ndviOttimale(giorni, etaPiantina).label,
+        faseFenologica: isCatalogo ? `${risultatiCatalogo.attiva?.id} · ${risultatiCatalogo.attiva?.label}` : isPomodoro ? fasePomodoro : isGranoDuro ? risultatiGrano.fase?.label : ndviOttimale(giorni, etaPiantina).label,
         bbch: isGranoDuro ? bbchGrano : null,
-        faseFonte: isPomodoro ? "Fase osservata in campo" : isGranoDuro ? "BBCH confermato in campo" : null,
+        faseFonte: isCatalogo ? cropPhaseSource(coltura, varieta) : isPomodoro ? "Fase osservata in campo" : isGranoDuro ? "BBCH confermato in campo" : null,
         cliente: cliente.trim(),
         appezzamento: appezzamento.trim(),
         resa,
         varieta,
         densitaValore,
         densitaUnita,
-        pianteHaEquivalenti: isPomodoro ? densitaValore : Math.round(isGranoDuro ? densitaGrano.semiHaEquivalenti : densita.pianteHaEquivalenti),
+        pianteHaEquivalenti: isCatalogo || isPomodoro ? densitaValore : Math.round(isGranoDuro ? densitaGrano.semiHaEquivalenti : densita.pianteHaEquivalenti),
         n1,
         n2,
         n3,
         n4,
         n5,
-        ...(isPomodoro ? {
+        ...(isCatalogo ? {
+          media: risultatiCatalogo.media, ottimale: risultatiCatalogo.ottimale,
+          discostamento: risultatiCatalogo.discostamento, dose: risultatiCatalogo.dose,
+          azotoTotale: risultatiCatalogo.azotoTotale, azotoGiaDistribuito,
+          quotaAzoto: risultatiCatalogo.dose,
+        } : isPomodoro ? {
           media: risultatiPomodoro.media, ottimale: risultatiPomodoro.ottimale,
           discostamento: risultatiPomodoro.discostamento, dose: risultatiPomodoro.dose,
           azotoTotale: risultatiPomodoro.azotoTotale, azotoGiaDistribuito,
@@ -691,7 +719,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     } else {
       doSave(null, null);
     }
-  }, [obsId, coltura, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, densitaGrano.semiHaEquivalenti, n1, n2, n3, n4, n5, risultati, risultatiGrano, risultatiPomodoro, fasePomodoro, isPomodoro, azotoGiaDistribuito, dataTrapiantoFutura, isGranoDuro, bbchGrano, bbchGranoConfermato, faseGrano, faseGranoSelezionata]);
+  }, [isCatalogo, risultatiCatalogo, obsId, coltura, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, densitaGrano.semiHaEquivalenti, n1, n2, n3, n4, n5, risultati, risultatiGrano, risultatiPomodoro, fasePomodoro, isPomodoro, azotoGiaDistribuito, dataTrapiantoFutura, isGranoDuro, bbchGrano, bbchGranoConfermato, faseGrano, faseGranoSelezionata]);
 
   const eliminaOsservazione = useCallback((id: string) => {
     fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -808,6 +836,13 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                 onChange={(event) => {
                   const nuovaColtura = event.target.value as Coltura;
                   setColtura(nuovaColtura);
+                  if (isCatalogueCrop(nuovaColtura)) {
+                    setVarieta(CROP_PROFILES.find(p => p.crop === nuovaColtura)!.name);
+                    setFaseCatalogo("");
+                    setFaseCatalogoConfermata(false);
+                    setErrors({});
+                    return;
+                  }
                   setVarieta(nuovaColtura === "pomodoro" ? PRIMO_POMODORO : nuovaColtura === "grano duro" ? "Redidenari" : "Burley (Non Cimato)");
                   setDensitaUnita(nuovaColtura === "grano duro" ? "kg/ha" : "piante/ha");
                   setBbchGrano("");
@@ -819,9 +854,17 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                 <option value="tabacco">Tabacco</option>
                 <option value="grano duro">Grano duro</option>
                 <option value="pomodoro">Pomodoro</option>
+                {CATALOGUE_CROPS.map(crop => <option key={crop} value={crop}>{t(crop)}</option>)}
               </select>
             </div>
-            {isPomodoro ? <PomodoroParameters
+            {isCatalogueCrop(coltura) ? <CatalogueCropParameters
+              crop={coltura} varieta={varieta} onVarieta={setVarieta}
+              resa={resa} onResa={setResa} densita={densitaValore} onDensita={setDensitaValore}
+              fase={faseCatalogo} onFase={setFaseCatalogo}
+              confermata={faseCatalogoConfermata} onConferma={setFaseCatalogoConfermata}
+              distribuito={azotoGiaDistribuito} onDistribuito={setAzotoGiaDistribuito}
+              piano={risultatiCatalogo} errore={errors.catalogue}
+            /> : isPomodoro ? <PomodoroParameters
               varieta={varieta} onVarieta={setVarieta}
               resa={resa} onResa={setResa} densita={densitaValore} onDensita={setDensitaValore}
               fase={fasePomodoro} onFase={setFasePomodoro}
@@ -1223,7 +1266,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
           </>
 
           {/* — Risultati — */}
-          {isPomodoro ? <PomodoroResults piano={risultatiPomodoro} /> : !isGranoDuro ? <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-3">
+          {isCatalogo ? <CatalogueCropResults piano={risultatiCatalogo} /> : isPomodoro ? <PomodoroResults piano={risultatiPomodoro} /> : !isGranoDuro ? <div className="bg-green-50 border-l-4 border-green-700 rounded-xl p-5 space-y-3">
             <h2 className="text-base font-bold text-green-900 mb-1">Risultati</h2>
             <div className="text-xs text-green-800 bg-green-100 rounded-lg px-3 py-2 space-y-1">
               <div className="font-semibold">📐 {ndviOttimaleNote}</div>
@@ -1470,7 +1513,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                     return (
                     <tr key={obs.id} className={i % 2 === 0 ? "bg-stone-50" : "bg-white"}>
                       <td className="px-2 py-2 text-center font-mono font-semibold text-green-800">{obs.id}</td>
-                      <td className="px-2 py-2 text-center capitalize">{obs.coltura ?? "tabacco"}</td>
+                      <td className="px-2 py-2 text-center capitalize">{t(obs.coltura ?? "tabacco")}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap">{obs.varieta}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap">{obs.data}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap text-stone-400">
@@ -1478,7 +1521,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                       </td>
                       <td className="px-2 py-2 text-center">{obs.cliente}</td>
                       <td className="px-2 py-2 text-center">{obs.appezzamento}</td>
-                      <td className="px-2 py-2 text-center">{obs.giorni}</td>
+                      <td className="px-2 py-2 text-center">{isCatalogueCrop(obs.coltura) ? "—" : obs.giorni}</td>
                       <td className="px-2 py-2 text-center text-xs font-mono whitespace-nowrap">{isObsGrano ? obs.bbch || "—" : "—"}</td>
                       <td className="px-2 py-2 text-center text-xs whitespace-nowrap">{obs.faseFenologica || "—"}</td>
                       <td className="px-2 py-2 text-center whitespace-nowrap">
@@ -1554,7 +1597,9 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         )}
 
         <p className="text-center text-xs text-green-700 pb-4">
-          {isPomodoro
+          {isCatalogo
+            ? t("Dose = quota della fase × deficit NDVI relativo, limitata al residuo del piano.")
+            : isPomodoro
             ? t("Formula pomodoro: quota della fase × deficit NDVI relativo, limitata al residuo del piano.")
             : isGranoDuro
             ? "Grano duro: l’indicazione N del punto è registrata per ogni media NDVI; BBCH, residuo e intervallo di consiglio la guidano, ma la verifica in campo resta necessaria."

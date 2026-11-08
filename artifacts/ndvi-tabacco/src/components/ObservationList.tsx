@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { groupObservations, ndviDeviation } from "../utils/observationHistory";
 import { downloadObservationWorkbook } from "../utils/observationExcel";
 import type { Observation } from "../App";
+import { isCatalogueCrop } from "@workspace/crop-calculations";
 import { getLocale, t, useLanguage } from "../i18n/runtime";
 
 /** Persisted values (IDs, clients, varieties, units) are never translated. */
@@ -41,7 +42,7 @@ function details(o: Observation, locale: string): Row[] {
     { label: t("Data del rilievo"), value: formatDay(o.data, locale) ?? "—" },
     { label: t("Data Trapianto"), value: formatDay(o.dataTrapianto, locale) ?? "—" },
     o.dataSemina ? { label: t("Data semina"), value: formatDay(o.dataSemina, locale) ?? o.dataSemina } : null,
-    { label: t("Giorni"), value: String(o.giorni) },
+    { label: t("Giorni"), value: isCatalogueCrop(o.coltura) ? "—" : String(o.giorni) },
     o.faseFenologica ? { label: t("Fase fenologica"), value: t(o.faseFenologica) } : null,
     o.bbch ? { label: "BBCH", value: o.bbch } : null,
     o.faseFonte ? { label: t("Fonte della fase"), value: t(o.faseFonte) } : null,

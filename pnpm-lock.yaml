@@ -185,6 +185,9 @@ importers:
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod
+      '@workspace/crop-calculations':
+        specifier: workspace:*
+        version: link:../../lib/crop-calculations
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
@@ -592,6 +595,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      '@workspace/crop-calculations':
+        specifier: workspace:*
+        version: link:../../lib/crop-calculations
       '@workspace/grain-calculations':
         specifier: workspace:*
         version: link:../../lib/grain-calculations
@@ -775,6 +781,8 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+
+  lib/crop-calculations: {}
 
   lib/db:
     dependencies:

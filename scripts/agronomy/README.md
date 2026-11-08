@@ -16,7 +16,7 @@ python scripts/agronomy/export_app_catalogue.py \
   attached_assets/Database_Colture_1794160273520.csv --check
 ```
 
-`artifacts/api-server/src/data/crop-catalogue.json` conserva le 488 righe e le
+`lib/crop-calculations/src/catalogue.json` conserva le 488 righe e le
 24 colonne del CSV selezionato senza conversioni di valori o identificatori.
 `selected-catalogue-trace.json` conserva separatamente hash, esclusioni,
 integrazioni e tracciabilità per parametro (raggruppata senza perdita quando
