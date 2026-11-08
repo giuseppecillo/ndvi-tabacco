@@ -112,3 +112,31 @@ mtime_ms = 1794162229668
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/2f2ba404-93bc-4e4b-9b50-6a85ec605900/8f2d9f7c-8afe-494b-84dd-5865e64aad04"
 storage_version_token = "1794162272924578"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "FxkuNVkOrEeeoVjL1uaSW"
+uri = "file://generated-artifacts/crop-expansion/lacune_ampliamento.html"
+type = "html"
+title = "Catalogo varietale — fonti e lacune"
+description = "Rapporto di ricerca incompleta: 23 nuove identità documentate, conteggi per coltura e parametri ancora mancanti. Non è una validazione agronomica."
+logical_id = "905aab24-d67e-4c1e-a677-5702a447e99f"
+content_hash = "sha256:33bb1dfbef04bdc78c50b36b6fa8a3e7f96b24e67eb7fdc1e1ccd710205affe2"
+size = 16676
+mtime_ms = 1794163113325
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/905aab24-d67e-4c1e-a677-5702a447e99f/7965ce1b-0464-4efa-86ca-48aeec377af7"
+storage_version_token = "1794163133746611"
+content_type = "text/html"
+
+[[outputs]]
+id = "Who_LgO0--V1T7Kyt8lp2"
+uri = "file://generated-artifacts/crop-expansion/BOZZA_INCOMPLETA_colture_ampliate.csv"
+type = "table"
+title = "Bozza incompleta — 516 record"
+description = "Solo per consultazione: 493 identità originali più 23 nuove. Contiene ancora celle applicabili mancanti; non è il catalogo definitivo. Nessun calcolo abilitato."
+logical_id = "8239e22d-b6fc-49d8-a5e6-2e40a09c2687"
+content_hash = "sha256:d302ebc369888efff9df2d4564b56dd84d39670e517a1a6acea5bb58254ec178"
+size = 3078820
+mtime_ms = 1794163113365
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:27ec4a15-12f0-429d-b773-9d505cf88e46/8239e22d-b6fc-49d8-a5e6-2e40a09c2687/f6e12f45-c9b7-4950-9ede-44b467c53fdb"
+storage_version_token = "1794163134152815"
+content_type = "text/csv"

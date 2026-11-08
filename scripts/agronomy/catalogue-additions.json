@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "reviewed_on": "2026-11-08",
+  "status": "RICERCA_INCOMPLETA_NON_CONSEGNABILE_COME_DEFINITIVA",
+  "original_source_sha256": "20a25d7aaea796f5a7d6e4278c6e4ce51e63d791f2c0e9fc6af388e40ea7998a",
+  "limits": [
+    "Selezione documentale, non elenco esaustivo né certificazione di iscrizione attuale in Italia.",
+    "Nessun dato del catalogo originale è usato come riferimento per stime.",
+    "Destinazione e impiego sono traduzioni descrittive della parte raccolta nelle fonti, non una certificazione commerciale.",
+    "Non sono ancora disponibili serie comparabili per tutti i parametri applicabili. La generazione definitiva deve restare bloccata.",
+    "Le indicazioni RHS si riferiscono al contesto britannico e non definiscono un sistema produttivo italiano."
+  ],
+  "sources": {
+    "ioc_frantoio": {
+      "title": "International Olive Council — World catalogue of olive varieties, Frantoio",
+      "url": "https://worldolivecatalogue.internationaloliveoil.org/en/variety/italy/frantoio",
+      "access": "Testo integrale della scheda consultato",
+      "scope": "Denominazione, sinonimi, destinazione olio, invaiatura medio-tardiva. Oil yield ~18% non è resa in t/ha.",
+      "locator": "Purpose; Agronomic characterisation and commercial considerations",
+      "excerpt": "Purpose: Oil. Fruit veraison is medium-late and scalable."
+    },
+    "ioc_leccino": {
+      "title": "International Olive Council — World catalogue of olive varieties, Leccino",
+      "url": "https://worldolivecatalogue.internationaloliveoil.org/en/variety/italy/leccino",
+      "access": "Testo integrale della scheda consultato",
+      "scope": "Denominazione, sinonimi, destinazione olio e maturazione precoce. La vicinanza a Frantoio non dimostra equivalenza numerica.",
+      "locator": "Purpose; Agronomic characterisation and commercial considerations",
+      "excerpt": "Purpose: Oil. Fruit ripening and oil accumulation are early and scalable."
+    },
+    "rhs_stella": {
+      "title": "RHS — Prunus avium Stella",
+      "url": "https://www.rhs.org.uk/plants/59056/prunus-avium-stella-(f)/details",
+      "access": "Testo integrale della scheda consultato",
+      "scope": "Cultivar produttiva autofertile; calendario britannico, non classe italiana di precocità.",
+      "locator": "Description",
+      "excerpt": "A black cherry with large, rich, high quality fruits. Heavy, regular crops; self-fertile. Cropping season: late July."
+    },
+    "rhs_sunburst": {
+      "title": "RHS — Prunus avium Sunburst",
+      "url": "https://www.rhs.org.uk/plants/62523/prunus-avium-sunburst-d/details",
+      "access": "Testo integrale della scheda consultato",
+      "scope": "Cultivar produttiva autofertile, non semplice impollinatore; metà estate nel contesto RHS.",
+      "locator": "Description",
+      "excerpt": "A self-fertile cherry with large, sweet, very dark red fruit in midsummer."
+    },
+    "rhs_garlic": {
+      "title": "RHS Advice Team — How to grow garlic",
+      "url": "https://www.rhs.org.uk/vegetables/garlic/grow-your-own",
+      "access": "Testo consultato, incluse Recommended Varieties e Planting",
+      "scope": "Arno, Cristo, Germidour e Solent Wight: varietà softneck. Sesto generico 15 x 30 cm: non prova una densità specifica varietale.",
+      "locator": "Recommended Varieties",
+      "excerpt": "Arno: A softneck variety with ivory-white skin. Cristo: A softneck variety. White bulbs. Germidour: A well known and reliable softneck variety. Solent Wight: A softneck variety well adapted to the British climate."
+    },
+    "rhs_onion": {
+      "title": "RHS Advice Team — How to grow onions",
+      "url": "https://www.rhs.org.uk/vegetables/onions/grow-your-own",
+      "access": "Testo consultato, incluse Recommended Varieties e Planting",
+      "scope": "Nomi Red Baron e Sturon; sesti diversi per semina/trapianto/bulbilli, non densità specifiche varietali.",
+      "locator": "Recommended Varieties",
+      "excerpt": "Red Baron; Sturon."
+    },
+    "vitalis_2022": {
+      "title": "Enza Zaden / Vitalis — Catalogue UK 2022",
+      "url": "https://www.enzazaden.com/uk/-/media/files/vitalis/pdf-catalogue/cat-2022/vitalis-catalogue-uk-2022.pdf",
+      "access": "Testo estratto del PDF consultato; non verifica visiva delle immagini o iscrizione attuale",
+      "scope": "Schede nominative Oranos F1, Teseo F1, Nuance, Dunja F1 e Fenna F1. Scarface è un portinnesto, non incluso fra i produttivi. Corno di Toro è il tipo di Teseo, non un sinonimo.",
+      "locator": "Pepper; Endive, Garden Cress, Eggplant and Kohlrabi; Courgette and Wintersquash",
+      "excerpt": "Sweet Conical - Oranos F1. Corno di Toro type - Teseo F1. Endive Flat Leaved - Nuance. Courgette - Dunja F1. Courgette - Fenna F1 New."
+    },
+    "uf_escarole": {
+      "title": "UF/IFAS Extension — HS1489, Escarole and Endive",
+      "url": "https://ask.ifas.ufl.edu/publication/HS1489",
+      "access": "Testo consultato, sezioni The Crop, Types e Cultivars Adapted to Florida Conditions",
+      "scope": "Scarola = Cichorium endivia var. latifolium, distinta dall'indivia riccia. Forbes, Olmos, Sienna e Twinkle in Florida, non prova di adattamento italiano.",
+      "locator": "Cultivars Adapted to Florida Conditions",
+      "excerpt": "Escarole: Forbes, Olmos, Sienna, and Twinkle."
+    },
+    "rhs_bright": {
+      "title": "RHS — Beta vulgaris Bright Lights",
+      "url": "https://www.rhs.org.uk/plants/206888/beta-vulgaris-bright-lights/details",
+      "access": "Testo integrale della scheda consultato",
+      "scope": "Voce nominativa chard a coste multicolori, non bietola da zucchero; nessuna verifica del lotto o della registrazione.",
+      "locator": "Description",
+      "excerpt": "A biennial vegetable grown for its edible leaves. Stems appear in a range of red, yellow and orange shades."
+    },
+    "rhs_fordhook": {
+      "title": "RHS — Beta vulgaris subsp. cicla var. flavescens Fordhook Giant",
+      "url": "https://www.rhs.org.uk/plants/165058/beta-vulgaris-subsp-cicla-var-flavescens-fordhook-giant/details",
+      "access": "Testo integrale della scheda consultato",
+      "scope": "Bietola da costa/foglia a coste bianche; calendario britannico, non classe di precocità italiana.",
+      "locator": "Description",
+      "excerpt": "A strong, vigorous and very productive dark green and leafy swiss chard with crisp white stems."
+    },
+    "kws_herma": {
+      "title": "KWS Italia — SMART HERMA KWS",
+      "url": "https://www.kws.com/it/it/prodotti/bietola-da-zucchero/descrizione-delle-varieta/smart-herma-kws/",
+      "access": "Testo integrale della scheda consultato",
+      "scope": "Nome varietale e destinazione zucchero; CONVISO SMART e CR+ sono tecnologie/marchi, non cultivar aggiuntive. Nessuna resa numerica in t/ha.",
+      "locator": "Caratteristiche; Epoca di raccolta",
+      "excerpt": "Varietà CONVISO SMART e CR+. Epoca di raccolta: Da precoce a tardiva."
+    },
+    "kws_fiammetta": {
+      "title": "KWS Italia — FIAMMETTA KWS",
+      "url": "https://www.kws.com/it/it/colture-estensive/bietola-da-zucchero/descrizione-delle-varieta/fiammetta-kws/",
+      "access": "Testo integrale della scheda consultato",
+      "scope": "Nome varietale da zucchero. Titolo Precoce ma tabella Epoca di raccolta Da Media a Tardiva: precocità da chiarire, non risolta arbitrariamente.",
+      "locator": "Sottotitolo; Epoca di raccolta",
+      "excerpt": "Precoce, produttiva con buona tolleranza alla cercospora. Epoca di raccolta: Da Media a Tardiva."
+    },
+    "olive_sensor": {
+      "title": "Sensors 2024, 24(8), 2557 — Relationship between Height and Exposure in Multispectral Vegetation Index Response and Product Characteristics in a Traditional Olive Orchard",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11053592/",
+      "access": "Testo consultato fino alle sezioni Methods e Results; estrazione troncata successivamente",
+      "scope": "Piangente e Scarlinese, OptRx laterale a due altezze e due esposizioni, misure 8 agosto 2022. Non una curva di quattro fasi di Frantoio/Leccino.",
+      "locator": "2.1; 2.2; 3.2",
+      "excerpt": "The sensor was placed 1.6 and 2.5 m from the ground, and the tractor maintained a 1 m distance from the canopies. Data were collected on August 8."
+    },
+    "onion_savi": {
+      "title": "Messina et al. 2020 — A Comparison of UAV and Satellites Multispectral Imagery in Monitoring Onion Crop",
+      "url": "https://www.mdpi.com/2072-4292/12/20/3424",
+      "access": "Primo blocco di testo consultato, incluse sezioni 2.2 e metodi; estrazione parziale",
+      "scope": "Indice SAVI, non NDVI; Cipolla Rossa di Tropea, Parrot Sequoia, PlanetScope e Sentinel-2, tre date nella fase principale BBCH 4. Non trasferire a Sturon/Red Baron o alle altre fasi.",
+      "locator": "Abstract; 2.2 Platforms and Data Acquisition; Data processing",
+      "excerpt": "The soil adjusted vegetation index (SAVI) was used for monitoring the vigor of the study field."
+    }
+  },
+  "records": [
+    {"crop": "Olivo", "name": "Frantoio", "kind": "CULTIVAR", "sources": ["ioc_frantoio"], "finding": "Scheda dedicata; sinonimi registrati nella fonte non aggiunti come osservazioni indipendenti.", "destination": "Trasformazione", "use": "Olio", "earliness": "Medio-tardiva (invaiatura scalare)", "earliness_sources": ["ioc_frantoio"]},
+    {"crop": "Olivo", "name": "Leccino", "kind": "CULTIVAR", "sources": ["ioc_leccino"], "finding": "Scheda dedicata; non assimilare numericamente a Frantoio per la sola vicinanza varietale.", "destination": "Trasformazione", "use": "Olio", "earliness": "Precoce (maturazione e accumulo olio scalari)", "earliness_sources": ["ioc_leccino"]},
+    {"crop": "Ciliegio", "name": "Stella", "kind": "CULTIVAR", "sources": ["rhs_stella"], "finding": "Cultivar autofertile produttiva, non anagrafica di solo impollinatore.", "destination": "Frutti eduli", "use": "Ciliegie"},
+    {"crop": "Ciliegio", "name": "Sunburst", "kind": "CULTIVAR", "sources": ["rhs_sunburst"], "finding": "Cultivar autofertile produttiva; midsummer non convertito in una classe italiana.", "destination": "Frutti eduli", "use": "Ciliegie"},
+    {"crop": "Aglio", "name": "Arno", "kind": "CULTIVAR", "sources": ["rhs_garlic"], "finding": "Voce nominativa fra Recommended Varieties; softneck.", "destination": "Bulbi eduli", "use": "Alimentare"},
+    {"crop": "Aglio", "name": "Cristo", "kind": "CULTIVAR", "sources": ["rhs_garlic"], "finding": "Voce nominativa fra Recommended Varieties; softneck.", "destination": "Bulbi eduli", "use": "Alimentare"},
+    {"crop": "Aglio", "name": "Germidour", "kind": "CULTIVAR", "sources": ["rhs_garlic"], "finding": "Voce nominativa fra Recommended Varieties; softneck.", "destination": "Bulbi eduli", "use": "Alimentare"},
+    {"crop": "Aglio", "name": "Solent Wight", "kind": "CULTIVAR", "sources": ["rhs_garlic"], "finding": "Voce nominativa fra Recommended Varieties; non aggiungere Solent White come varietà indipendente.", "destination": "Bulbi eduli", "use": "Alimentare"},
+    {"crop": "Cipolla", "name": "Red Baron", "kind": "CULTIVAR", "sources": ["rhs_onion"], "finding": "Voce nominativa fra Recommended Varieties; non trasferire il sesto generico come dato varietale.", "destination": "Bulbi eduli", "use": "Alimentare"},
+    {"crop": "Cipolla", "name": "Sturon", "kind": "CULTIVAR", "sources": ["rhs_onion"], "finding": "Voce nominativa fra Recommended Varieties.", "destination": "Bulbi eduli", "use": "Alimentare"},
+    {"crop": "Zucchino", "name": "Dunja F1", "kind": "CULTIVAR_IBRIDA_F1", "sources": ["vitalis_2022"], "finding": "Scheda Courgette Dunja F1. Non attestata qui alcuna sinonimia con Ladoga.", "destination": "Frutti immaturi eduli", "use": "Alimentare"},
+    {"crop": "Zucchino", "name": "Fenna F1", "kind": "CULTIVAR_IBRIDA_F1", "sources": ["vitalis_2022"], "finding": "Scheda Courgette Fenna F1; New non è parte della denominazione.", "destination": "Frutti immaturi eduli", "use": "Alimentare"},
+    {"crop": "Peperone", "name": "Oranos F1", "kind": "CULTIVAR_IBRIDA_F1", "sources": ["vitalis_2022"], "finding": "Sweet Conical, arancione. Corretto il nome della coltura Peperone, non Peperonone.", "destination": "Frutti eduli", "use": "Peperone dolce"},
+    {"crop": "Peperone", "name": "Teseo F1", "kind": "CULTIVAR_IBRIDA_F1", "sources": ["vitalis_2022"], "finding": "Corno di Toro type descrive il tipo; non è una cultivar aggiuntiva né un sinonimo dimostrato.", "destination": "Frutti eduli", "use": "Peperone dolce"},
+    {"crop": "Scarola", "name": "Nuance", "kind": "CULTIVAR", "sources": ["vitalis_2022"], "finding": "Endive Flat Leaved, distinta da Endive Curled Benefine.", "destination": "Foglie eduli", "use": "Alimentare"},
+    {"crop": "Scarola", "name": "Forbes", "kind": "CULTIVAR", "sources": ["uf_escarole"], "finding": "Elenco esplicito Escarole; adattamento Florida, non attestazione di adattamento italiano.", "destination": "Foglie eduli", "use": "Alimentare"},
+    {"crop": "Scarola", "name": "Olmos", "kind": "CULTIVAR", "sources": ["uf_escarole"], "finding": "Elenco esplicito Escarole; non includere varietà di indivia riccia per analogia.", "destination": "Foglie eduli", "use": "Alimentare"},
+    {"crop": "Scarola", "name": "Sienna", "kind": "CULTIVAR", "sources": ["uf_escarole"], "finding": "Elenco esplicito Escarole.", "destination": "Foglie eduli", "use": "Alimentare"},
+    {"crop": "Scarola", "name": "Twinkle", "kind": "CULTIVAR", "sources": ["uf_escarole"], "finding": "Elenco esplicito Escarole.", "destination": "Foglie eduli", "use": "Alimentare"},
+    {"crop": "Bietola da costa/foglia", "name": "Bright Lights", "kind": "CULTIVAR", "sources": ["rhs_bright"], "finding": "Voce nominativa chard a coste multicolori; non attesta uniformità genetica o registrazione. Destinazione costa/foglia, mai zucchero.", "destination": "Coste e foglie eduli", "use": "Alimentare"},
+    {"crop": "Bietola da costa/foglia", "name": "Fordhook Giant", "kind": "CULTIVAR", "sources": ["rhs_fordhook"], "finding": "Voce nominativa swiss chard a coste bianche; non barbabietola da zucchero.", "destination": "Coste e foglie eduli", "use": "Alimentare"},
+    {"crop": "Bietola da zucchero", "name": "SMART HERMA KWS", "kind": "CULTIVAR_CON_TECNOLOGIA_COMMERCIALE", "sources": ["kws_herma"], "finding": "Scheda del costitutore. CONVISO SMART e CR+ non sono contati come cultivar. Epoca di estirpo non convertita in classe di precocità.", "destination": "Trasformazione industriale", "use": "Zucchero da radici"},
+    {"crop": "Bietola da zucchero", "name": "FIAMMETTA KWS", "kind": "CULTIVAR", "sources": ["kws_fiammetta"], "finding": "Scheda del costitutore: sottotitolo Precoce ma epoca di raccolta Da Media a Tardiva. Richiedere chiarimento prima di completare Precocità.", "destination": "Trasformazione industriale", "use": "Zucchero da radici"}
+  ]
+}
