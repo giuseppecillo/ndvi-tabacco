@@ -163,7 +163,12 @@ function checkDose(model, ref, observed, applied, quota) {
   };
 }
 
-export function evaluateFieldCampaigns(dataset, candidate, {authorizedReferenceData = false} = {}) {
+export function evaluateFieldCampaigns(dataset, candidate, {
+  authorizedReferenceData = false,
+  // Offline dependency injection for controlled negative tests only. The CLI
+  // never supplies this callback; all intake/current-model validation still runs.
+  modelForSafetyTest,
+} = {}) {
   if (!authorizedReferenceData) fail("EXPLICIT_REFERENCE_DATA_AUTHORIZATION_REQUIRED");
   if (!dataset || dataset.schemaVersion !== 1 || !text(dataset.sourceEvidence)
     || dataset.customerData !== false || dataset.independentFieldData !== true || dataset.synthetic !== false
@@ -175,7 +180,8 @@ export function evaluateFieldCampaigns(dataset, candidate, {authorizedReferenceD
     const model = validateRow(row);
     const id = norm(row.id);
     if (ids.has(id)) fail("DUPLICATE_SAMPLE_ID");
-    ids.add(id); models.set(row.id, model);
+    ids.add(id);
+    models.set(row.id, modelForSafetyTest ? modelForSafetyTest(row, model) : model);
   }
   const calibration = dataset.rows.filter(r => r.split === "calibration");
   const evaluation = dataset.rows.filter(r => r.split === "evaluation");

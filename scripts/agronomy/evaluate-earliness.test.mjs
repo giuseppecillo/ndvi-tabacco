@@ -81,6 +81,79 @@ function fixture() {
 }
 const evaluate=(d,c)=>evaluateFieldCampaigns(d,c,{authorizedReferenceData:true});
 
+// Deliberately unsafe models live ONLY in this test. Never alter a real model,
+// clamp its output in the evaluator, or present these fixtures as field evidence.
+const controlledSafetyModel = () => ({
+  reference:.6, totalN:120, quota:30, applied:10,
+  dose:(observed,reference,applied=10,quota=30) =>
+    Math.min(Math.max(0,120-applied),quota) * Math.max(0,reference-observed) / reference,
+});
+const noViolations = () => ({
+  residual:0, phaseQuota:0, aboveReference:0, zeroNPhase:0, exhaustedPlan:0,
+});
+for(const [name,unsafeDose,expected] of [
+  ["fractional residual",
+    (observed,reference,applied,quota) =>
+      observed<reference && quota>0 && 120-applied>0 && 120-applied<.1 ? .1 : null,
+    {residual:2}],
+  ["above NDVI reference",
+    (observed,reference) => observed>reference ? 1 : null,
+    {aboveReference:1}],
+  ["zero-N phase",
+    (_observed,_reference,_applied,quota) => quota===0 ? 1 : null,
+    {zeroNPhase:1,phaseQuota:1}],
+  ["exhausted nitrogen plan",
+    (_observed,_reference,applied) => applied>=120 ? 1 : null,
+    {exhaustedPlan:2,residual:2}],
+]) test(`offline evaluator rejects controlled unsafe doses: ${name}`,()=>{
+  const {dataset,candidate}=fixture();
+  candidate.curves[0].points=[{day:0,ndvi:.6},{day:20,ndvi:.6}];
+  const original=structuredClone({dataset,candidate});
+  const run=modelForSafetyTest=>evaluateFieldCampaigns(dataset,candidate,{
+    authorizedReferenceData:true,modelForSafetyTest,
+  });
+  const safe=run(controlledSafetyModel);
+  assert.equal(safe.status,"OFFLINE_COMPARISON_ONLY");
+  for(const branch of ["baseline","candidate"]) {
+    assert.equal(safe.safety[branch].checks,10);
+    assert.deepEqual(safe.safety[branch].violations,noViolations());
+  }
+  const result=run(()=>{
+    const model=controlledSafetyModel();
+    return {...model,dose:(observed,reference,applied=model.applied,quota=model.quota) =>
+      unsafeDose(observed,reference,applied,quota) ?? model.dose(observed,reference,applied,quota)};
+  });
+  assert.equal(result.status,"SAFETY_FAILED");
+  assert.equal(result.decision,"DO_NOT_ACTIVATE");
+  assert.equal(result.applicationChanged,false);
+  assert.equal(result.supabaseWrites,false);
+  assert.equal(result.customerDataRead,false);
+  for(const branch of ["baseline","candidate"]) {
+    assert.equal(result.safety[branch].checks,10);
+    assert.deepEqual(result.safety[branch].violations,{...noViolations(),...expected});
+  }
+  assert.deepEqual({dataset,candidate},original);
+  // Injection is per call; a later normal run still uses the real crop model.
+  assert.equal(evaluate(dataset,candidate).status,"OFFLINE_COMPARISON_ONLY");
+});
+
+test("unsafe dose is reported unchanged, not hidden by a residual clamp",()=>{
+  const {dataset,candidate}=fixture();
+  const result=evaluateFieldCampaigns(dataset,candidate,{
+    authorizedReferenceData:true,
+    modelForSafetyTest:()=>({
+      ...controlledSafetyModel(),applied:119.96,dose:()=>.1,
+    }),
+  });
+  assert.ok(.1>120-119.96);
+  assert.equal(result.status,"SAFETY_FAILED");
+  assert.equal(result.decision,"DO_NOT_ACTIVATE");
+  assert.equal(result.doseImpact.baselineMean,.1);
+  assert.equal(result.doseImpact.candidateMean,.1);
+  for(const branch of ["baseline","candidate"])
+    assert.ok(result.safety[branch].violations.residual>0);
+});
+
 test("paired holdout MAE/RMSE and dose changes use current model, never training measurements",()=>{
   const {dataset,candidate,evaluation,training}=fixture();
   const result=evaluate(dataset,candidate);
