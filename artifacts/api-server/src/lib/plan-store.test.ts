@@ -111,6 +111,23 @@ test("Pro storage exhaustion rolls back BOTH the observation and its visit ledge
   assert.equal([...f.state().keys()].filter(k=>k.startsWith(usagePrefix(owner.id))).length,0);
   assert.ok(f.calls.includes("ROLLBACK"));assert.equal(f.released(),1);
 });
+test("Pro map measures the archive once inside the transaction and returns that measurement",async t=>{
+  const f=fixture(t);f.seed("pro");
+  const result=await countGeneratedMap(owner,randomUUID());
+  assert.equal(result.mapsUsed,1);
+  assert.equal(f.calls.filter(sql=>sql.startsWith("SELECT owner_id, count(*)")).length,1);
+  const measurement=f.calls.findIndex(sql=>sql.startsWith("SELECT owner_id, count(*)"));
+  assert.ok(measurement>f.calls.findIndex(sql=>sql.startsWith("INSERT INTO app_plan_state")));
+  assert.ok(measurement<f.calls.indexOf("COMMIT"));
+});
+test("Pro map storage overflow rolls back the event as well as its response",async t=>{
+  const f=fixture(t);f.seed("pro");
+  f.observations().push({owner_id:owner.id,cliente:"Synthetic",data:"2026-01-01",bytes:PRO_BYTES,created_at:new Date().toISOString()});
+  await assert.rejects(countGeneratedMap(owner,randomUUID()),{code:"STORAGE_QUOTA_EXCEEDED"});
+  assert.equal([...f.state().keys()].filter(k=>k.startsWith(usagePrefix(owner.id))).length,0);
+  assert.equal(f.calls.at(-1),"ROLLBACK");
+  assert.equal(f.observations().length,1);
+});
 test("upgrade preserves counts; renewal retains all observations and historical contract counters",async t=>{
   const f=fixture(t);const p=f.seed();await f.save("Historical customer");
   f.ledger(p.periodId,"map",3);

@@ -104,3 +104,16 @@ interamente simulato, nessuna connessione reale. Controlli su soglie, rinnovo,
 idempotenza, lock/ROLLBACK, isolamento e cancellazione per proprietario.
 `tests/admin-plans.html`: interfaccia reale con rete intercettata e dati
 sintetici, solo in sviluppo. Non elude le protezioni dell'applicazione reale.
+
+## Prestazioni e grandi archivi
+
+Risultati, comando riproducibile, limiti e proposta di evoluzione:
+[`USER_PLANS_PERFORMANCE.md`](USER_PLANS_PERFORMANCE.md).
+
+Il riepilogo usa ora indici **locali alla singola richiesta**, non contatori
+persistenti: ogni evento viene validato e contato una sola volta per periodo.
+Per una nuova mappa Pro la stessa misura post-inserimento serve sia al controllo
+dei byte sia alla risposta, nella transazione e sotto i lock già previsti.
+Nessuna query, migrazione, autorizzazione o regola contrattuale aggiuntiva.
+Le query sui dati e il trasferimento degli eventi restano proporzionali
+all'archivio: non è una certificazione di capacità per account da 50 GB.

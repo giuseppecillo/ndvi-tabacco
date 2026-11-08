@@ -15,6 +15,14 @@ I piani richiesti sono Standard, fino a 50 rilievi e 50 mappe IDW, e Pro, con «
 
 **How to apply:** non introdurre pagamenti o rinnovi autonomi; l’amministratore gestisce l’assegnazione.
 
+La quota Pro di 50 GB non deve essere presentata come spazio infrastrutturale
+già prenotato.
+
+**Why:** vincolo esplicito del titolare per la verifica dei consumi su grandi archivi.
+
+**How to apply:** distinguere sempre quota applicativa e capacità effettiva
+dell'hosting; un benchmark sintetico non attesta spazio disponibile sul provider.
+
 Un rilievo corrisponde a una visita per cliente e data, non a una singola osservazione. Le quote Standard si azzerano al rinnovo annuale; l’abbonamento decorre dalla data scelta dall’amministratore.
 
 **Why:** il titolare ha confermato esplicitamente tutte e tre le regole.
