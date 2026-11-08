@@ -47,6 +47,19 @@ significativo del contesto; non concedere permessi per aggirarla.
 Il titolare ha chiesto di segnalare il blocco, senza continuare a preparare
 ulteriori alternative complesse.
 
+Il titolare ha successivamente accettato il rischio residuo di possibile
+presenza di materiale di autenticazione nei log gestiti da Supabase e vuole
+procedere con il metodo ufficialmente supportato per app_runtime. Non
+effettuare ulteriori analisi o tentativi di modificare il logging PostgreSQL.
+
+**Why:** il titolare vuole sbloccare la migrazione senza attività superflue.
+
+**How to apply:** non trattare più l'assenza assoluta dai log Supabase come
+prerequisito. Richiedere una sola autorizzazione esplicita con operazioni
+esatte prima della configurazione di password, LOGIN e Secret Production.
+Non ricevere password in chat né salvarle nel repository; non ampliare
+privilegi. Pubblicazione, importazione e cambio connessione restano separati.
+
 Il titolare non vuole installare PostgreSQL o altri strumenti sul proprio PC
 per questa migrazione. Vuole procedere esclusivamente tramite Replit e il
 progetto Supabase Agri Precision; per identificare il primario ha scelto un

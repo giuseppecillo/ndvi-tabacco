@@ -71,6 +71,16 @@ impostazioni, canary o password. Esito completo in
 `LOGGING_PERMISSIONS_RESULT.md`. Non preparare altre varianti complesse
 automaticamente; la predisposizione runtime resta bloccata.
 
+**Consenso successivo del titolare:** accettato il rischio residuo di
+materiale di autenticazione nei log Supabase. Abbandonata definitivamente
+la variante che modifica il logging; il precedente blocco su tale garanzia
+non è più un prerequisito. Percorso scelto: configurazione standard del
+solo app_runtime tramite Dashboard amministrativa Supabase e inserimento
+manuale della connessione esclusivamente nei Production app secrets.
+La password rimane al titolare. Prima di queste operazioni è richiesta
+un'unica autorizzazione esplicita; non implica consenso a Publish,
+importazione, manutenzione o modifica di DATABASE_URL.
+
 ### A. Prima della finestra: credenziali e collaudo della connessione
 
 Stima: 5–15 minuti, applicazione ancora su Replit.
