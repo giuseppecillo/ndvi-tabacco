@@ -1,6 +1,8 @@
 # Piano operativo definitivo — Replit Production → Supabase Agri Precision
 
-Stato: piano approvato dal titolare; preparativi operativi avviati.
+Stato: migrazione completata e servizio riaperto su Supabase.
+Verifica finale: 8 novembre 2026, revisione Production 7bec5ebd.
+Le sezioni di avanzamento seguenti mantengono la cronologia dei gate.
 Questo documento prevale sui passaggi ormai superati delle checklist precedenti.
 Non autorizza operazioni per il solo fatto di essere presente nel repository.
 
@@ -123,6 +125,32 @@ La release LIVE resta quella con manutenzione finché il titolare non
 completa l'ultimo Republish. Dopo il clic verificare nuova revisione LIVE,
 runtimeIdentity passed, maintenance false, pilotAccounts 0 e health 200.
 Solo allora attestare la riapertura effettiva.
+
+### Riapertura verificata — esecuzione conclusa
+
+Ultimo Republish effettuato dal titolare. La revisione
+7bec5ebd-ea35-4eea-aad7-bf166632a8b6 è success/LIVE, pubblicata
+l'8 novembre 2026 alle 15:50:57 UTC circa.
+L'audit dei log limitato alla nuova revisione rileva alle 15:50:37.871Z:
+backend supabase, runtimeIdentity passed, maintenance false, pilotAccounts 0.
+Verifica schema read-only superata, avvio completato e health 200.
+Nessun errore fatale d'avvio; i probe 500 precedenti la readiness sono
+seguiti da avvio riuscito. Il controllo diretto HTTP conferma:
+health 200, auth/setup 200, osservazioni senza sessione 401 (non più 503).
+L'assenza di sessione resta quindi protetta, senza rendere pubblici i dati.
+
+Il collaudo autenticato completo è quello manuale del titolare già
+registrato; il breve intervallo di log finale non contiene una nuova GET
+autenticata osservazioni e non viene presentato come un secondo test UI.
+Nessun nuovo backup, import, confronto integrale o modifica dati eseguito
+per la verifica finale. DATABASE_URL, credenziali e Clerk invariati.
+Nuove scritture operative destinate a Supabase; Replit sorgente conservato.
+
+Resta da confermare la custodia esterna del NUOVO archivio finale cifrato
+e del suo checksum (non confonderli con il backup preliminare già scaricato).
+Non esporre la chiave privata né rimuovere Secrets temporanei senza consenso.
+Dal momento della riapertura non applicare un semplice ritorno a Replit:
+eventuali nuove scritture Supabase richiedono riconciliazione del delta.
 
 ### Accesso al collaudo durante la manutenzione
 

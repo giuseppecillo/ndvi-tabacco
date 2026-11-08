@@ -9,6 +9,17 @@ Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL:
 
 **How to apply:** non rendere disponibili nello sviluppo ordinario credenziali scrivibili di produzione o amministrative. Esplicitare che i test di salvataggio non sono possibili con la sola lettura; qualsiasi accesso QA aggiuntivo o database temporaneo richiede approvazione, non una deroga implicita.
 
+Dopo la riapertura su Supabase, non tornare al database Replit conservato
+con il semplice cambio del backend. Prima servono nuovo congelamento e
+riconciliazione delle eventuali nuove scritture, con consenso specifico.
+
+**Why:** la copia sorgente e il backup fotografano il momento del trasferimento;
+non contengono i dati salvati successivamente su Supabase.
+
+**How to apply:** distinguere il rollback prima della riapertura, coperto
+dal piano di migrazione, da un rientro successivo all'uso operativo.
+Non promettere recupero senza perdita di dati dal solo database conservato.
+
 Per la sola pubblicazione preliminare il titolare accetta consapevolmente
 il rischio del diff SQL preventivo non verificato. Non autorizza repliche
 o altre risorse aggiuntive, nemmeno per calcolare quel diff.
