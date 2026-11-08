@@ -13,4 +13,16 @@ I piani richiesti sono Standard, fino a 50 rilievi e 50 mappe IDW, e Pro, con «
 
 **Why:** il titolare ha definito due piani e una gestione contrattuale amministrativa, non un acquisto automatico.
 
-**How to apply:** chiarire l’unità di conteggio dei rilievi e la decorrenza/rinnovo delle quote prima di applicare limiti; non introdurre pagamenti o rinnovi autonomi. Non interpretare automaticamente il termine «rilievo» come singolo punto se può indicare una visita con più osservazioni.
+**How to apply:** non introdurre pagamenti o rinnovi autonomi; l’amministratore gestisce l’assegnazione.
+
+Un rilievo corrisponde a una visita per cliente e data, non a una singola osservazione. Le quote Standard si azzerano al rinnovo annuale; l’abbonamento decorre dalla data scelta dall’amministratore.
+
+**Why:** il titolare ha confermato esplicitamente tutte e tre le regole.
+
+**How to apply:** raggruppare le osservazioni della stessa visita per il conteggio, distinguendo i contatori del periodo contrattuale dal totale storico.
+
+«Tutti i dati dei clienti devono essere storicizzabili e presenti.» Il rinnovo, il cambio piano e il raggiungimento delle quote non devono cancellare né sostituire lo storico.
+
+**Why:** il titolare ha aggiunto esplicitamente questo requisito durante la definizione dei piani.
+
+**How to apply:** separare i consumi annuali dai dati conservati; il rinnovo azzera i contatori, non i rilievi. Non usare cancellazioni o sovrascritture per liberare quote. Preservare l’isolamento per account e distinguere questo requisito dalle cancellazioni privacy e dalla politica di conservazione già concordata.
