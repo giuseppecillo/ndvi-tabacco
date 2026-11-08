@@ -4,7 +4,7 @@ Stato: piano approvato dal titolare; preparativi operativi avviati.
 Questo documento prevale sui passaggi ormai superati delle checklist precedenti.
 Non autorizza operazioni per il solo fatto di essere presente nel repository.
 
-### Avanzamento prima del primo rollout
+### Avanzamento effettivo — 8 novembre 2026, 15:24 UTC circa
 
 - Approvazione dell'intero perimetro ricevuta.
 - Tool import/compare compilati e programmi PostgreSQL/age disponibili.
@@ -12,13 +12,49 @@ Non autorizza operazioni per il solo fatto di essere presente nel repository.
   destinatario pubblico confermata senza stampare la chiave.
 - Esclusioni Git/pubblicazione verificate; connessioni operative dedicate
   presenti nei Secrets, senza lettura dei valori da parte dell'Agent.
-- Predisposta configurazione Production: backend replit, pausa 1,
-  preflight 1, allowlist piloti vuota.
-- ATTENZIONE: questa configurazione richiede ancora il primo Republish
-  manuale. La manutenzione effettiva e il drenaggio NON sono confermati.
-- Prima del clic occorrono visibilità dei rilievi nella sessione del
-  titolare e sospensione degli altri accessi in scrittura.
-- Nessun backup finale, importazione o cambio backend eseguito.
+- Primo rollout manuale riuscito: revisione 8fe74dfb LIVE. Health 200;
+  osservazioni 503 con messaggio di migrazione, no-store e Retry-After.
+  Preflight Production passed: backend ancora Replit, schema read-only.
+- Accesso all'interfaccia NON verificato: il titolare ha chiarito di non
+  poterlo provare. Ha richiesto conteggi e trasferimento dopo i gate SQL.
+- Sospensione degli scrittori esterni attestata dal titolare. Quiete
+  confermata prima e dopo il backup: due campioni per controllo, nessun
+  altro client/transazione/prepared transaction/subscription/scheduler.
+  Non equivale a un blocco SQL permanente delle connessioni esterne.
+- Conteggi Production: app_users 1, security_state 1, privacy_requests 0,
+  security_events 1, osservazioni 22.
+- Backup finale:
+  generated-artifacts/production-backup/2026-11-08T15-22-12.328Z-LjiaOm/
+  database.dump.age (16127 byte), checksum.json nella stessa cartella.
+  SHA-256 b985567eaea8f6f886f258bdd40962e7d3c0e2c0f6c8807f8c6db7f21c07eb55.
+  Verificati checksum indipendente, decifratura autenticata e parsing
+  integrale senza connessione DB. Chiave esistente separata e non esposta.
+- Importazione completata: IMPORTED_NOT_CUT_OVER. Conteggi identici.
+  Transazione conclusa con ripristino FORCE RLS e gate pre-COMMIT positivi
+  (15 policy, ownership, ACL Data API, relazioni e amministratore).
+- Confronto ALL_60_COLUMNS_MATCH_NO_CUTOVER: tutte le righe e tutte le
+  60 colonne coincidono, conteggi e SHA-256 identici per ciascuna tabella;
+  controlli d'integrità positivi su origine e destinazione.
+- Predisposto SECONDO rollout: backend supabase, pausa 1, preflight
+  aggiuntivo 0, allowlist del solo amministratore iniziale Clerk esistente.
+  Questa configurazione è soltanto predisposta: attende Republish manuale.
+  Il backend LIVE resta Replit; DATABASE_URL non è stato modificato.
+- Il prossimo gate è il collaudo applicativo riservato al pilota, NON
+  ancora eseguito. Nessuna riapertura generale autorizzata dai soli hash.
+
+### Accesso al collaudo durante la manutenzione
+
+Dopo il secondo Republish e la verifica del pool operativo Supabase,
+il titolare apre il sito Production /sign-in con il proprio account
+amministratore Clerk già esistente, poi /user-portal. Il middleware
+consente soltanto il Clerk ID originale del pilota, verificato sul server;
+gli altri utenti ricevono ancora 503. Nessuna credenziale in chat.
+
+Se l'accesso resta bloccato, fermare il collaudo e diagnosticare lo stato
+Clerk/allowlist senza aprire a tutti né inventare sessioni. Prima del
+terzo rollout devono riuscire consultazione dei 22 rilievi, storico,
+dettagli, export/mappe e CRUD del solo rilievo sintetico con eliminazione.
+Non dichiarare questi controlli UI superati in base al confronto SQL.
 
 ## Perimetro e punto di partenza
 
