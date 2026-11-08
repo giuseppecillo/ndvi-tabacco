@@ -99,7 +99,7 @@ test("all nine calculation crops save and reload with exact identities, N doses,
   const response = () => {
     let status = 200; let payload: any;
     const res = {
-      locals: { account: { id: "synthetic-owner" } },
+      locals: { account: { id: "synthetic-owner", role: "admin" } },
       status(code: number) { status = code; return this; },
       json(body: unknown) { payload = body; return this; },
     } as unknown as Response;

@@ -25,14 +25,19 @@ import type {
   CreatePrivacyRequestBody,
   CropCatalogue,
   ExportMyData200,
+  GeneratedMapInput,
   GetAccessSetup200,
   HealthStatus,
-  InviteManagedUserBody,
+  ListPendingRegistrationsParams,
   ListSecurityEvents200Item,
+  ManagedUserInvitation,
   Message,
+  PendingRegistrations,
+  PlanAssignment,
   PrivacyRequest,
   UpdateManagedPrivacyRequestBody,
-  UpdateManagedUserBody
+  UpdateManagedUserBody,
+  UserUsage
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -681,7 +686,7 @@ export const getInviteManagedUserUrl = () => {
   return `/api/admin/users`
 }
 
-export const inviteManagedUser = async (inviteManagedUserBody: InviteManagedUserBody, options?: RequestInit): Promise<Account> => {
+export const inviteManagedUser = async (managedUserInvitation: ManagedUserInvitation, options?: RequestInit): Promise<Account> => {
 
   return customFetch<Account>(getInviteManagedUserUrl(),
   {
@@ -689,7 +694,7 @@ export const inviteManagedUser = async (inviteManagedUserBody: InviteManagedUser
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      inviteManagedUserBody,)
+      managedUserInvitation,)
   }
 );}
 
@@ -697,8 +702,8 @@ export const inviteManagedUser = async (inviteManagedUserBody: InviteManagedUser
 
 
 export const getInviteManagedUserMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteManagedUser>>, TError,{data: BodyType<InviteManagedUserBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof inviteManagedUser>>, TError,{data: BodyType<InviteManagedUserBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteManagedUser>>, TError,{data: BodyType<ManagedUserInvitation>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof inviteManagedUser>>, TError,{data: BodyType<ManagedUserInvitation>}, TContext> => {
 
 const mutationKey = ['inviteManagedUser'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -710,7 +715,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteManagedUser>>, {data: BodyType<InviteManagedUserBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteManagedUser>>, {data: BodyType<ManagedUserInvitation>}> = (props) => {
           const {data} = props ?? {};
 
           return  inviteManagedUser(data,requestOptions)
@@ -724,18 +729,369 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type InviteManagedUserMutationResult = NonNullable<Awaited<ReturnType<typeof inviteManagedUser>>>
-    export type InviteManagedUserMutationBody = BodyType<InviteManagedUserBody>
+    export type InviteManagedUserMutationBody = BodyType<ManagedUserInvitation>
     export type InviteManagedUserMutationError = ErrorType<unknown>
 
     export const useInviteManagedUser = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteManagedUser>>, TError,{data: BodyType<InviteManagedUserBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteManagedUser>>, TError,{data: BodyType<ManagedUserInvitation>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof inviteManagedUser>>,
         TError,
-        {data: BodyType<InviteManagedUserBody>},
+        {data: BodyType<ManagedUserInvitation>},
         TContext
       > => {
       return useMutation(getInviteManagedUserMutationOptions(options));
+    }
+
+export const getGetMyUsageUrl = () => {
+
+
+
+
+  return `/api/auth/usage`
+}
+
+export const getMyUsage = async ( options?: RequestInit): Promise<UserUsage> => {
+
+  return customFetch<UserUsage>(getGetMyUsageUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyUsageQueryKey = () => {
+    return [
+    `/api/auth/usage`
+    ] as const;
+    }
+
+
+export const getGetMyUsageQueryOptions = <TData = Awaited<ReturnType<typeof getMyUsage>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyUsage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyUsageQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyUsage>>> = ({ signal }) => getMyUsage({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyUsage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyUsageQueryResult = NonNullable<Awaited<ReturnType<typeof getMyUsage>>>
+export type GetMyUsageQueryError = ErrorType<unknown>
+
+
+
+export function useGetMyUsage<TData = Awaited<ReturnType<typeof getMyUsage>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyUsage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyUsageQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListManagedUsageUrl = () => {
+
+
+
+
+  return `/api/admin/usage`
+}
+
+export const listManagedUsage = async ( options?: RequestInit): Promise<UserUsage[]> => {
+
+  return customFetch<UserUsage[]>(getListManagedUsageUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListManagedUsageQueryKey = () => {
+    return [
+    `/api/admin/usage`
+    ] as const;
+    }
+
+
+export const getListManagedUsageQueryOptions = <TData = Awaited<ReturnType<typeof listManagedUsage>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listManagedUsage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListManagedUsageQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listManagedUsage>>> = ({ signal }) => listManagedUsage({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listManagedUsage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListManagedUsageQueryResult = NonNullable<Awaited<ReturnType<typeof listManagedUsage>>>
+export type ListManagedUsageQueryError = ErrorType<unknown>
+
+
+
+export function useListManagedUsage<TData = Awaited<ReturnType<typeof listManagedUsage>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listManagedUsage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListManagedUsageQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListPendingRegistrationsUrl = (params?: ListPendingRegistrationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/registrations?${stringifiedParams}` : `/api/admin/registrations`
+}
+
+export const listPendingRegistrations = async (params?: ListPendingRegistrationsParams, options?: RequestInit): Promise<PendingRegistrations> => {
+
+  return customFetch<PendingRegistrations>(getListPendingRegistrationsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPendingRegistrationsQueryKey = (params?: ListPendingRegistrationsParams,) => {
+    return [
+    `/api/admin/registrations`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPendingRegistrationsQueryOptions = <TData = Awaited<ReturnType<typeof listPendingRegistrations>>, TError = ErrorType<unknown>>(params?: ListPendingRegistrationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPendingRegistrations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPendingRegistrationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPendingRegistrations>>> = ({ signal }) => listPendingRegistrations(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPendingRegistrations>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPendingRegistrationsQueryResult = NonNullable<Awaited<ReturnType<typeof listPendingRegistrations>>>
+export type ListPendingRegistrationsQueryError = ErrorType<unknown>
+
+
+
+export function useListPendingRegistrations<TData = Awaited<ReturnType<typeof listPendingRegistrations>>, TError = ErrorType<unknown>>(
+ params?: ListPendingRegistrationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPendingRegistrations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPendingRegistrationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAssignManagedPlanUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/users/${id}/plan`
+}
+
+export const assignManagedPlan = async (id: string,
+    planAssignment: PlanAssignment, options?: RequestInit): Promise<UserUsage> => {
+
+  return customFetch<UserUsage>(getAssignManagedPlanUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      planAssignment,)
+  }
+);}
+
+
+
+
+export const getAssignManagedPlanMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignManagedPlan>>, TError,{id: string;data: BodyType<PlanAssignment>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof assignManagedPlan>>, TError,{id: string;data: BodyType<PlanAssignment>}, TContext> => {
+
+const mutationKey = ['assignManagedPlan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignManagedPlan>>, {id: string;data: BodyType<PlanAssignment>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  assignManagedPlan(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AssignManagedPlanMutationResult = NonNullable<Awaited<ReturnType<typeof assignManagedPlan>>>
+    export type AssignManagedPlanMutationBody = BodyType<PlanAssignment>
+    export type AssignManagedPlanMutationError = ErrorType<unknown>
+
+    export const useAssignManagedPlan = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignManagedPlan>>, TError,{id: string;data: BodyType<PlanAssignment>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof assignManagedPlan>>,
+        TError,
+        {id: string;data: BodyType<PlanAssignment>},
+        TContext
+      > => {
+      return useMutation(getAssignManagedPlanMutationOptions(options));
+    }
+
+export const getRegisterGeneratedMapUrl = () => {
+
+
+
+
+  return `/api/usage/maps`
+}
+
+export const registerGeneratedMap = async (generatedMapInput: GeneratedMapInput, options?: RequestInit): Promise<UserUsage> => {
+
+  return customFetch<UserUsage>(getRegisterGeneratedMapUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      generatedMapInput,)
+  }
+);}
+
+
+
+
+export const getRegisterGeneratedMapMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerGeneratedMap>>, TError,{data: BodyType<GeneratedMapInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerGeneratedMap>>, TError,{data: BodyType<GeneratedMapInput>}, TContext> => {
+
+const mutationKey = ['registerGeneratedMap'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerGeneratedMap>>, {data: BodyType<GeneratedMapInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerGeneratedMap(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterGeneratedMapMutationResult = NonNullable<Awaited<ReturnType<typeof registerGeneratedMap>>>
+    export type RegisterGeneratedMapMutationBody = BodyType<GeneratedMapInput>
+    export type RegisterGeneratedMapMutationError = ErrorType<unknown>
+
+    export const useRegisterGeneratedMap = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerGeneratedMap>>, TError,{data: BodyType<GeneratedMapInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerGeneratedMap>>,
+        TError,
+        {data: BodyType<GeneratedMapInput>},
+        TContext
+      > => {
+      return useMutation(getRegisterGeneratedMapMutationOptions(options));
     }
 
 export const getUpdateManagedUserUrl = (id: string,) => {

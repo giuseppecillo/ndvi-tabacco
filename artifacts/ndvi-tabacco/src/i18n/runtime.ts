@@ -5,12 +5,13 @@ import { maps } from "./maps";
 import { privacy } from "./privacy";
 import { tomato } from "./tomato";
 import { catalogue } from "./catalogue";
+import { plans } from "./plans";
 
 export type Language = "it" | "en" | "es";
 export type Translation = readonly [string, string, string];
 export const LANGUAGE_KEY = "nitrocrop-language";
 export const LOCALES = { it: "it-IT", en: "en-GB", es: "es-ES" } as const;
-const entries: readonly Translation[] = [...common, ...agronomy, ...maps, ...privacy, ...tomato, ...catalogue];
+const entries: readonly Translation[] = [...common, ...agronomy, ...maps, ...privacy, ...tomato, ...catalogue, ...plans];
 const normalize = (s: string) => s.replace(/\s+/g, " ").trim();
 const translations = new Map(entries.map(e => [normalize(e[0]), e]));
 const patterns = entries.filter(e => /\{\d+\}/.test(e[0])).map(entry => ({

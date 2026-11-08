@@ -133,18 +133,74 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [email, name]
-              properties:
-                email: { type: string, format: email, maxLength: 254 }
-                name: { type: string, maxLength: 120 }
-                subscriptionDays: { type: integer, minimum: 1, maximum: 3650, default: 30 }
+              $ref: "#/components/schemas/ManagedUserInvitation"
       responses:
         "201":
           description: Authorized account and invitation
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Account" }
+  /auth/usage:
+    get:
+      operationId: getMyUsage
+      responses:
+        "200":
+          description: Own subscription and measured stored-data usage
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserUsage" }
+  /admin/usage:
+    get:
+      operationId: listManagedUsage
+      responses:
+        "200":
+          description: Administrator-only aggregates, never observation contents
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UserUsage" }
+  /admin/registrations:
+    get:
+      operationId: listPendingRegistrations
+      parameters:
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Registered identities not yet authorized by an administrator
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PendingRegistrations" }
+  /admin/users/{id}/plan:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    put:
+      operationId: assignManagedPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PlanAssignment" }
+      responses:
+        "200":
+          description: Assigned plan or explicitly renewed annual period
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserUsage" }
+  /usage/maps:
+    post:
+      operationId: registerGeneratedMap
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GeneratedMapInput" }
+      responses:
+        "200":
+          description: Idempotent accounting of a successful map, or quota error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserUsage" }
   /admin/users/{id}:
     parameters:
       - { name: id, in: path, required: true, schema: { type: string } }
@@ -266,6 +322,78 @@ components:
       required: [message]
       properties:
         message: { type: string }
+    ManagedUserInvitation:
+      type: object
+      required: [email, name, plan, startsOn]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        plan: { type: string, enum: [standard, pro] }
+        startsOn: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
+    PlanAssignment:
+      type: object
+      required: [plan, startsOn, renew, expectedPeriodId, requestId]
+      properties:
+        plan: { type: string, enum: [standard, pro] }
+        startsOn: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
+        renew: { type: boolean }
+        expectedPeriodId: { type: [string, "null"] }
+        requestId: { type: string, format: uuid }
+    GeneratedMapInput:
+      type: object
+      required: [requestId]
+      properties:
+        requestId: { type: string, format: uuid }
+    PlanPeriod:
+      type: object
+      required: [periodId, plan, startsOn, expiresAt, visitsUsed, mapsUsed]
+      properties:
+        periodId: { type: string }
+        plan: { type: string, enum: [standard, pro] }
+        startsOn: { type: string }
+        expiresAt: { type: string }
+        visitsUsed: { type: integer }
+        mapsUsed: { type: integer }
+    UserUsage:
+      type: object
+      required: [userId, planManagementReady, plan, state, periodId, startsOn, expiresAt, visitsUsed, mapsUsed, visitsTotal, observationsTotal, mapsTotal, storageBytes, storageMb, visitsLimit, mapsLimit, storageLimitBytes, trackingSince, periods]
+      properties:
+        userId: { type: string }
+        planManagementReady: { type: boolean }
+        plan: { type: string, enum: [standard, pro, unassigned, admin] }
+        state: { type: string, enum: [unassigned, scheduled, active, expired, exempt] }
+        periodId: { type: [string, "null"] }
+        startsOn: { type: [string, "null"] }
+        expiresAt: { type: [string, "null"] }
+        visitsUsed: { type: [integer, "null"] }
+        mapsUsed: { type: [integer, "null"] }
+        visitsTotal: { type: integer }
+        observationsTotal: { type: integer }
+        mapsTotal: { type: integer }
+        storageBytes: { type: number }
+        storageMb: { type: number }
+        visitsLimit: { type: [integer, "null"] }
+        mapsLimit: { type: [integer, "null"] }
+        storageLimitBytes: { type: [number, "null"] }
+        trackingSince: { type: [string, "null"] }
+        periods:
+          type: array
+          items: { $ref: "#/components/schemas/PlanPeriod" }
+    PendingRegistration:
+      type: object
+      required: [email, name, registeredAt]
+      properties:
+        email: { type: string }
+        name: { type: string }
+        registeredAt: { type: string }
+    PendingRegistrations:
+      type: object
+      required: [items, nextOffset]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/PendingRegistration" }
+        nextOffset: { type: [integer, "null"] }
     Account:
       type: object
       required: [id, email, name, role, status, privacyAcknowledged, privacyVersion, activated, createdAt, subscriptionExpiresAt, subscriptionDurationDays, subscriptionDaysRemaining, subscriptionExpired, subscriptionExempt]

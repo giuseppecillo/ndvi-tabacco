@@ -3,6 +3,8 @@ import { erroreOsservazionePomodoro } from "@workspace/tomato-calculations";
 import { isCatalogueCrop, catalogueObservationError } from "@workspace/crop-calculations";
 import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
+import { saveWithUsage } from "../lib/plan-store";
+import { PlanError, validDay } from "../lib/plan-model";
 import { riferimentoNdviTabacco, calcolaDoseNTabacco } from "@workspace/tobacco-calculations";
 import { requireAccount, requirePrivacyAck, requireSubscription } from "../middlewares/access";
 import {
@@ -11,7 +13,9 @@ import {
 } from "@workspace/grain-calculations";
 
 const router = Router();
-router.use("/osservazioni", requireAccount, requireSubscription, requirePrivacyAck);
+router.use("/osservazioni", requireAccount,
+  (req,res,next) => req.method === "GET" ? next() : requireSubscription(req,res,next),
+  requirePrivacyAck);
 
 const numero = (value: unknown): number | null => {
   if (typeof value !== "number" && (typeof value !== "string" || value.trim() === "")) {
@@ -227,8 +231,13 @@ router.post("/osservazioni", async (req, res) => {
     res.status(400).json({ error: errore });
     return;
   }
+  if (typeof o.data !== "string" || !validDay(o.data)
+    || typeof o.cliente !== "string" || !o.cliente.trim() || o.cliente.length > 500) {
+    res.status(400).json({error:"Cliente e data del rilievo non validi."});
+    return;
+  }
   try {
-    const saved = await pool.query(
+    const saved = await saveWithUsage(res.locals.account, o.cliente, o.data, sql => sql.query(
       `INSERT INTO osservazioni
          (id, data, data_trapianto, tipo_intervento, giorni, eta_piantina,
            cliente, appezzamento, resa, varieta, piante_semi_ha, piante_semi_unita, piante_ha_equivalenti,
@@ -254,9 +263,13 @@ router.post("/osservazioni", async (req, res) => {
            o.azotoTotale ?? null, o.azotoGiaDistribuito ?? null, o.quotaAzoto ?? null,
            o.lat ?? null, o.lng ?? null, res.locals.account.id, o.id.trim(),
       ]
-    );
+    ));
     res.status(201).json({ ok: true, createdAt: saved.rows[0].createdAt });
   } catch (err) {
+    if (err instanceof PlanError) {
+      res.status(err.status).json({error:err.message,code:err.code});
+      return;
+    }
     res.status(500).json({ error: "Impossibile salvare l’osservazione." });
   }
 });

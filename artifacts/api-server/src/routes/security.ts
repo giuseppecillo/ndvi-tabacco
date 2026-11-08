@@ -9,7 +9,9 @@ import pool from "../lib/db";
 import { audit, PRIVACY_VERSION } from "../lib/security-db";
 import { accountJson, deleteAccount, inviteAccount, requestColumns } from "../lib/account-actions";
 import { requireAccount, requireAdmin, type LocalAccount } from "../middlewares/access";
-import { DEFAULT_SUBSCRIPTION_DAYS, subscriptionExpiry, validSubscriptionDays } from "../lib/subscription";
+import { subscriptionExpiry, validSubscriptionDays } from "../lib/subscription";
+import { annualExpiry, PlanError } from "../lib/plan-model";
+import { readPlan, writePlan, usageFor, planStoreReady } from "../lib/plan-store";
 
 const router = Router();
 const privateRouter = Router();
@@ -76,6 +78,7 @@ privateRouter.get("/export", accountLimit, async (_req, res) => {
   res.json({
     exportedAt: new Date().toISOString(), account: accountJson(account),
     observations: observations.rows, privacyRequests: requests.rows,
+    subscriptionUsage: (await usageFor([account]))[0],
     identityData: "I dati di sicurezza dell’identità, delle sessioni e delle verifiche email sono gestiti dal fornitore di autenticazione. Per una copia completa contatta privacy@taurusagsolution.com.",
   });
 });
@@ -102,18 +105,34 @@ adminRouter.get("/users", async (_req, res) => {
 });
 adminRouter.post("/users", accountLimit, async (req, res) => {
   const result = InviteManagedUserBody.safeParse(req.body);
-  if (!result.success) return res.status(400).json({ error: "Inserisci un indirizzo email valido e un nome (massimo 120 caratteri)." });
-  if (!validSubscriptionDays(result.data.subscriptionDays ?? DEFAULT_SUBSCRIPTION_DAYS)) return res.status(400).json({ error: "La durata deve essere un numero intero da 1 a 3650 giorni." });
+  if (!result.success || !result.data.name.trim()) return res.status(400).json({ error: "Inserisci un indirizzo email valido e un nome (massimo 120 caratteri)." });
   const email = result.data.email.trim().toLowerCase();
-  const { rows } = await pool.query<LocalAccount>(
-    `INSERT INTO app_users(id,email,name,subscription_duration_days,subscription_expires_at) VALUES($1,$2,$3,$4,$5) ON CONFLICT(email) DO NOTHING RETURNING *`,
-    [randomUUID(), email, result.data.name.trim(), result.data.subscriptionDays ?? DEFAULT_SUBSCRIPTION_DAYS, subscriptionExpiry(result.data.subscriptionDays ?? DEFAULT_SUBSCRIPTION_DAYS)],
-  );
-  if (!rows[0]) return res.status(409).json({ error: "Esiste già un utente con questa email. Usa Reinvia invito oppure Abilita." });
-  await audit(res.locals.account.id, rows[0].id, "user_authorized");
+  if (!await planStoreReady()) return res.status(503).json({error:"La gestione piani richiede l’aggiornamento autorizzato del database.",code:"PLAN_STORE_NOT_READY"});
+  let account: LocalAccount;
+  const client = await pool.connect();
   try {
-    await inviteAccount(rows[0], res.locals.siteOrigin);
-    return res.status(201).json(accountJson(rows[0]));
+    const expires = annualExpiry(result.data.startsOn);
+    const id = randomUUID();
+    await client.query("BEGIN");
+    const { rows } = await client.query<LocalAccount>(
+      `INSERT INTO app_users(id,email,name,subscription_expires_at) VALUES($1,$2,$3,$4)
+       ON CONFLICT(email) DO NOTHING RETURNING *`,
+      [id,email,result.data.name.trim(),expires]);
+    if (!rows[0]) throw new PlanError("USER_EXISTS","Esiste già un utente con questa email. Usa Reinvia invito oppure Abilita.");
+    await writePlan(id, { plan: result.data.plan, startsOn: result.data.startsOn, renew: false,
+      expectedPeriodId: null, requestId: randomUUID() }, client);
+    account = (await client.query<LocalAccount>("SELECT * FROM app_users WHERE id=$1", [id])).rows[0];
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    if (error instanceof PlanError) return res.status(error.status).json({error:error.message,code:error.code});
+    req.log.error("Planned account creation failed");
+    return res.status(503).json({error:"Creazione dell’utente e del piano non riuscita."});
+  } finally { client.release(); }
+  await audit(res.locals.account.id, account.id, "user_authorized");
+  try {
+    await inviteAccount(account, res.locals.siteOrigin);
+    return res.status(201).json(accountJson(account));
   } catch {
     req.log.error("User invitation delivery failed");
     return res.status(502).json({ error: "Utente creato, ma l’invio dell’invito non è riuscito. Aggiorna l’elenco e usa Reinvia invito." });
@@ -127,6 +146,9 @@ adminRouter.patch("/users/:id", accountLimit, async (req, res) => {
   if (!target) return res.status(404).json({ error: "Utente non trovato." });
   if (target.role === "admin" || target.status === "deleting") return res.status(400).json({ error: "Non puoi modificare questo account." });
   const days = result.data.subscriptionDays;
+  if (days !== undefined && await readPlan(target.id)) {
+    return res.status(400).json({error:"Per questo utente usa la gestione del piano e il rinnovo annuale."});
+  }
   const { rows } = await pool.query<LocalAccount>(
     `UPDATE app_users SET status=COALESCE($2,status),
       subscription_duration_days=COALESCE($3,subscription_duration_days),

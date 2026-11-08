@@ -1,35 +1,48 @@
-import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import {
   getListManagedPrivacyRequestsQueryKey, getListManagedUsersQueryKey, getListSecurityEventsQueryKey,
   useDeleteManagedUser, useInviteManagedUser, useListManagedPrivacyRequests, useListManagedUsers,
   useListSecurityEvents, useResendManagedInvitation, useUpdateManagedPrivacyRequest, useUpdateManagedUser,
-  type Account, type PrivacyRequest, type UpdateManagedPrivacyRequestBodyStatus,
+  type Account, type PendingRegistration, type PlanAssignmentPlan, type PrivacyRequest, type UserUsage, type UpdateManagedPrivacyRequestBodyStatus,
 } from "@workspace/api-client-react";
 import { Btn, Card, ErrorNote, Eyebrow, OkNote, Skeleton, TopBar, fmtDate } from "./ui";
 import { ModuleHeading } from "./ModuleHeading";
 import { REQ_LABEL, STATUS_LABEL } from "./AccountPage";
 import { SubscriptionSummary } from "./SubscriptionSummary";
+import { NotReadyNote, PendingRegistrationsCard, PlanChoice, planReady, PlanForm, UsageOverview, useInvalidatePlans, useManagedUsage } from "./PlanUsage";
+import { t, useLanguage } from "../i18n/runtime";
 
 const input = "w-full rounded-xl border border-[var(--nc-line)] bg-[var(--nc-paper)] px-3 py-2.5 text-sm outline-none focus:border-[var(--nc-leaf)]";
 
-function InviteForm() {
-  const qc = useQueryClient();
-  const [email, setEmail] = useState(""); const [name, setName] = useState("");
-  const [days, setDays] = useState("30");
-  const m = useInviteManagedUser({ mutation: { onSuccess: () => { setEmail(""); setName(""); qc.invalidateQueries({ queryKey: getListManagedUsersQueryKey() }); } } });
+function InviteForm({ prefill, onClearPrefill, writable }: { prefill: PendingRegistration | null; onClearPrefill: () => void; writable: "loading" | "error" | boolean }) {
+  useLanguage();
+  const invalidate = useInvalidatePlans();
+  const [email, setEmail] = useState(prefill?.email ?? ""); const [name, setName] = useState(prefill?.name ?? "");
+  const [plan, setPlan] = useState<PlanAssignmentPlan | "">("");
+  const [startsOn, setStartsOn] = useState("");
+  const m = useInviteManagedUser({ mutation: { onSuccess: () => { setEmail(""); setName(""); setPlan(""); setStartsOn(""); invalidate(); if (prefill) onClearPrefill(); }, onError: () => invalidate() } });
+  const ok = writable === true && !!email.trim() && !!name.trim() && !!plan && /^\d{4}-\d{2}-\d{2}$/.test(startsOn);
   return (
-    <Card>
-      <h2 className="nc-display text-xl font-semibold">Autorizza un nuovo utente</h2>
-      <p className="mt-1 text-sm text-[var(--nc-muted)]">L'utente riceve un invito via email e sceglie da solo la propria password. L'invito scade dopo 7 giorni e può essere reinviato al massimo ogni 15 minuti.</p>
-      <p className="mt-2 text-sm text-[var(--nc-muted)]">L’abbonamento decorre dalla creazione dell’utente, anche se l’invito non è ancora stato accettato.</p>
-      <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); m.mutate({ data: { email: email.trim(), name: name.trim(), subscriptionDays: Number(days) } }); }}>
-        <input className={input} placeholder="Nome e cognome" value={name} maxLength={120} required onChange={e => setName(e.target.value)} />
-        <input className={input} type="email" placeholder="email@azienda.it" value={email} maxLength={254} required onChange={e => setEmail(e.target.value)} />
-        <label className="text-sm font-medium">Durata abbonamento (giorni)
-          <input className={`${input} mt-1`} type="number" min={1} max={3650} step={1} value={days} required onChange={e => setDays(e.target.value)} />
+    <Card className={prefill ? "ring-2 ring-[var(--nc-wheat)]" : ""}>
+      <div id="nc-invite" className="scroll-mt-24" />
+      <h2 className="nc-display text-xl font-semibold">{prefill ? t("Approva registrazione") : t("Autorizza un nuovo utente")}</h2>
+      <p className="mt-1 text-sm text-[var(--nc-muted)]">{t("L'utente riceve un invito via email. Piano e data di inizio vanno scelti esplicitamente.")} {t("L'invito scade dopo 7 giorni e può essere reinviato al massimo ogni 15 minuti.")}</p>
+      {writable === false && <div className="mt-3"><NotReadyNote /></div>}
+      {writable === "loading" && <p className="mt-3 text-xs text-[var(--nc-muted)]">{t("Verifica dello stato dei piani in corso...")}</p>}
+      {writable === "error" && <p role="alert" className="mt-3 text-sm text-[var(--nc-danger)]">{t("Stato dei piani non verificabile: invito disattivato finché i consumi non si caricano.")}</p>}
+      <form className="mt-4 grid gap-3 sm:grid-cols-2" data-testid="form-invite" onSubmit={e => { e.preventDefault(); if (ok && plan) m.mutate({ data: { email: email.trim(), name: name.trim(), plan, startsOn } }); }}>
+        <input className={input} placeholder="Nome e cognome" value={name} maxLength={120} required onChange={e => setName(e.target.value)} data-testid="input-invite-name" />
+        <input className={input} type="email" placeholder="email@azienda.it" value={email} maxLength={254} required readOnly={!!prefill} onChange={e => setEmail(e.target.value)} data-testid="input-invite-email" />
+        <div className="sm:col-span-2"><PlanChoice value={plan} onChange={setPlan} name="invite" /></div>
+        <label className="text-sm font-medium">{t("Data di inizio")}
+          <input className={`${input} mt-1`} type="date" value={startsOn} required onChange={e => setStartsOn(e.target.value)} data-testid="input-invite-starts" />
+          <span className="mt-1 block text-xs font-normal text-[var(--nc-muted)]">{t("Il contratto dura un anno dalla data di inizio. Nessuna firma o fatturazione automatica.")}</span>
         </label>
-        <Btn type="submit" disabled={m.isPending || !email.trim() || !name.trim()}>{m.isPending ? "Invio..." : "Invita"}</Btn>
+        <div className="flex flex-wrap items-start gap-2 sm:justify-end sm:pt-6">
+          {prefill && <Btn variant="ghost" onClick={onClearPrefill}>{t("Annulla approvazione")}</Btn>}
+          <Btn type="submit" disabled={m.isPending || !ok}>{m.isPending ? "Invio..." : prefill ? t("Approva") : t("Invita con piano")}</Btn>
+        </div>
       </form>
       <div className="mt-3">
         {m.isError && <ErrorNote error={m.error} />}
@@ -61,24 +74,27 @@ function DeleteDialog({ user, onClose }: { user: Account; onClose: () => void })
   );
 }
 
-function UserRow({ u, me, onDelete }: { u: Account; me: Account; onDelete: () => void }) {
+function UserRow({ u, me, usage, usageState, onDelete }: { u: Account; me: Account; usage: UserUsage | undefined; usageState: "loading" | "error" | "ok"; onDelete: () => void }) {
+  useLanguage();
   const qc = useQueryClient();
-  const [days, setDays] = useState(String(u.subscriptionDurationDays ?? 30));
-  useEffect(() => { setDays(String(u.subscriptionDurationDays ?? 30)); }, [u.subscriptionDurationDays]);
+  const [editing, setEditing] = useState(false);
   const upd = useUpdateManagedUser({ mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: getListManagedUsersQueryKey() }) } });
   const resend = useResendManagedInvitation();
   const protectedUser = u.id === me.id || u.role === "admin";
   const badge = u.status === "active" ? "bg-[#e3eedb] text-[var(--nc-leaf)]" : "bg-[#f7e3dc] text-[var(--nc-danger)]";
+  const canPlan = !protectedUser && u.status !== "deleting" && !!usage && usage.state !== "exempt";
   return (
-    <li className="py-4">
+    <li className="py-4" data-testid={`row-user-${u.id}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="font-semibold">{u.name} {u.role === "admin" && <span className="nc-mono ml-1 text-xs text-[var(--nc-wheat)]">ADMIN</span>}</p>
           <p className="nc-mono break-all text-xs text-[var(--nc-muted)]">{u.email}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badge}`}>{u.status === "active" ? "Attivo" : u.status === "suspended" ? "Sospeso" : "In eliminazione"}</span>
           <span className="text-xs text-[var(--nc-muted)]">{u.activated ? "Invito accettato" : "Invito in sospeso"}</span>
+          {canPlan && <Btn variant={usage?.state === "unassigned" ? "wheat" : "ghost"} className="!px-3 !py-1.5" onClick={() => setEditing(v => !v)}>
+            <span data-testid={`button-plan-${u.id}`}>{editing ? t("Chiudi") : usage?.state === "unassigned" ? t("Assegna piano") : t("Gestisci piano")}</span></Btn>}
           {!u.activated && <Btn variant="ghost" className="!px-3 !py-1.5" disabled={resend.isPending} onClick={() => resend.mutate({ id: u.id })}>{resend.isPending ? "..." : "Reinvia invito"}</Btn>}
           {!protectedUser && u.status !== "deleting" && (
             <Btn variant="ghost" className="!px-3 !py-1.5" disabled={upd.isPending}
@@ -90,17 +106,10 @@ function UserRow({ u, me, onDelete }: { u: Account; me: Account; onDelete: () =>
         </div>
       </div>
       <div className="mt-2 space-y-2">
-        <SubscriptionSummary account={u} compact />
-        {!protectedUser && u.status !== "deleting" && <form className="flex flex-wrap items-end gap-2" onSubmit={e => {
-          e.preventDefault();
-          upd.mutate({ id: u.id, data: { subscriptionDays: Number(days) } });
-        }}>
-          <label className="text-sm">Durata da oggi (giorni)
-            <input aria-label={`Durata abbonamento di ${u.name}`} className={`${input} mt-1 max-w-40`} type="number" required min={1} max={3650} step={1} value={days} onChange={e => setDays(e.target.value)} />
-          </label>
-          <Btn type="submit" disabled={upd.isPending}>{upd.isPending ? "Salvataggio..." : "Imposta da oggi"}</Btn>
-          <p className="w-full text-xs text-[var(--nc-muted)]">Sostituisce la scadenza con oggi + giorni indicati, senza sommare quelli residui. Non riattiva un account sospeso.</p>
-        </form>}
+        {usage ? <SubscriptionSummary account={u} usage={usage} compact /> :
+          usageState === "loading" ? <div className="nc-skel h-16" aria-busy="true" aria-label={t("Consumi in caricamento")} /> :
+          <p className="rounded-xl border border-dashed border-[var(--nc-line)] px-3 py-2 text-xs text-[var(--nc-muted)]">{t("Consumi non disponibili.")}</p>}
+        {editing && canPlan && usage && <PlanForm user={u} usage={usage} onDone={() => setEditing(false)} />}
         {upd.isSuccess && <OkNote>Utente aggiornato.</OkNote>}
         {upd.isError && <ErrorNote error={upd.error} />}
         {resend.isError && <ErrorNote error={resend.error} />}
@@ -110,16 +119,18 @@ function UserRow({ u, me, onDelete }: { u: Account; me: Account; onDelete: () =>
   );
 }
 
-function Users({ me }: { me: Account }) {
-  const q = useListManagedUsers({ query: { queryKey: getListManagedUsersQueryKey(), refetchInterval: 15000, refetchOnWindowFocus: true } });
+function Users({ me, q }: { me: Account; q: UseQueryResult<Account[], unknown> }) {
+  const usage = useManagedUsage();
   const [del, setDel] = useState<Account | null>(null);
+  const usageState = usage.isPending ? "loading" : usage.isError ? "error" : "ok";
   return (
     <Card>
       <h2 className="nc-display text-xl font-semibold">Utenti autorizzati</h2>
       <div className="mt-3">
+        {usage.isError && <div className="mb-3"><ErrorNote error={usage.error} onRetry={() => void usage.refetch()} /></div>}
         {q.isPending ? <Skeleton /> : q.isError ? <ErrorNote error={q.error} onRetry={() => void q.refetch()} /> :
           q.data.length === 0 ? <p className="text-sm text-[var(--nc-muted)]">Nessun utente. Usa il modulo qui sopra per invitare il primo.</p> :
-            <ul className="divide-y divide-[var(--nc-line)]">{q.data.map(u => <UserRow key={u.id} u={u} me={me} onDelete={() => setDel(u)} />)}</ul>}
+            <ul className="divide-y divide-[var(--nc-line)]">{q.data.map(u => <UserRow key={u.id} u={u} me={me} usage={usage.data?.find(x => x.userId === u.id)} usageState={usageState} onDelete={() => setDel(u)} />)}</ul>}
       </div>
       {del && <DeleteDialog user={del} onClose={() => setDel(null)} />}
     </Card>
@@ -186,20 +197,39 @@ function Audit() {
   );
 }
 
+/** Admin content without the Clerk-bound TopBar; also mounted by the synthetic DEV fixture. */
+export function AdminWorkspace({ account }: { account: Account }) {
+  useLanguage();
+  const users = useListManagedUsers({ query: { queryKey: getListManagedUsersQueryKey(), refetchInterval: 15000, refetchOnWindowFocus: true } });
+  const usageQ = useManagedUsage();
+  // Global readiness from loaded admin usage; never assumed before it loads.
+  const writable: "loading" | "error" | boolean = usageQ.isPending ? "loading" : usageQ.isError ? "error" : usageQ.data.length > 0 && usageQ.data.every(planReady);
+  const [prefill, setPrefill] = useState<PendingRegistration | null>(null);
+  const approve = (r: PendingRegistration) => {
+    setPrefill(r);
+    requestAnimationFrame(() => document.getElementById("nc-invite")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  return (
+    <main className="mx-auto max-w-5xl space-y-6 px-4 py-10">
+      <div className="nc-rise">
+        <ModuleHeading title="Amministrazione"><Eyebrow>Chi può vedere i campi</Eyebrow></ModuleHeading>
+        <p className="mt-2 max-w-2xl text-[var(--nc-muted)]">Gestisci gli accessi. Come amministratore vedi nello strumento solo i tuoi rilievi, non quelli degli altri utenti.</p>
+      </div>
+      <InviteForm key={prefill?.email ?? "new"} prefill={prefill} writable={writable} onClearPrefill={() => setPrefill(null)} />
+      <PendingRegistrationsCard onApprove={approve} canApprove={writable === true} />
+      <UsageOverview users={users.data} />
+      <Users me={account} q={users} />
+      <Requests />
+      <Audit />
+    </main>
+  );
+}
+
 export function AdminPage({ account }: { account: Account }) {
   return (
     <div className="min-h-[100dvh]">
       <TopBar account={account} />
-      <main className="mx-auto max-w-5xl space-y-6 px-4 py-10">
-        <div className="nc-rise">
-          <ModuleHeading title="Amministrazione"><Eyebrow>Chi può vedere i campi</Eyebrow></ModuleHeading>
-          <p className="mt-2 max-w-2xl text-[var(--nc-muted)]">Gestisci gli accessi. Come amministratore vedi nello strumento solo i tuoi rilievi, non quelli degli altri utenti.</p>
-        </div>
-        <InviteForm />
-        <Users me={account} />
-        <Requests />
-        <Audit />
-      </main>
+      <AdminWorkspace account={account} />
     </div>
   );
 }

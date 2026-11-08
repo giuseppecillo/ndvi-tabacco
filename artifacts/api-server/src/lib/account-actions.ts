@@ -4,6 +4,7 @@ import pool from "./db";
 import { audit, PRIVACY_VERSION } from "./security-db";
 import type { LocalAccount } from "../middlewares/access";
 import { subscriptionInfo } from "./subscription";
+import { deletePlanData } from "./plan-store";
 
 export const accountJson = (a: LocalAccount) => ({
   id: a.id, email: a.email, name: a.name, role: a.role, status: a.status,
@@ -81,6 +82,7 @@ export async function deleteAccount(req: Request, res: Response) {
   try {
     await client.query("BEGIN");
     await client.query("DELETE FROM osservazioni WHERE owner_id=$1", [targetId]);
+    await deletePlanData(targetId, client);
     await client.query("DELETE FROM app_users WHERE id=$1", [targetId]);
     // Erase past subject identifiers from audit, retaining non-personal events.
     await client.query("UPDATE security_events SET actor_id=NULL WHERE actor_id=$1", [targetId]);

@@ -30,7 +30,7 @@ test("tomato POST and GET preserve crop, profile, phase, coordinates and dose us
   let status = 0;
   let payload: unknown;
   const res = {
-    locals: { account: { id: "synthetic-owner" } },
+    locals: { account: { id: "synthetic-owner", role: "admin" } },
     status(value: number) { status = value; return this; },
     json(value: unknown) { payload = value; return this; },
   } as unknown as Response;
@@ -280,7 +280,7 @@ test("POST rejects forged standard nitrogen plans before any database write, inc
         let status = 0;
         let payload: unknown;
         const response = {
-          locals: { account: { id: "qa-synthetic-owner" } },
+          locals: { account: { id: "qa-synthetic-owner", role: "admin" } },
           status(value: number) { status = value; return this; },
           json(value: unknown) { payload = value; return this; },
         } as unknown as Response;
@@ -310,6 +310,7 @@ test("save dispatch validates both coltura and legacy tipoIntervento without con
       for (const dose of [14, 13]) {
         const body: Record<string, unknown> = {
           ...pianoGranoValido(), id: "qa-standard-parity", varieta: "Telemaco",
+          data: "2026-01-01", cliente: "Synthetic customer",
           resa: 40, densitaValore: 385,
           giorni: 10, bbch: "00–09", faseFenologica: "Semina / emergenza",
           n1: 0.135, n2: 0.135, n3: 0.135, n4: 0.135, n5: 0.135,
@@ -321,7 +322,7 @@ test("save dispatch validates both coltura and legacy tipoIntervento without con
         let status = 0;
         let payload: unknown;
         const response = {
-          locals: { account: { id: "qa-synthetic-owner" } },
+          locals: { account: { id: "qa-synthetic-owner", role: "admin" } },
           status(value: number) { status = value; return this; },
           json(value: unknown) { payload = value; return this; },
         } as unknown as Response;

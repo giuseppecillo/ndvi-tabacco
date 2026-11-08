@@ -29,6 +29,7 @@ import { NitrogenSavings } from "./components/NitrogenSavings";
 import { t, useLanguage } from "./i18n/runtime";
 import { checkGisFileSize, gisErrorMessage } from "./utils/gisLimits";
 import { decodeGis } from "./utils/gisWorkerClient";
+import { getMyUsage, registerGeneratedMap } from "@workspace/api-client-react";
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
 
@@ -305,13 +306,17 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   // Results
   const [results,       setResults]       = useState<Map<number, PolyIdwResult>>(new Map());
   const [computing,     setComputing]     = useState(false);
+  const [quotaError, setQuotaError] = useState("");
+  const calculationVersion = useRef(0);
   const computationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const polygonImporter = useMemo(() => createPolygonImporter(setPolygonImport, () => {
+    calculationVersion.current++;
     clearTimeout(computationTimer.current);
     setResults(new Map());
     setComputing(false);
   }), []);
   useEffect(() => () => {
+    calculationVersion.current++;
     shpVersion.current++;
     shpController.current?.abort();
     polygonImporter.invalidate();
@@ -357,6 +362,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   // ── Shapefile upload ────────────────────────────────────────────────────────
 
   const clearPointResults = () => {
+    calculationVersion.current++;
     clearTimeout(computationTimer.current);
     setComputing(false);
     setResults(new Map());
@@ -403,14 +409,34 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
   const runIdw = useCallback(() => {
     if (!canSpatialize(polygonImport, activeControls.length, computing) || selPolyIdx === null) return;
     const version = polygonImporter.version;
+    const attempt = ++calculationVersion.current;
+    const requestId = crypto.randomUUID();
+    setQuotaError("");
     setComputing(true);
-    computationTimer.current = setTimeout(() => {
+    computationTimer.current = setTimeout(async () => {
       if (version !== polygonImporter.version) return;
       try {
+        const usage = await getMyUsage();
+        if (attempt !== calculationVersion.current) return;
+        if (usage.state === "expired" || usage.state === "scheduled") {
+          throw { data: { error: t("Il piano non è attivo. Contatta l’amministratore.") } };
+        }
+        if (usage.mapsLimit !== null && (usage.mapsUsed ?? 0) >= usage.mapsLimit) {
+          throw { data: { error: t("Raggiunto il limite di 50 mappe annuali. Lo storico resta disponibile.") } };
+        }
         const poly   = polygons[selPolyIdx];
         const result = computeIdwGrid(poly, activeControls, 10, power);
+        // Register only successful computation, idempotently. Never expose/export
+        // a result rejected by the server's atomic annual quota check.
+        await registerGeneratedMap({ requestId });
+        if (attempt !== calculationVersion.current || version !== polygonImporter.version) return;
         setResults(prev => new Map(prev).set(selPolyIdx, result));
-      } finally { setComputing(false); }
+      } catch (error) {
+        if (attempt === calculationVersion.current) {
+          const message = (error as { data?: { error?: unknown } })?.data?.error;
+          setQuotaError(typeof message === "string" ? t(message) : t("Elaborazione non completata. Verifica la connessione e riprova."));
+        }
+      } finally { if (attempt === calculationVersion.current) setComputing(false); }
     }, 50);
   }, [polygonImport, computing, polygonImporter, selPolyIdx, polygons, activeControls, power]);
 
@@ -695,6 +721,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
       </div>
 
       {/* ── Step 4: Run ─────────────────────────────────────────────────────── */}
+      {quotaError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">{quotaError}</p>}
       <button
         onClick={runIdw}
         disabled={!canSpatialize(polygonImport, activeControls.length, computing)}

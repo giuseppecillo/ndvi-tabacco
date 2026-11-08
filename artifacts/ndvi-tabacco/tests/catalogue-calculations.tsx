@@ -30,6 +30,14 @@ window.fetch = async (input, init) => {
     return Response.json({ ok: true });
   }
   if (url.pathname === "/api/catalogo-colture" && method === "GET") return Response.json(cropCatalogue);
+  if ((url.pathname === "/api/auth/usage" && method === "GET") || (url.pathname === "/api/usage/maps" && method === "POST")) {
+    // Legacy unassigned test account: keep this fixture network-isolated even
+    // after the real map component starts consulting the metering endpoints.
+    return Response.json({ userId:"synthetic",planManagementReady:false,plan:"unassigned",state:"unassigned",
+      periodId:null,startsOn:null,expiresAt:null,visitsUsed:null,mapsUsed:null,
+      visitsTotal:0,observationsTotal:records().length,mapsTotal:0,storageBytes:0,storageMb:0,
+      visitsLimit:null,mapsLimit:null,storageLimitBytes:null,trackingSince:null,periods:[] });
+  }
   throw new Error(`Network disabled in synthetic catalogue harness: ${method} ${url.pathname}`);
 };
 Object.defineProperty(navigator, "geolocation", { configurable: true, value: {

@@ -14,6 +14,130 @@ export interface Message {
   message: string;
 }
 
+export type ManagedUserInvitationPlan = typeof ManagedUserInvitationPlan[keyof typeof ManagedUserInvitationPlan];
+
+
+export const ManagedUserInvitationPlan = {
+  standard: 'standard',
+  pro: 'pro',
+} as const;
+
+export interface ManagedUserInvitation {
+  /** @maxLength 254 */
+  email: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  plan: ManagedUserInvitationPlan;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  startsOn: string;
+}
+
+export type PlanAssignmentPlan = typeof PlanAssignmentPlan[keyof typeof PlanAssignmentPlan];
+
+
+export const PlanAssignmentPlan = {
+  standard: 'standard',
+  pro: 'pro',
+} as const;
+
+export interface PlanAssignment {
+  plan: PlanAssignmentPlan;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  startsOn: string;
+  renew: boolean;
+  /** @nullable */
+  expectedPeriodId: string | null;
+  requestId: string;
+}
+
+export interface GeneratedMapInput {
+  requestId: string;
+}
+
+export type PlanPeriodPlan = typeof PlanPeriodPlan[keyof typeof PlanPeriodPlan];
+
+
+export const PlanPeriodPlan = {
+  standard: 'standard',
+  pro: 'pro',
+} as const;
+
+export interface PlanPeriod {
+  periodId: string;
+  plan: PlanPeriodPlan;
+  startsOn: string;
+  expiresAt: string;
+  visitsUsed: number;
+  mapsUsed: number;
+}
+
+export type UserUsagePlan = typeof UserUsagePlan[keyof typeof UserUsagePlan];
+
+
+export const UserUsagePlan = {
+  standard: 'standard',
+  pro: 'pro',
+  unassigned: 'unassigned',
+  admin: 'admin',
+} as const;
+
+export type UserUsageState = typeof UserUsageState[keyof typeof UserUsageState];
+
+
+export const UserUsageState = {
+  unassigned: 'unassigned',
+  scheduled: 'scheduled',
+  active: 'active',
+  expired: 'expired',
+  exempt: 'exempt',
+} as const;
+
+export interface UserUsage {
+  userId: string;
+  planManagementReady: boolean;
+  plan: UserUsagePlan;
+  state: UserUsageState;
+  /** @nullable */
+  periodId: string | null;
+  /** @nullable */
+  startsOn: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  /** @nullable */
+  visitsUsed: number | null;
+  /** @nullable */
+  mapsUsed: number | null;
+  visitsTotal: number;
+  observationsTotal: number;
+  mapsTotal: number;
+  storageBytes: number;
+  storageMb: number;
+  /** @nullable */
+  visitsLimit: number | null;
+  /** @nullable */
+  mapsLimit: number | null;
+  /** @nullable */
+  storageLimitBytes: number | null;
+  /** @nullable */
+  trackingSince: string | null;
+  periods: PlanPeriod[];
+}
+
+export interface PendingRegistration {
+  email: string;
+  name: string;
+  registeredAt: string;
+}
+
+export interface PendingRegistrations {
+  items: PendingRegistration[];
+  /** @nullable */
+  nextOffset: number | null;
+}
+
 export type AccountRole = typeof AccountRole[keyof typeof AccountRole];
 
 
@@ -116,16 +240,11 @@ export type CreatePrivacyRequestBody = {
   message: string;
 };
 
-export type InviteManagedUserBody = {
-  /** @maxLength 254 */
-  email: string;
-  /** @maxLength 120 */
-  name: string;
-  /**
-     * @minimum 1
-     * @maximum 3650
-     */
-  subscriptionDays?: number;
+export type ListPendingRegistrationsParams = {
+/**
+ * @minimum 0
+ */
+offset?: number;
 };
 
 export type UpdateManagedUserBodyStatus = typeof UpdateManagedUserBodyStatus[keyof typeof UpdateManagedUserBodyStatus];

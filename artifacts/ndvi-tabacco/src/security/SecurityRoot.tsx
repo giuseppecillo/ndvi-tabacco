@@ -249,7 +249,7 @@ function HomeRedirect() {
 
 function Portal() {
   return (
-    <AccountGate>
+    <AccountGate requireSubscription={false}>
       {account => (
         <div className="min-h-[100dvh]">
           <TopBar account={account} />

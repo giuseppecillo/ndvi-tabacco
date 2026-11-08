@@ -26,3 +26,14 @@ Un rilievo corrisponde a una visita per cliente e data, non a una singola osserv
 **Why:** il titolare ha aggiunto esplicitamente questo requisito durante la definizione dei piani.
 
 **How to apply:** separare i consumi annuali dai dati conservati; il rinnovo azzera i contatori, non i rilievi. Non usare cancellazioni o sovrascritture per liberare quote. Preservare l’isolamento per account e distinguere questo requisito dalle cancellazioni privacy e dalla politica di conservazione già concordata.
+
+Non assegnare automaticamente un contratto ai vecchi account né ricostruire
+conteggi storici delle mappe non registrate.
+
+**Why:** il titolare non ha indicato piano/decorrenza dei vecchi account.
+Le elaborazioni precedenti erano locali al browser, senza un registro affidabile
+delle generazioni: attribuire loro zero mappe come totale certificato sarebbe falso.
+
+**How to apply:** conservare l'accesso contrattuale precedente finché l'amministratore
+non assegna esplicitamente il nuovo piano; indicare l'inizio del tracciamento delle
+mappe e distinguere sempre archivio disponibile da consumo annuale contabilizzato.

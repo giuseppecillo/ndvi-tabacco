@@ -102,15 +102,173 @@ export const inviteManagedUserBodyEmailMax = 254;
 
 export const inviteManagedUserBodyNameMax = 120;
 
-export const inviteManagedUserBodySubscriptionDaysDefault = 30;
-export const inviteManagedUserBodySubscriptionDaysMax = 3650;
-
+export const inviteManagedUserBodyStartsOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 
 
 export const InviteManagedUserBody = zod.object({
   "email": zod.string().email().max(inviteManagedUserBodyEmailMax),
-  "name": zod.string().max(inviteManagedUserBodyNameMax),
-  "subscriptionDays": zod.number().min(1).max(inviteManagedUserBodySubscriptionDaysMax).default(inviteManagedUserBodySubscriptionDaysDefault)
+  "name": zod.string().min(1).max(inviteManagedUserBodyNameMax),
+  "plan": zod.enum(['standard', 'pro']),
+  "startsOn": zod.string().regex(inviteManagedUserBodyStartsOnRegExp)
+})
+
+
+export const GetMyUsageResponse = zod.object({
+  "userId": zod.string(),
+  "planManagementReady": zod.boolean(),
+  "plan": zod.enum(['standard', 'pro', 'unassigned', 'admin']),
+  "state": zod.enum(['unassigned', 'scheduled', 'active', 'expired', 'exempt']),
+  "periodId": zod.string().nullable(),
+  "startsOn": zod.string().nullable(),
+  "expiresAt": zod.string().nullable(),
+  "visitsUsed": zod.number().nullable(),
+  "mapsUsed": zod.number().nullable(),
+  "visitsTotal": zod.number(),
+  "observationsTotal": zod.number(),
+  "mapsTotal": zod.number(),
+  "storageBytes": zod.number(),
+  "storageMb": zod.number(),
+  "visitsLimit": zod.number().nullable(),
+  "mapsLimit": zod.number().nullable(),
+  "storageLimitBytes": zod.number().nullable(),
+  "trackingSince": zod.string().nullable(),
+  "periods": zod.array(zod.object({
+  "periodId": zod.string(),
+  "plan": zod.enum(['standard', 'pro']),
+  "startsOn": zod.string(),
+  "expiresAt": zod.string(),
+  "visitsUsed": zod.number(),
+  "mapsUsed": zod.number()
+}))
+})
+
+
+export const ListManagedUsageResponseItem = zod.object({
+  "userId": zod.string(),
+  "planManagementReady": zod.boolean(),
+  "plan": zod.enum(['standard', 'pro', 'unassigned', 'admin']),
+  "state": zod.enum(['unassigned', 'scheduled', 'active', 'expired', 'exempt']),
+  "periodId": zod.string().nullable(),
+  "startsOn": zod.string().nullable(),
+  "expiresAt": zod.string().nullable(),
+  "visitsUsed": zod.number().nullable(),
+  "mapsUsed": zod.number().nullable(),
+  "visitsTotal": zod.number(),
+  "observationsTotal": zod.number(),
+  "mapsTotal": zod.number(),
+  "storageBytes": zod.number(),
+  "storageMb": zod.number(),
+  "visitsLimit": zod.number().nullable(),
+  "mapsLimit": zod.number().nullable(),
+  "storageLimitBytes": zod.number().nullable(),
+  "trackingSince": zod.string().nullable(),
+  "periods": zod.array(zod.object({
+  "periodId": zod.string(),
+  "plan": zod.enum(['standard', 'pro']),
+  "startsOn": zod.string(),
+  "expiresAt": zod.string(),
+  "visitsUsed": zod.number(),
+  "mapsUsed": zod.number()
+}))
+})
+export const ListManagedUsageResponse = zod.array(ListManagedUsageResponseItem)
+
+
+export const listPendingRegistrationsQueryOffsetDefault = 0;
+export const listPendingRegistrationsQueryOffsetMin = 0;
+
+
+
+export const ListPendingRegistrationsQueryParams = zod.object({
+  "offset": zod.coerce.number().min(listPendingRegistrationsQueryOffsetMin).default(listPendingRegistrationsQueryOffsetDefault)
+})
+
+export const ListPendingRegistrationsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "email": zod.string(),
+  "name": zod.string(),
+  "registeredAt": zod.string()
+})),
+  "nextOffset": zod.number().nullable()
+})
+
+
+export const AssignManagedPlanParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const assignManagedPlanBodyStartsOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const AssignManagedPlanBody = zod.object({
+  "plan": zod.enum(['standard', 'pro']),
+  "startsOn": zod.string().regex(assignManagedPlanBodyStartsOnRegExp),
+  "renew": zod.boolean(),
+  "expectedPeriodId": zod.string().nullable(),
+  "requestId": zod.string().uuid()
+})
+
+export const AssignManagedPlanResponse = zod.object({
+  "userId": zod.string(),
+  "planManagementReady": zod.boolean(),
+  "plan": zod.enum(['standard', 'pro', 'unassigned', 'admin']),
+  "state": zod.enum(['unassigned', 'scheduled', 'active', 'expired', 'exempt']),
+  "periodId": zod.string().nullable(),
+  "startsOn": zod.string().nullable(),
+  "expiresAt": zod.string().nullable(),
+  "visitsUsed": zod.number().nullable(),
+  "mapsUsed": zod.number().nullable(),
+  "visitsTotal": zod.number(),
+  "observationsTotal": zod.number(),
+  "mapsTotal": zod.number(),
+  "storageBytes": zod.number(),
+  "storageMb": zod.number(),
+  "visitsLimit": zod.number().nullable(),
+  "mapsLimit": zod.number().nullable(),
+  "storageLimitBytes": zod.number().nullable(),
+  "trackingSince": zod.string().nullable(),
+  "periods": zod.array(zod.object({
+  "periodId": zod.string(),
+  "plan": zod.enum(['standard', 'pro']),
+  "startsOn": zod.string(),
+  "expiresAt": zod.string(),
+  "visitsUsed": zod.number(),
+  "mapsUsed": zod.number()
+}))
+})
+
+
+export const RegisterGeneratedMapBody = zod.object({
+  "requestId": zod.string().uuid()
+})
+
+export const RegisterGeneratedMapResponse = zod.object({
+  "userId": zod.string(),
+  "planManagementReady": zod.boolean(),
+  "plan": zod.enum(['standard', 'pro', 'unassigned', 'admin']),
+  "state": zod.enum(['unassigned', 'scheduled', 'active', 'expired', 'exempt']),
+  "periodId": zod.string().nullable(),
+  "startsOn": zod.string().nullable(),
+  "expiresAt": zod.string().nullable(),
+  "visitsUsed": zod.number().nullable(),
+  "mapsUsed": zod.number().nullable(),
+  "visitsTotal": zod.number(),
+  "observationsTotal": zod.number(),
+  "mapsTotal": zod.number(),
+  "storageBytes": zod.number(),
+  "storageMb": zod.number(),
+  "visitsLimit": zod.number().nullable(),
+  "mapsLimit": zod.number().nullable(),
+  "storageLimitBytes": zod.number().nullable(),
+  "trackingSince": zod.string().nullable(),
+  "periods": zod.array(zod.object({
+  "periodId": zod.string(),
+  "plan": zod.enum(['standard', 'pro']),
+  "startsOn": zod.string(),
+  "expiresAt": zod.string(),
+  "visitsUsed": zod.number(),
+  "mapsUsed": zod.number()
+}))
 })
 
 
