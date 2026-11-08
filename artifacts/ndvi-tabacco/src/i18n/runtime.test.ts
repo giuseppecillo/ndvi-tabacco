@@ -16,8 +16,8 @@ test("Sign-in introductory copy is concise in all supported languages", () => {
   assert.ok(!root.includes("Accesso riservato agli utenti autorizzati dall’amministratore."));
   for (const [language, support, access] of [
     ["it", "Supporto alla fertilizzazione azotata.", "Accesso riservato agli utenti."],
-    ["en", "Nitrogen fertilization support.", "Access restricted to users."],
-    ["es", "Apoyo a la fertilización nitrogenada.", "Acceso restringido a usuarios."],
+    ["en", "Guidance for nitrogen fertilization.", "Registered users only."],
+    ["es", "Ayuda para la fertilización nitrogenada.", "Solo para usuarios registrados."],
   ] as const) {
     setLanguage(language);
     assert.equal(t("Supporto alla fertilizzazione azotata."), support);
@@ -32,11 +32,26 @@ test("Sign-in subtitle presents operational nitrogen support in all languages", 
   assert.ok(!root.includes("Accesso riservato agli account approvati"));
   for (const [language, expected] of [
     ["it", source],
-    ["en", "Practical nitrogen fertilization support in the palm of your hand"],
-    ["es", "Apoyo práctico a la fertilización nitrogenada en la palma de tu mano"],
+    ["en", "Nitrogen fertilization guidance in your hand"],
+    ["es", "Tu guía de fertilización nitrogenada, en tu mano"],
   ] as const) {
     setLanguage(language);
     assert.equal(t(source), expected);
+    if(language!=="it")assert.doesNotMatch(t(source),/palm|palma/i);
+  }
+});
+
+test("sign-in help and actions use natural English and Spanish without changing contacts",()=>{
+  for(const [language,title,password,support] of [
+    ["en","Sign in to NitroCrop NDVI","Need to reset or change your password?","Contact technical support"],
+    ["es","Inicia sesión en NitroCrop NDVI","¿Necesitas restablecer o cambiar tu contraseña?","Contactar con soporte técnico"],
+  ] as const){
+    setLanguage(language);
+    assert.equal(t("Accedi a NitroCrop NDVI"),title);
+    assert.equal(t("Assistenza per recupero e cambio password:"),password);
+    assert.equal(t("Scrivi al supporto tecnico"),support);
+    for(const address of ["password@taurusagsolution.com","support@taurusagsolution.com","privacy@taurusagsolution.com"])
+      assert.equal(t(address),address);
   }
 });
 

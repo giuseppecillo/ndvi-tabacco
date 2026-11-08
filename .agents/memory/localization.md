@@ -15,6 +15,15 @@ La traduzione riguarda la visualizzazione: identificatori agronomici, valori del
 
 **How to apply:** usare il catalogo condiviso per il testo visualizzato e le localizzazioni native del gestore di autenticazione. Non usare mutazioni del DOM o traduzioni esterne dei dati dell’utente.
 
+Nella schermata di accesso l'utente vuole inglese e spagnolo naturali, non
+traduzioni letterali: preferisce «in your hand» a «in the palm of your hand»,
+con lo stesso approccio in spagnolo.
+
+**Why:** richiesta esplicita dell'utente sulla naturalezza dei testi di accesso.
+
+**How to apply:** usare formulazioni brevi e idiomatiche per slogan, accesso,
+pulsanti e assistenza; conservare il significato, i contatti e i testi italiani.
+
 Il supporto tecnico deve aprire la posta dell’utente verso support@taurusagsolution.com, con invio confermato dall’utente, senza aggiungere automaticamente dati personali, rilievi o GPS. L’indirizzo resta visibile e copiabile.
 
 **Why:** l’utente ha approvato esplicitamente un pulsante per scrivere dalla propria posta, non un modulo interno o un invio automatico.
