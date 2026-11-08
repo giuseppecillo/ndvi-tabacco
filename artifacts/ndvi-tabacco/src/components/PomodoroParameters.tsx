@@ -18,12 +18,10 @@ const inputClass = "w-full min-w-0 rounded-lg border border-stone-300 bg-white p
 const number = (value: number) => Number.isFinite(value) ? value.toLocaleString(getLocale(), { maximumFractionDigits: 2 }) : "—";
 
 export function PomodoroParameters(p: Props) {
-  const [ricerca, setRicerca] = useState("");
   const [destinazione, setDestinazione] = useState("");
   const opzioni = useMemo(() => Object.values(POMODORO_DB).filter((v) =>
-    (!destinazione || v.destinazione === destinazione)
-    && v.id.toLocaleLowerCase().includes(ricerca.trim().toLocaleLowerCase())),
-  [ricerca, destinazione]);
+    !destinazione || v.destinazione === destinazione),
+  [destinazione]);
   const profilo = POMODORO_DB[p.varieta];
   const numeric = (label: string, value: number, onChange: (value: number) => void, min = 0) =>
     <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold text-stone-700">
@@ -32,11 +30,7 @@ export function PomodoroParameters(p: Props) {
         onChange={(event) => onChange(event.target.value === "" ? NaN : Number(event.target.value))} className={inputClass} />
     </label>;
   return <div className="col-span-2 min-w-0 space-y-4" data-testid="pomodoro-parameters">
-    <div className="grid gap-3 sm:grid-cols-2">
-      <label className="flex flex-col gap-1 text-sm font-semibold text-stone-700">
-        {t("Cerca varietà di pomodoro")}
-        <input aria-label={t("Cerca varietà di pomodoro")} value={ricerca} onChange={(e) => setRicerca(e.target.value)} className={inputClass} />
-      </label>
+    <div>
       <label className="flex flex-col gap-1 text-sm font-semibold text-stone-700">
         {t("Destinazione")}
         <select aria-label={t("Destinazione")} value={destinazione} onChange={(e) => setDestinazione(e.target.value)} className={inputClass}>
@@ -53,7 +47,7 @@ export function PomodoroParameters(p: Props) {
         {opzioni.map((v) => <option value={v.id} key={v.id}>{v.nome} — {t(v.destinazione)} · {t(v.impiego)}</option>)}
       </select>
     </label>
-    <p className="text-xs text-stone-600">{t("Profili trovati")}: {opzioni.length} / 527</p>
+    <p className="text-xs text-stone-600">{t("Profili trovati")}: {opzioni.length} / {Object.keys(POMODORO_DB).length}</p>
     {profilo && <div className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-950">
       <strong>{profilo.nome}</strong> · {t(profilo.destinazione)} · {t(profilo.impiego)} · {t(profilo.precocita)}
       <p>{t("Riferimento del catalogo")}: {number(profilo.pianteHa)} {t("piante/ha")} · {number(profilo.resa)} t/ha · {number(profilo.azotoTotale)} kg N/ha.</p>
@@ -99,7 +93,7 @@ export function PomodoroParameters(p: Props) {
         </tr>)}</tbody>
       </table>
     </div>
-    <p className="text-xs text-stone-500">{t("Parametri ricavati dal CSV fornito. Le quote originali possono includere arrotondamenti. Un NDVI basso non dimostra da solo una carenza di azoto: verificare anche acqua, suolo e stato sanitario.")}</p>
+    <p className="text-xs text-stone-500">{t("Le quote originali possono includere arrotondamenti. Un NDVI basso non dimostra da solo una carenza di azoto: verificare anche acqua, suolo e stato sanitario.")}</p>
   </div>;
 }
 

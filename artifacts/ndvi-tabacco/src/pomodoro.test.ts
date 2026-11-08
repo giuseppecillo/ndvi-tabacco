@@ -8,14 +8,21 @@ const input = {
   varieta: PRIMO_POMODORO, fase: "Sviluppo", confermata: true,
   resa: 100, azotoGiaDistribuito: 0, letture: [0.2, 0.2, 0.2, 0.2, 0.2],
 };
-test("all 527 supplied profiles survive, including both pairs of homonyms", () => {
+test("525 unique varieties remain with the two user-selected homonym profiles", () => {
   const profiles = Object.values(POMODORO_DB);
-  assert.equal(profiles.length, 527);
+  assert.equal(profiles.length, 525);
   assert.equal(new Set(profiles.map(p => p.nome)).size, 525);
-  assert.equal(profiles.filter(p => p.nome === "Roma VF").length, 2);
-  assert.equal(profiles.filter(p => p.nome === "Gardener's Delight").length, 2);
+  const roma = profiles.filter(p => p.nome === "Roma VF");
+  assert.equal(roma.length, 1);
+  assert.equal(roma[0].destinazione, "Industria");
+  assert.equal(roma[0].impiego, "Pelato Intero / Polpa");
+  assert.equal(roma[0].azotoTotale, 250);
+  const gardeners = profiles.filter(p => p.nome === "Gardener's Delight");
+  assert.equal(gardeners.length, 1);
+  assert.equal(gardeners[0].impiego, "Ciliegino da Snack/Grappolo");
+  assert.equal(gardeners[0].azotoTotale, 210);
   assert.equal(profiles.filter(p => p.destinazione === "Industria").length, 220);
-  assert.equal(profiles.filter(p => p.destinazione === "Mensa").length, 307);
+  assert.equal(profiles.filter(p => p.destinazione === "Mensa").length, 305);
   assert.deepEqual(profiles[0].fasi, [[37.5, .3, .5], [75, .6, .75], [112.5, .75, .85], [25, .55, .65]]);
 });
 test("each profile and phase uses range mean, keeps original quotas and respects all dose limits", () => {

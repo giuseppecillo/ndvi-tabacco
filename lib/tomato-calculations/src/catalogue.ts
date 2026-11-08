@@ -1,4 +1,5 @@
 // Source: user-supplied Database_Agronomico_Pomodoro_400plus CSV. Preserve supplied values.
+// User excluded Roma VF fresh-market and Gardener's Delight truss profiles.
 // Phase tuples: [kg N/ha, NDVI minimum, NDVI maximum].
 type Row = readonly [string, string, string, string, number, number, number, ...[number, number, number][]];
 export const catalogue: readonly Row[] = [
@@ -451,7 +452,6 @@ export const catalogue: readonly Row[] = [
   ["Endeavour (Rijk Zwaan)","Mensa","Grappolo / Liscio / Specialità","Medio",19000,90,252,[37.8,0.4,0.6],[75.6,0.65,0.8],[113.4,0.8,0.9],[25.2,0.7,0.8]],
   ["Foronti (De Ruiter)","Mensa","Grappolo / Liscio / Specialità","Medio",15000,85,238,[35.7,0.4,0.6],[71.4,0.65,0.8],[107.1,0.8,0.9],[23.8,0.7,0.8]],
   ["Furet (Clause)","Mensa","Grappolo / Liscio / Specialità","Tardivo",18000,105,294,[44.1,0.4,0.6],[88.2,0.65,0.8],[132.3,0.8,0.9],[29.4,0.7,0.8]],
-  ["Gardener's Delight","Mensa","Grappolo / Liscio / Specialità","Medio",19000,85,238,[35.7,0.4,0.6],[71.4,0.65,0.8],[107.1,0.8,0.9],[23.8,0.7,0.8]],
   ["Ginevra","Mensa","Grappolo / Liscio / Specialità","Precoce",17000,95,266,[39.9,0.4,0.6],[79.8,0.65,0.8],[119.7,0.8,0.9],[26.6,0.7,0.8]],
   ["Globo Arancio","Mensa","Grappolo / Liscio / Specialità","Precoce",15000,90,252,[37.8,0.4,0.6],[75.6,0.65,0.8],[113.4,0.8,0.9],[25.2,0.7,0.8]],
   ["Globo Giallo","Mensa","Grappolo / Liscio / Specialità","Tardivo",20000,95,266,[39.9,0.4,0.6],[79.8,0.65,0.8],[119.7,0.8,0.9],[26.6,0.7,0.8]],
@@ -492,7 +492,6 @@ export const catalogue: readonly Row[] = [
   ["Principe Borghese","Mensa","Grappolo / Liscio / Specialità","Medio",18000,90,252,[37.8,0.4,0.6],[75.6,0.65,0.8],[113.4,0.8,0.9],[25.2,0.7,0.8]],
   ["Prode (Rijk Zwaan)","Mensa","Grappolo / Liscio / Specialità","Precoce",18000,105,294,[44.1,0.4,0.6],[88.2,0.65,0.8],[132.3,0.8,0.9],[29.4,0.7,0.8]],
   ["Roma","Mensa","Grappolo / Liscio / Specialità","Medio",16000,95,266,[39.9,0.4,0.6],[79.8,0.65,0.8],[119.7,0.8,0.9],[26.6,0.7,0.8]],
-  ["Roma VF","Mensa","Grappolo / Liscio / Specialità","Medio",16000,85,238,[35.7,0.4,0.6],[71.4,0.65,0.8],[107.1,0.8,0.9],[23.8,0.7,0.8]],
   ["Roma VFN","Mensa","Grappolo / Liscio / Specialità","Precoce",18000,85,238,[35.7,0.4,0.6],[71.4,0.65,0.8],[107.1,0.8,0.9],[23.8,0.7,0.8]],
   ["Roma VFNT","Mensa","Grappolo / Liscio / Specialità","Tardivo",15000,85,238,[35.7,0.4,0.6],[71.4,0.65,0.8],[107.1,0.8,0.9],[23.8,0.7,0.8]],
   ["Roma VFNTA","Mensa","Grappolo / Liscio / Specialità","Precoce",15000,100,280,[42,0.4,0.6],[84,0.65,0.8],[126,0.8,0.9],[28,0.7,0.8]],

@@ -39,7 +39,7 @@ export const tomato: readonly Translation[] = [
   ["Piano azoto pomodoro per fase", "Tomato nitrogen plan by growth stage", "Plan de nitrógeno del tomate por fase"],
   ["Intervallo NDVI", "NDVI range", "Intervalo NDVI"],
   ["NDVI riferimento", "Reference NDVI", "NDVI de referencia"],
-  ["Parametri ricavati dal CSV fornito. Le quote originali possono includere arrotondamenti. Un NDVI basso non dimostra da solo una carenza di azoto: verificare anche acqua, suolo e stato sanitario.", "Parameters taken from the supplied CSV. Original allocations may include rounding. Low NDVI alone does not prove nitrogen deficiency: also check water, soil and plant health.", "Parámetros extraídos del CSV facilitado. Las cuotas originales pueden incluir redondeos. Un NDVI bajo no demuestra por sí solo una carencia de nitrógeno: comprueba también el agua, el suelo y el estado sanitario."],
+  ["Le quote originali possono includere arrotondamenti. Un NDVI basso non dimostra da solo una carenza di azoto: verificare anche acqua, suolo e stato sanitario.", "Original allocations may include rounding. Low NDVI alone does not prove nitrogen deficiency: also check water, soil and plant health.", "Las cuotas originales pueden incluir redondeos. Un NDVI bajo no demuestra por sí solo una carencia de nitrógeno: comprueba también el agua, el suelo y el estado sanitario."],
   ["Risultati pomodoro", "Tomato results", "Resultados del tomate"],
   ["Deficit NDVI relativo", "Relative NDVI deficit", "Déficit NDVI relativo"],
   ["Dose indicata nel punto", "Indicated point dose", "Dosis indicada en el punto"],

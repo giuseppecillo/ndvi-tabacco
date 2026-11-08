@@ -14,7 +14,7 @@ export type ProfiloPomodoro = {
   fasi: readonly (readonly [number, number, number])[];
 };
 
-// Preserve all 527 source profiles, including homonyms with different uses.
+// Keep source values, excluding only the two homonymous profiles selected by the user.
 export const POMODORO_DB: Readonly<Record<string, ProfiloPomodoro>> = Object.fromEntries(
   catalogue.map(([nome, destinazione, impiego, precocita, pianteHa, resa, azotoTotale, ...fasi]) => {
     const id = `${nome} — ${destinazione} · ${impiego}`;

@@ -12,6 +12,7 @@
 - [Grano duro nitrogen planning](grano-duro-nitrogen-planning.md) — Convert seed rates with PMG and constrain scaled phase advice to each disciplinary range.
 - [Grain dose API integrity](grain-dose-api-integrity.md) — Recalculate the grain point dose on the API; never trust client-side BBCH, NDVI, or dose values.
 - [NDVI point-N indication](ndvi-point-n-indication.md) — Above-reference NDVI means no point N; below-reference NDVI maps proportionally to the crop’s optimal N quota.
+- [Pomodoro](tomato-agronomy.md) — Media degli intervalli NDVI; mantenere Roma VF industria e Gardener's Delight ciliegino nei profili omonimi.
 - [IDW nitrogen savings](idw-nitrogen-savings.md) — Savings compare total planned N with already-applied N plus the IDW dose across the full polygon area.
 - [Accesso riservato](access-control.md) — Solo utenti autorizzati dall’amministratore; rilievi privati per account, senza visibilità trasversale amministrativa implicita.
 - [Lingue e supporto](localization.md) — Italiano, inglese e spagnolo per accesso e app; tradurre la visualizzazione, mai gli identificatori agronomici o i dati dei clienti.
