@@ -88,6 +88,22 @@ titolare, non da un browser automatizzato dell'Agent. Restano da collaudare
 esportazione/mappe e creazione/rilettura/aggiornamento/eliminazione del solo
 rilievo sintetico. Non dichiarare concluso il collaudo applicativo.
 
+Il titolare ha poi confermato: rilievo sintetico salvato e presente dopo
+ricaricamento, Excel aperto correttamente, spazializzazione e dosi su mappa
+funzionanti. Queste sono prove manuali dichiarate dal titolare.
+Restano aggiornamento e cancellazione del solo ID QA-MIGRAZIONE-20261108.
+
+L'interfaccia impedisce ID già usati e non espone la modifica dei salvati:
+non chiedere all'utente di usare un pulsante inesistente. Predisposto
+pilot-browser-check.js da eseguire manualmente nella sessione Production
+già autenticata, senza acquisire cookie/token o creare sessioni sostitutive.
+Usa soltanto GET, POST sul singolo record sintetico identificato e DELETE
+con ID esplicito; interrompe ogni scrittura con origine/record non validi.
+La prova cambia solo il sintetico a NDVI 1 e piano N zero, ne verifica
+l'aggiornamento, lo elimina e ne verifica l'assenza.
+I 7 nuovi test offline di sicurezza dello script sono superati.
+Lo script NON è ancora stato eseguito in Production. Nessuna riapertura.
+
 ### Accesso al collaudo durante la manutenzione
 
 Dopo il secondo Republish e la verifica del pool operativo Supabase,
