@@ -4,6 +4,9 @@
   "files": [],
   "references": [
     {
+      "path": "./lib/tomato-calculations"
+    },
+    {
       "path": "./lib/tobacco-calculations"
     },
     {

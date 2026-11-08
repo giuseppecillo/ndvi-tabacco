@@ -21,6 +21,7 @@
     "@workspace/db": "workspace:*",
     "@workspace/grain-calculations": "workspace:*",
     "@workspace/tobacco-calculations": "workspace:*",
+    "@workspace/tomato-calculations": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "drizzle-orm": "catalog:",

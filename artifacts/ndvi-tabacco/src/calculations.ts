@@ -12,7 +12,7 @@ export {
 
 import { riferimentoNdviTabacco, calcolaDoseNTabacco, type EtaPiantina } from "@workspace/tobacco-calculations";
 export { ETA_GIORNI_EQUIVALENTI, type EtaPiantina } from "@workspace/tobacco-calculations";
-export type Coltura = "tabacco" | "grano duro";
+export type Coltura = "tabacco" | "grano duro" | "pomodoro";
 
 export type FinestraDasLocale = {
   fase: FaseGranoLabel;

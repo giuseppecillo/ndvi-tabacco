@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { erroreOsservazionePomodoro } from "@workspace/tomato-calculations";
 import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
 import { riferimentoNdviTabacco, calcolaDoseNTabacco } from "@workspace/tobacco-calculations";
@@ -174,7 +175,7 @@ router.get("/osservazioni", async (_req, res) => {
     );
     const parsed = rows.map((r) => ({
        ...r,
-       coltura: r.coltura === "grano duro" ? "grano duro" : "tabacco",
+       coltura: r.coltura === "pomodoro" ? "pomodoro" : r.coltura === "grano duro" ? "grano duro" : "tabacco",
       giorni:        Number(r.giorni),
       resa:          Number(r.resa),
       n1:            Number(r.n1),
@@ -210,11 +211,13 @@ router.post("/osservazioni", async (req, res) => {
     return;
   }
   const coltura = o.coltura ?? o.tipoIntervento ?? "tabacco";
-  if (coltura !== "tabacco" && coltura !== "grano duro") {
+  if (coltura !== "tabacco" && coltura !== "grano duro" && coltura !== "pomodoro") {
     res.status(400).json({ error: "Coltura non supportata." });
     return;
   }
-  const errore = coltura === "grano duro"
+  const errore = coltura === "pomodoro"
+    ? erroreOsservazionePomodoro(o)
+    : coltura === "grano duro"
     ? erroreOsservazioneGrano(o)
     : erroreOsservazioneTabacco(o);
   if (errore) {

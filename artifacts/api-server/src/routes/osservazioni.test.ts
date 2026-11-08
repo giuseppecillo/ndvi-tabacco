@@ -3,6 +3,60 @@ import test, { mock } from "node:test";
 import type { Request, Response } from "express";
 import router, { erroreOsservazioneGrano, erroreOsservazioneTabacco } from "./osservazioni";
 import pool from "../lib/db";
+import { PRIMO_POMODORO } from "@workspace/tomato-calculations";
+
+test("tomato POST and GET preserve crop, profile, phase, coordinates and dose using only a mocked pool", async () => {
+  const body = {
+    id: "synthetic-tomato", coltura: "pomodoro", data: "2026-11-08", dataTrapianto: "2026-10-19",
+    cliente: "Synthetic customer", appezzamento: "Synthetic field", lat: 41.1, lng: 14.2,
+    varieta: PRIMO_POMODORO, faseFenologica: "Sviluppo", faseFonte: "Fase osservata in campo", bbch: null,
+    resa: 100, azotoGiaDistribuito: 0, azotoTotale: 250, quotaAzoto: 18.8,
+    dose: 18.8, media: .2, ottimale: .4, discostamento: .2,
+    densitaValore: 30000, pianteHaEquivalenti: 30000, densitaUnita: "piante/ha", giorni: 20,
+    n1: .2, n2: .2, n3: .2, n4: .2, n5: .2, etaPiantina: "standard",
+  };
+  const post = router.stack.find(layer => layer.route?.path === "/osservazioni"
+    && layer.route.stack.some(handler => handler.method === "post"))!.route!.stack[0].handle;
+  const get = router.stack.find(layer => layer.route?.path === "/osservazioni"
+    && layer.route.stack.some(handler => handler.method === "get"))!.route!.stack[0].handle;
+  const writes: unknown[][] = [];
+  const query = mock.method(pool, "query", async (sql: string, values: unknown[]) => {
+    if (sql.trimStart().startsWith("INSERT")) {
+      writes.push(values);
+      return { rows: [{ createdAt: "2026-11-08T12:00:00Z" }] };
+    }
+    return { rows: [{ ...body, createdAt: "2026-11-08T12:00:00Z" }] };
+  });
+  let status = 0;
+  let payload: unknown;
+  const res = {
+    locals: { account: { id: "synthetic-owner" } },
+    status(value: number) { status = value; return this; },
+    json(value: unknown) { payload = value; return this; },
+  } as unknown as Response;
+  try {
+    await post({ body } as Request, res, () => {});
+    assert.equal(status, 201);
+    assert.equal(writes.length, 1);
+    assert.equal(writes[0][3], "pomodoro");
+    assert.equal(writes[0][9], PRIMO_POMODORO);
+    assert.equal(writes[0][21], 18.8);
+    assert.equal(writes[0][22], "Sviluppo");
+    assert.equal(writes[0][24], "Fase osservata in campo");
+    assert.equal(writes[0][28], 41.1);
+    assert.equal(writes[0][29], 14.2);
+    await get({} as Request, res, () => {});
+    const rows = payload as typeof body[];
+    assert.equal(rows[0].coltura, "pomodoro");
+    assert.equal(rows[0].varieta, PRIMO_POMODORO);
+    assert.equal(rows[0].dose, 18.8);
+    for (const change of [{ dose: 30 }, { faseFonte: null }, { varieta: "unknown" }, { ottimale: .5 }]) {
+      await post({ body: { ...body, ...change } } as Request, res, () => {});
+      assert.equal(status, 400);
+      assert.equal(writes.length, 1);
+    }
+  } finally { query.mock.restore(); }
+});
 
 const pianoGranoValido = (): Record<string, unknown> => ({
   coltura: "grano duro",

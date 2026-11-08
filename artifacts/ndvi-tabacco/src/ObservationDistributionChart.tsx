@@ -39,7 +39,7 @@ function DistributionTooltip({ active, payload }: TooltipProps) {
   return (
     <div className="min-w-56 rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-xs shadow-xl">
       <p className="font-semibold text-stone-900">Osservazione {point.id} · {point.data}</p>
-      <p className="mb-2 text-stone-500">{point.coltura === "grano duro" ? "Grano duro" : "Tabacco"} · {point.varieta}</p>
+      <p className="mb-2 text-stone-500">{t(point.coltura)} · {point.varieta}</p>
       <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
         <dt className="text-stone-500">NDVI medio</dt><dd className="font-mono text-stone-800">{formatNdvi(point.media)}</dd>
         <dt className="text-stone-500">NDVI atteso</dt><dd className="font-mono text-stone-800">{formatNdvi(point.ottimale)}</dd>
@@ -70,6 +70,7 @@ export function ObservationDistributionChart({
 
   const tabacco = punti.filter((punto) => punto.coltura === "tabacco");
   const grano = punti.filter((punto) => punto.coltura === "grano duro");
+  const pomodoro = punti.filter((punto) => punto.coltura === "pomodoro");
   const scostamentoMin = Math.min(...punti.map((punto) => punto.scostamento), -0.03);
   const scostamentoMax = Math.max(...punti.map((punto) => punto.scostamento), 0.03);
   const padding = Math.max(0.02, (scostamentoMax - scostamentoMin) * 0.12);
@@ -106,6 +107,7 @@ export function ObservationDistributionChart({
           <Legend verticalAlign="top" height={30} />
           <Scatter name="Tabacco" data={tabacco} fill="#15803d" />
           <Scatter name="Grano duro" data={grano} fill="#2563eb" />
+          <Scatter name={t("Pomodoro")} data={pomodoro} fill="#dc2626" />
         </ScatterChart>
       </ChartContainer>
       <p className="mt-3 text-xs text-stone-500">
@@ -138,7 +140,7 @@ export function ObservationDistributionChart({
               {punti.map((punto) => (
                 <tr key={punto.id} className="border-b border-stone-100 last:border-0">
                   <td className="px-2 py-2 font-mono font-semibold text-stone-800">{punto.id}</td>
-                  <td className="px-2 py-2">{punto.coltura === "grano duro" ? "Grano duro" : "Tabacco"}</td>
+                  <td className="px-2 py-2">{t(punto.coltura)}</td>
                   <td className="px-2 py-2 font-mono">{formatNdvi(punto.media)}</td>
                   <td className="px-2 py-2 font-mono">{formatNdvi(punto.ottimale)}</td>
                   <td className={`px-2 py-2 font-mono font-semibold ${punto.scostamento > 0 ? "text-amber-700" : "text-green-700"}`}>

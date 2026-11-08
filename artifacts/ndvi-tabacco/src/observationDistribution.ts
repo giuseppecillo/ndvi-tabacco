@@ -32,7 +32,7 @@ export function serieDistribuzioneOsservazioni(
   osservazioni: ObservationDistributionSource[],
 ): ObservationDistributionPoint[] {
   return osservazioni.flatMap((osservazione) => {
-    const coltura = osservazione.coltura === "grano duro" ? "grano duro" : "tabacco";
+    const coltura = osservazione.coltura === "pomodoro" ? "pomodoro" : osservazione.coltura === "grano duro" ? "grano duro" : "tabacco";
     const scostamento = osservazione.ottimale - osservazione.media;
     const azotoIndicato = coltura === "grano duro"
       ? osservazione.quotaAzoto ?? osservazione.dose

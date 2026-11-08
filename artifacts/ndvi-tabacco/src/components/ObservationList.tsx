@@ -45,7 +45,7 @@ function details(o: Observation, locale: string): Row[] {
     o.faseFenologica ? { label: t("Fase fenologica"), value: t(o.faseFenologica) } : null,
     o.bbch ? { label: "BBCH", value: o.bbch } : null,
     o.faseFonte ? { label: t("Fonte della fase"), value: t(o.faseFonte) } : null,
-    { label: t("Età piantina"), value: t(ETA_LABEL[o.etaPiantina] ?? o.etaPiantina) },
+    o.coltura === "tabacco" ? { label: t("Età piantina"), value: t(ETA_LABEL[o.etaPiantina] ?? o.etaPiantina) } : null,
     { label: t("Resa attesa"), value: `${num(o.resa) ?? "—"} t/ha` },
     num(o.densitaValore, 0) ? { label: t("Densità"), value: `${num(o.densitaValore, 0)} ${o.densitaUnita ?? ""}`.trim() } : null,
     num(o.pianteHaEquivalenti, 0) ? { label: t("Piante/ha equivalenti"), value: num(o.pianteHaEquivalenti, 0)! } : null,

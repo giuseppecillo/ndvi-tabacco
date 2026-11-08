@@ -194,6 +194,9 @@ importers:
       '@workspace/tobacco-calculations':
         specifier: workspace:*
         version: link:../../lib/tobacco-calculations
+      '@workspace/tomato-calculations':
+        specifier: workspace:*
+        version: link:../../lib/tomato-calculations
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -595,6 +598,9 @@ importers:
       '@workspace/tobacco-calculations':
         specifier: workspace:*
         version: link:../../lib/tobacco-calculations
+      '@workspace/tomato-calculations':
+        specifier: workspace:*
+        version: link:../../lib/tomato-calculations
       '@xmldom/xmldom':
         specifier: ^0.9.12
         version: 0.9.12
@@ -798,6 +804,8 @@ importers:
   lib/grain-calculations: {}
 
   lib/tobacco-calculations: {}
+
+  lib/tomato-calculations: {}
 
   scripts:
     devDependencies:

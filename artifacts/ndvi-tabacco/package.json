@@ -9,7 +9,7 @@
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:gis-compiled": "node tests/gis-compiled.mjs",
-    "test": "tsx --test src/App.test.ts src/i18n/runtime.test.ts src/utils/observationPdf.test.ts tests/*.test.mjs"
+    "test": "tsx --test src/App.test.ts src/pomodoro.test.ts src/i18n/runtime.test.ts src/utils/observationPdf.test.ts tests/*.test.mjs"
   },
   "devDependencies": {
     "@clerk/localizations": "^4.24.2",
@@ -58,6 +58,7 @@
     "@workspace/api-client-react": "workspace:*",
     "@workspace/grain-calculations": "workspace:*",
     "@workspace/tobacco-calculations": "workspace:*",
+    "@workspace/tomato-calculations": "workspace:*",
     "@xmldom/xmldom": "^0.9.12",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
