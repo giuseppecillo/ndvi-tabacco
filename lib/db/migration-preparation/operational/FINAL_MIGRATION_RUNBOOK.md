@@ -42,6 +42,19 @@ Non autorizza operazioni per il solo fatto di essere presente nel repository.
 - Il prossimo gate è il collaudo applicativo riservato al pilota, NON
   ancora eseguito. Nessuna riapertura generale autorizzata dai soli hash.
 
+### Secondo rollout — gate ancora aperto
+
+Revisione b68f628b LIVE (8 novembre 2026, 15:27 UTC); health 200,
+API osservazioni 503 con messaggio di migrazione. Log della revisione:
+preflight aggiuntivo disabled, verifica schema read-only superata.
+Non è presente un log del backend operativo o del successo della verifica
+identità runtime. La configurazione Production predisposta indica supabase,
+ma questo dato non dimostra da solo il valore effettivo nel processo.
+Non attestare ancora il backend operativo Supabase né il collaudo UI.
+Occorre controllare gli eventuali override nei Deployment app secrets
+prima dell'accesso pilota. Nessuna ripetizione di backup/import/confronto.
+Terzo rollout NON predisposto, pausa ancora attiva.
+
 ### Accesso al collaudo durante la manutenzione
 
 Dopo il secondo Republish e la verifica del pool operativo Supabase,
