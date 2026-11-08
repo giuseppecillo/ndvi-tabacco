@@ -1,8 +1,24 @@
 # Piano operativo definitivo — Replit Production → Supabase Agri Precision
 
-Stato: piano soltanto; esecuzione subordinata all'approvazione del titolare.
+Stato: piano approvato dal titolare; preparativi operativi avviati.
 Questo documento prevale sui passaggi ormai superati delle checklist precedenti.
 Non autorizza operazioni per il solo fatto di essere presente nel repository.
+
+### Avanzamento prima del primo rollout
+
+- Approvazione dell'intero perimetro ricevuta.
+- Tool import/compare compilati e programmi PostgreSQL/age disponibili.
+- Chiave esistente presente, permessi verificati e corrispondenza con il
+  destinatario pubblico confermata senza stampare la chiave.
+- Esclusioni Git/pubblicazione verificate; connessioni operative dedicate
+  presenti nei Secrets, senza lettura dei valori da parte dell'Agent.
+- Predisposta configurazione Production: backend replit, pausa 1,
+  preflight 1, allowlist piloti vuota.
+- ATTENZIONE: questa configurazione richiede ancora il primo Republish
+  manuale. La manutenzione effettiva e il drenaggio NON sono confermati.
+- Prima del clic occorrono visibilità dei rilievi nella sessione del
+  titolare e sospensione degli altri accessi in scrittura.
+- Nessun backup finale, importazione o cambio backend eseguito.
 
 ## Perimetro e punto di partenza
 
