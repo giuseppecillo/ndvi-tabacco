@@ -137,13 +137,25 @@ non applicabile.
   i nuovi record. Lo studio sulla cipolla usa SAVI: non è una fonte di valori NDVI.
 - Risolvere la divergenza interna alla scheda FIAMMETTA KWS: sottotitolo
   «Precoce» ma tabella di raccolta «Da Media a Tardiva».
-- Estendere schema e verificatore con osservazioni numeriche indipendenti,
-  unità, contesto, identità canoniche, priorità del dato specifico e calcolo
-  riproducibile delle analogie. Con un solo riferimento si parla di valore
-  trasferito, non media. Vietati duplicati/sinonimi conteggiati due volte,
-  confronti incompatibili e uso ricorsivo di stime o valori originali non validati.
-  Il verificatore attuale rifiuta campi numerici/analogie non supportati,
-  invece di ignorarli o accettarli senza controlli.
+- Completare le osservazioni numeriche indipendenti e i contesti di confronto.
+  `catalogue_averages.py` applica la media solo entro la stessa coltura,
+  destinazione, precocità, ciclo e sistema produttivo. Con un solo riferimento
+  si parla di valore trasferito, non media. I dati specifici hanno priorità.
+  Ogni risultato espone riferimenti, unità, contesto, numerosità varietale,
+  campioni della fonte separati dalla numerosità varietale, metodo, intervallo
+  e precisione non superiore a quella della fonte meno precisa.
+  Sono rifiutati duplicati/sinonimi conteggiati due volte, confronti incompatibili
+  e uso ricorsivo di analogie o valori originali non validati. Per NDVI devono
+  coincidere anche fase, BBCH, sensore, bande, geometria e maschera suolo/chioma;
+  per N la grandezza (dose, fabbisogno o asportazione) resta distinta.
+  Precocità e codici BBCH sono categorie, non numeri da mediare.
+- Le prime osservazioni quantitative aggiuntive sono due rese specifiche di
+  cipolla della prova NIAB 2010 da bulbilli ESC: Sturon e Red Baron.
+  Sono medie della stessa cultivar su due siti, **non** medie di più varietà,
+  né rese garantite nel contesto italiano. I lotti ABS non diventano ulteriori
+  cultivar. La prova LSU dello zucchino riporta libbre per parcella e raccolta,
+  senza interfila sufficiente alla conversione in t/ha: non viene trasferita.
+  L'indice Yield 105 del catalogo Red Baron non viene interpretato come t/ha.
 - Completare tutti i parametri applicabili nell'intera tabella, tracciando
   separatamente ogni integrazione ai record preesistenti. Il rapporto distingue
   valori originali presenti ma non validati da nuovi dati specifici documentati,

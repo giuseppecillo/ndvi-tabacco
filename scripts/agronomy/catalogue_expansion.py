@@ -1,8 +1,7 @@
 """Offline draft and completeness audit. Never fills gaps with guessed numbers.
 
 The original hash-bound review is called unmodified, not read from stale outputs.
-Numeric/analogy curation is deliberately not accepted until source observations
-and a comparison context have been collected and reviewed.
+Only source-backed observations and explicitly comparable cohorts can fill gaps.
 """
 import argparse
 import csv
@@ -16,6 +15,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from catalogue_identity import EVIDENCE_PATH, apply_identity_review, load_evidence
+from catalogue_averages import UNITS, estimate, validate_observations
 
 ADDITIONS = Path(__file__).with_name("catalogue-additions.json")
 SCRIPT = Path(__file__).with_name("review-crop-catalogue.py")
@@ -31,6 +31,7 @@ PARAMETERS = [
 ALLOWED_RECORD_KEYS = {
     "crop", "name", "kind", "sources", "finding", "destination", "use",
     "earliness", "earliness_sources",
+    "comparison_context", "context_sources", "canonical_variety", "phase_contexts",
 }
 MISSING = "MANCANTE_APPLICABILE"
 
@@ -65,7 +66,7 @@ def load_additions(source, path=ADDITIONS):
         if key in seen or record["crop"] not in EXPECTED_CROPS:
             raise ValueError("Identità aggiuntiva duplicata o coltura inattesa")
         seen.add(key)
-        # Unsupported numeric data must not silently disappear from the draft.
+        # Values go through the observations verifier, never arbitrary cells.
         if set(record) - ALLOWED_RECORD_KEYS:
             raise ValueError("Parametri aggiuntivi non supportati: serve revisione delle evidenze")
         if not all(record.get(k, "").strip() for k in
@@ -78,8 +79,13 @@ def load_additions(source, path=ADDITIONS):
                 raise ValueError("Precocità senza fonte specifica")
         if not ids or any(s not in data["sources"] for s in ids):
             raise ValueError("Fonte aggiuntiva sconosciuta")
+        if record.get("comparison_context") or record.get("phase_contexts"):
+            context_sources = record.get("context_sources", [])
+            if not context_sources or any(s not in data["sources"] for s in context_sources):
+                raise ValueError("Contesto di confronto senza fonte")
     if {r["crop"] for r in data["records"]} != EXPECTED_CROPS:
         raise ValueError("Copertura delle nuove colture incompleta")
+    validate_observations(data.get("observations", []), data["sources"])
     return data
 
 
@@ -155,6 +161,10 @@ def build(source, additions):
                 "fonti": [sources[s]["url"] for s in ids] if row[parameter] else [],
                 "metodo": "Traduzione descrittiva, nessuna media" if row[parameter] else "Nessun valore assegnato",
             }
+            if not row[parameter] and parameter in UNITS:
+                result = estimate(record, parameter, additions.get("observations", []), sources)
+                if result is not None:
+                    row[parameter], entries[parameter] = result
         rows.append(row)
         matrix.append(entries)
 
@@ -184,6 +194,10 @@ def build(source, additions):
         "nuovi_per_coltura": dict(Counter(r["crop"] for r in additions["records"])),
         "calcolo_automatico_abilitato": 0,
         "celle_applicabili_mancanti": sum(len(b["parametri"]) for b in blockers),
+        "parametri_nuovi_da_osservazioni": dict(Counter(
+            entry["stato"] for entries in matrix[len(supplied):] for entry in entries.values()
+            if entry["stato"] in {"SPECIFICO_DOCUMENTATO", "MEDIA_PER_ANALOGIA", "VALORE_TRASFERITO"}
+        )),
         "bloccanti": blockers, "integrazioni_originali": changes,
         "revisioni_originali": original_audit,
         "matrice_completezza": audit,
@@ -245,7 +259,8 @@ def main():
     args = parser.parse_args()
     names = ("controlli_ampliamento.json", "lacune_ampliamento.html",
              "BOZZA_INCOMPLETA_colture_ampliate.csv")
-    inputs = {p.resolve() for p in (args.source, args.additions, EVIDENCE_PATH, SCRIPT)}
+    inputs = {p.resolve() for p in (args.source, args.additions, EVIDENCE_PATH, SCRIPT,
+                                   Path(__file__), Path(__file__).with_name("catalogue_averages.py"))}
     for name in names:
         target = (args.output / name).resolve()
         if target in inputs or target in {p.resolve() for p in

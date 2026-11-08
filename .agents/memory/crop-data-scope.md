@@ -22,3 +22,12 @@ da costa/foglia e da zucchero, da mantenere distinte.
 agronomiche; non trasferire il profilo della radice da zucchero alla coltura
 raccolta per coste/foglie. Non dichiarare definitivo un catalogo con parametri
 applicabili mancanti e non usare NON APPLICABILE per nascondere quelle lacune.
+
+Per i valori mancanti l'utente chiede «i valori medi delle varietà appartenti
+ad una coltura, considera la precocità e fai una media».
+
+**Why:** l'utente ha ribadito esplicitamente il criterio di raggruppamento.
+
+**How to apply:** usare valori disponibili della stessa coltura e precocità,
+senza mescolare destinazioni incompatibili; conservare il dato specifico quando
+presente. Un gruppo senza osservazioni numeriche non consente una media.

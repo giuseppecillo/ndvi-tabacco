@@ -148,7 +148,13 @@ class ExpansionIntegrationTests(unittest.TestCase):
             self.assertTrue(row["Fonti identità"])
             self.assertTrue(row["Riscontro identità"])
             for parameter in expansion.PARAMETERS:
-                if parameter not in {"Destinazione", "Impiego", "Precocità"}:
+                if parameter == "Resa media (t/ha)" and row["Coltura"] == "Cipolla":
+                    self.assertEqual(row[parameter], {"Sturon": "63,6", "Red Baron": "49,6"}[row["Varietà"]])
+                    meta = json.loads(row["Provenienza parametri JSON"])[parameter]
+                    self.assertEqual(meta["stato"], "SPECIFICO_DOCUMENTATO")
+                    self.assertEqual(meta["numerosita_varieta"], 1)
+                    self.assertEqual(meta["riferimenti"][0]["source_sample_size"], 2)
+                elif parameter not in {"Destinazione", "Impiego", "Precocità"}:
                     self.assertEqual(row[parameter], "")
         fiammetta = next(r for r in self.rows if r["Varietà"] == "FIAMMETTA KWS")
         self.assertEqual(fiammetta["Precocità"], "")
