@@ -101,3 +101,6 @@ Nessuna pubblicazione eseguita; le modifiche verificate riguardano il workspace,
 non una nuova versione del sito già pubblicato.
 
 **Punto 3 non avviato. Nessun collegamento Supabase in questa fase.**
+
+Programma successivo preparato, senza esecuzione o autorizzazione implicita:
+[punto 3 — backup verificabile](migrazione-punto-3.md).

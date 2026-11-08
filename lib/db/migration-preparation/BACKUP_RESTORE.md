@@ -1,5 +1,15 @@
 # Backup, ripristino e confronto — procedura NON eseguita
 
+## Programma operativo corrente
+
+Il [programma del punto 3](../../../docs/migrazione-punto-3.md) specifica
+origine Production, autorizzazioni, snapshot condiviso, inventario, cifratura,
+checksum, consegna e prove di leggibilità. È preparazione documentale, non
+un backup eseguito. Le prescrizioni correnti prevalgono sugli esempi storici:
+nessun secondo database/progetto e futuro restore **solo in Agri Precision**,
+con autorizzazione distinta. Le precedenti prove sintetiche non vanno riavviate
+per questa attività.
+
 Questa procedura richiede autorizzazioni distinte. Nessun dump è stato creato
 e nessun contenuto applicativo è stato letto o modificato. La sola ispezione dei
 metadati è stata successivamente autorizzata ed è descritta in
@@ -11,14 +21,18 @@ in Git, negli allegati della chat o nei log.
 - Confermare esplicitamente origine **Production Replit** e destinazione
   **Supabase**, regione, responsabili, accessi e finestra di manutenzione.
   Il database del workspace non è automaticamente quello pubblicato.
-- Conservare il riferimento codice `baa1953` e identificare il commit esatto da
-  pubblicare al cutover. Un commit non è un backup del database.
+- Conservare i riferimenti storici e identificare separatamente il commit
+  effettivamente pubblicato e quello previsto al cutover. `baa1953` è un
+  riferimento storico, non la versione pubblicata accertata. Un commit non è
+  un backup del database.
 - Far predisporre all'operatore autorizzato servizi libpq distinti
   `nitrocrop_source_approved` e `nitrocrop_target_qa_approved`, con credenziali nel
   sistema sicuro e password file con permessi 0600, mai URL/password in CLI,
   repository o shell history. SSL verify-full e CA attendibile.
 - Conservare dump in archivio cifrato controllato dal titolare con accessi minimi,
   retention approvata e verifica SHA-256. Nessun backup reale nella repository.
+- Non usare credenziali target per acquisire il backup. Il servizio target
+  serve soltanto al restore successivo separatamente autorizzato.
 - Verificare versioni PostgreSQL e strumenti: pg_dump non deve essere più vecchio
   del server sorgente; valutare compatibilità del server target e delle estensioni.
 - Inventariare tabelle, tipi, vincoli, indici, default, sequenze, funzioni,
@@ -27,17 +41,21 @@ in Git, negli allegati della chat o nei log.
 
 ## 2. Backup logico
 
-Esempi per l'operatore, **da non eseguire in questa fase**:
+Esempi abbreviati per l'operatore, **da non eseguire in questa fase**.
+Per acquisizione e cifratura seguire il programma corrente: STAGE è un volume
+cifrato del titolare fuori dal workspace; SNAPSHOT_ID viene dalla transazione
+coordinatrice ancora aperta. Il backup di conservazione include owner/ACL;
+la mappatura si effettua solo nel successivo restore revisionato.
 
 ```sh
-# Fonte già approvata; $SECURE_BACKUP è un percorso esterno cifrato del titolare.
+# Fonte già approvata; nessun output nel repository o nei log condivisi.
 # Nessuna password viene passata nella riga di comando.
 pg_dump --dbname='service=nitrocrop_source_approved' \
-  --format=custom --no-owner --no-acl --file="$SECURE_BACKUP/application.dump"
+  --format=custom --snapshot="$SNAPSHOT_ID" --file="$STAGE/application.dump"
 pg_dump --dbname='service=nitrocrop_source_approved' \
-  --schema-only --no-owner --no-acl --file="$SECURE_BACKUP/schema.sql"
-pg_restore --list "$SECURE_BACKUP/application.dump"
-sha256sum "$SECURE_BACKUP/application.dump" "$SECURE_BACKUP/schema.sql"
+  --schema-only --snapshot="$SNAPSHOT_ID" --file="$STAGE/schema.sql"
+pg_restore --list "$STAGE/application.dump" > "$STAGE/archive.list"
+# Inventario/checksum, cifratura e verifica della copia ricevuta: programma punto 3.
 ```
 
 pg_dump acquisisce uno snapshot coerente ma NON blocca le scritture applicative.
@@ -49,8 +67,10 @@ tutte le dipendenze; non tentare un restore cieco dei ruoli di sistema.
 
 ## 3. Restore di prova (scrive: serve autorizzazione)
 
-- Solo destinazione vuota e isolata approvata; mai sull'origine e mai su un target
-  con dati clienti. Nessun `--clean` o `DROP` per liberare una destinazione.
+- Solo spazio applicativo vuoto e approvato nel progetto **Agri Precision**
+  esistente; mai sull'origine e mai su un target con dati clienti preesistenti.
+  Nessun secondo database/progetto, neppure temporaneo. Non toccare gli oggetti
+  tecnici Supabase. Nessun `--clean` o `DROP` per liberare una destinazione.
 - Verificare hostname, current_database e session_user fuori dai log contenenti
   segreti. Credenziale migrator disponibile soltanto all'esecutore autorizzato.
 - Scegliere una strategia: dump completo revisionato **oppure** baseline verificata

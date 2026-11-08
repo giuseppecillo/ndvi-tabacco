@@ -1,5 +1,15 @@
 # Preparazione INATTIVA PostgreSQL → Supabase
 
+## Punto 3: programma preparato, esecuzione non autorizzata
+
+Il [programma del backup verificabile](../../../docs/migrazione-punto-3.md)
+definisce i permessi ancora necessari e i passaggi manuali su postazione
+controllata dal titolare. Nessuna lettura di dati/credenziali, esportazione,
+connessione o prova di restore è stata eseguita per prepararlo.
+La destinazione futura è soltanto il progetto Agri Precision già esistente:
+nessun secondo database/progetto, neppure temporaneo. I collaudi locali
+descritti sotto sono storici, non una deroga per il punto 3.
+
 ## Aggiornamento: punto 2 autorizzato
 
 Le migrazioni e il collegamento a Supabase restano inattivi. È stata invece
