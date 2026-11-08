@@ -8,6 +8,9 @@ import {calcolaDoseNTabacco} from "../../lib/tobacco-calculations/src/index.ts";
 import {calcolaDoseNGrano, faseGranoDaBbch, GRANO_DURO_DB} from "../../lib/grain-calculations/src/index.ts";
 import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
+import {mkdtempSync,writeFileSync,rmSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 const row=(variety,earliness,target,crop="crop")=>({crop,variety,earliness,target,
   destination:"fresh",use:"food",phase:"F1",bbch:"10-19"});
 test("detects an informative maturity class without learning from held-out cultivar",()=>{
@@ -360,9 +363,54 @@ test("real rounding of native models respects fractional residuals without evalu
   assert.equal(grainResult.safety.candidate.violations.residual,0);
 });
 
+const cliScript=fileURLToPath(new URL("./evaluate-earliness.mjs",import.meta.url));
+const runCli=args=>spawnSync(process.execPath,[...process.execArgv,cliScript,...args],{encoding:"utf8"});
+
+// Structural test files only; the manifest flags exercise the intake contract,
+// not a claim that real independent field evidence exists.
+function cliFixture(t) {
+  const dir=mkdtempSync(join(tmpdir(),"earliness-cli-synthetic-"));
+  t.after(()=>rmSync(dir,{recursive:true,force:true}));
+  const field=join(dir,"synthetic-field-do-not-echo.json");
+  const candidate=join(dir,"synthetic-candidate-do-not-echo.json");
+  const dataset={schemaVersion:1,sourceEvidence:"synthetic structural test only",
+    customerData:false,independentFieldData:true,synthetic:false,rows:[]};
+  writeFileSync(field,JSON.stringify(dataset));
+  writeFileSync(candidate,JSON.stringify({}));
+  return {field,candidate,args:["--field",field,"--candidate",candidate,"--authorized-reference-data"]};
+}
+
+test("CLI returns exit 2 and a non-activating BLOCKED report for an authorized empty manifest",t=>{
+  const {args}=cliFixture(t);
+  const result=runCli(args);
+  assert.ifError(result.error);
+  assert.equal(result.signal,null);
+  assert.equal(result.status,2);
+  assert.equal(result.stderr,"");
+  assert.deepEqual(JSON.parse(result.stdout),{
+    status:"BLOCKED",reason:"INDEPENDENT_ADEQUATE_N_FIELD_CAMPAIGNS_NOT_SUPPLIED",
+    samples:0,comparison:null,doseImpact:null,decision:"DO_NOT_ACTIVATE",
+    applicationChanged:false,supabaseWrites:false,customerDataRead:false,
+  });
+});
+
+for(const input of ["field","candidate"])
+test(`CLI rejects malformed ${input} JSON without exposing contents or paths`,t=>{
+  const files=cliFixture(t);
+  const marker="SYNTHETIC_CONTENT_MUST_NOT_APPEAR";
+  writeFileSync(files[input],`{"${marker}": invalid-json}`);
+  const result=runCli(files.args);
+  assert.ifError(result.error);
+  assert.equal(result.signal,null);
+  assert.equal(result.status,1);
+  assert.equal(result.stdout,"");
+  assert.equal(result.stderr,JSON.stringify({status:"ERROR",reason:"INVALID_JSON"})+"\n");
+  for(const value of [marker,files.field,files.candidate])
+    assert.ok(!(result.stdout+result.stderr).includes(value));
+});
+
 test("CLI refuses implicit local reads and reports unreadable files without echoing paths",()=>{
-  const script=fileURLToPath(new URL("./evaluate-earliness.mjs",import.meta.url));
-  const run=args=>spawnSync(process.execPath,[...process.execArgv,script,...args],{encoding:"utf8"});
+  const run=runCli;
   const missingAuthorization=run(["--field","do-not-open.json","--candidate","do-not-open.json"]);
   assert.equal(missingAuthorization.status,1);
   assert.match(missingAuthorization.stderr,/USAGE/);
