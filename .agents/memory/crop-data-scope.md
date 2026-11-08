@@ -23,14 +23,28 @@ agronomiche; non trasferire il profilo della radice da zucchero alla coltura
 raccolta per coste/foglie. Non dichiarare definitivo un catalogo con parametri
 applicabili mancanti e non usare NON APPLICABILE per nascondere quelle lacune.
 
-Per i valori mancanti l'utente chiede «i valori medi delle varietà appartenti
-ad una coltura, considera la precocità e fai una media».
+Per i valori mancanti l'utente chiede la media di tutte le varietà della stessa
+coltura. Per le fasi fenologiche chiede varietà simili della stessa classe o,
+se non note, le fasi generali della coltura di riferimento. Per collegare fasi
+e NDVI autorizza l'uso dei valori di una varietà «standard» conosciuta con dati
+disponibili.
 
 **Why:** l'utente ha ribadito esplicitamente il criterio di raggruppamento.
 
-**How to apply:** usare valori disponibili della stessa coltura e precocità,
-senza mescolare destinazioni incompatibili; conservare il dato specifico quando
-presente. Un gruppo senza osservazioni numeriche non consente una media.
+**How to apply:** conservare il dato specifico quando presente; per le fasi
+usare un profilo coerente della coltura, senza mediare aritmeticamente nomi o
+codici BBCH né mescolare destinazioni incompatibili; mantenere la curva NDVI
+di riferimento associata alle sue fasi. Un gruppo senza valori
+numerici non consente una media.
+
+L'utente chiede di cancellare dalla tabella impollinatori e portinnesti e le
+varietà per cui non si possano riportare resa e azoto totale.
+
+**Why:** l'utente ha esplicitamente sostituito il mantenimento di tutti i profili
+con questa selezione.
+
+**How to apply:** applicare la selezione a una copia distinta, conservando
+l'allegato originale e la revisione vincolata all'hash.
 
 Nella tabella visibile l'utente non vuole spiegazioni su come è stata costruita,
 né indicazioni che distinguano dati specifici, medie o dati da letteratura.

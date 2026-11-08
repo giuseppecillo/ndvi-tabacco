@@ -4,6 +4,59 @@ Questa procedura non importa colture nell'app e non apre connessioni di rete o
 database. Non modifica osservazioni, dati utente o Production. Nessun piano N/NDVI
 è validato dalla verifica dei nomi.
 
+## Tabella selezionata secondo le ultime istruzioni
+
+```sh
+python scripts/agronomy/catalogue_selection.py \
+  attached_assets/Database_Colture_1794160273520.csv
+```
+
+Output distinto in `generated-artifacts/crop-selection/`:
+
+- `catalogo_colture.csv`: solo coltura, varietà e parametri, senza colonne di
+  stato, provenienza o spiegazioni del metodo. UTF-8 con BOM, separatore `;`,
+  virgola decimale, compatibile con Excel italiano;
+- `controlli_selezione.json`: esclusioni e motivi, integrazioni, tracciabilità
+  per parametro, hash e conteggi, separati dalla tabella visibile.
+
+Questa selezione applica la nuova richiesta di eliminare impollinatori,
+portinnesti e varietà senza resa o N totale dopo le integrazioni disponibili.
+Non riscrive l'originale, la revisione delle 493 righe o la bozza ampliata.
+La tabella selezionata non equivale al catalogo ampliato integrale.
+
+I parametri numerici di base mancanti usano la media aritmetica dei valori
+disponibili della stessa coltura nella fotografia iniziale della tabella:
+il calcolo non riutilizza valori appena integrati e non include ruoli esclusi
+o identità segnalate come sinonimi/sovrapposizioni. I valori già presenti non
+sono sostituiti. La provenienza tecnica conserva lo stato dei dati forniti,
+senza promuoverli a riferimenti agronomici validati: è una nuova selezione
+richiesta dall'utente, non un indebolimento della revisione originale.
+
+Per le fasi si usa un profilo generale coerente della stessa coltura e
+destinazione, preferendo la stessa precocità. Fasi e BBCH sono trasferiti
+insieme, mai mediati aritmeticamente. Profili diversi a pari prevalenza non
+consentono una scelta automatica. Le quote N mancanti usano le proporzioni
+medie dei profili compatibili, rapportate al totale disponibile senza cambiare
+quote già presenti. Per NDVI si può trasferire la curva completa di una varietà
+di riferimento nominativa, mantenendola associata alle sue fasi e BBCH.
+Il campo tecnico opzionale `Varietà riferimento fenologico` permette una scelta
+esplicita e non compare nella tabella esportata. In assenza di tale scelta si
+preferiscono profili nominativi documentati o con NDVI specifico documentato,
+con un ordinamento deterministico; questo non ne certifica i parametri.
+I valori NDVI già presenti devono essere compatibili con la curva scelta.
+In alternativa NDVI è mediato per fase; contesti sensore noti e diversi
+non vengono mescolati. Un contesto non documentato nella tabella resta tale
+nel file tecnico. Qualsiasi parametro applicabile ancora mancante impedisce
+di esportare il CSV.
+
+Con gli input attuali: **516 profili in ingresso, 488 in uscita, 9 colture**.
+Sono esclusi 5 impollinatori/portinnesti e tutti i 23 profili aggiuntivi:
+per questi ultimi manca N totale e non ci sono valori della rispettiva
+coltura da cui ricavarlo. Le 488 righe residue sono già complete: **nessuna
+media né fase di riferimento aggiunta nell'output effettivo attuale**.
+Il codice dei fallback è verificato separatamente con fixture sintetiche,
+mai incluse nel dataset. Non viene abilitato alcun calcolo nell'app.
+
 ## Rigenerazione
 
 Dalla radice del progetto, senza dipendenze Python aggiuntive:
