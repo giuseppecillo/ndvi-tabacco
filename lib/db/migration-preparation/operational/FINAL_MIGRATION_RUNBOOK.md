@@ -66,6 +66,22 @@ superati; API sviluppo riavviata correttamente. Il riscontro di sviluppo
 non attesta Production. Richiesto rollout diagnostico ancora in manutenzione,
 prima del collaudo applicativo e della riapertura.
 
+### Rollout diagnostico — backend target attestato
+
+Revisione 82f85820 LIVE, 8 novembre 2026, 15:37 UTC. L'audit dei log
+della sola nuova revisione rileva alle 15:37:12.846Z:
+backend supabase, runtimeIdentity passed, maintenance true, pilotAccounts 1.
+Questo attesta il superamento della verifica obbligatoria del pool
+operativo (app_runtime, TLS/CA/hostname, READ ONLY e ROLLBACK).
+Verifica schema read-only positiva e health 200 alle 15:37:14.671Z.
+Il preflight aggiuntivo source-only resta disabled come previsto.
+Nessun errore fatale d'avvio; i probe 500 precedono la readiness.
+
+Il collaudo autenticato e i dati nell'interfaccia restano NON verificati.
+Prossimo passo: accesso manuale del titolare con l'account amministratore
+originale, senza token/password in chat né account sostitutivi.
+Nessun terzo rollout o riapertura prima del collaudo applicativo completo.
+
 ### Accesso al collaudo durante la manutenzione
 
 Dopo il secondo Republish e la verifica del pool operativo Supabase,
