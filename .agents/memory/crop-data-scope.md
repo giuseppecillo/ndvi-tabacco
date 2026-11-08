@@ -13,10 +13,8 @@ di correggere gli altri dati non realistici o agronomicamente conformi.
 gli errori documentabili senza attribuire attendibilità scientifica a valori
 N/NDVI semplicemente plausibili.
 
-L'ampliamento del catalogo varietale richiesto è una consegna CSV offline,
-non un'autorizzazione ad abilitare nuove colture nell'app. L'utente ha confermato
-entrambe le destinazioni della Bietola: da costa/foglia e da zucchero, da
-mantenere distinte.
+L'utente ha confermato entrambe le destinazioni della Bietola:
+da costa/foglia e da zucchero, da mantenere distinte.
 
 **Why:** sono vincoli espliciti della richiesta dell'utente.
 
