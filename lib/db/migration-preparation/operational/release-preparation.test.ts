@@ -9,6 +9,7 @@ import {preparedAppSource,preparedDatabaseSource} from "./prepared-wiring.mjs";
 import {verifyRuntimeIdentity} from "../../src/runtime-identity";
 import {TLSSocket} from "node:tls";
 import {verifyProductionRuntimePreflight} from "../../src/production-runtime-preflight";
+import {runtimePreflightErrorCode} from "../../src/runtime-preflight-errors";
 
 const runtimeUrl=`postgresql://app_runtime.${RUNTIME_PROJECT}:synthetic-password@${RUNTIME_HOST}:5432/postgres`;
 test("source mode preserves the existing connection and ignores inactive target credentials",()=>{
@@ -107,7 +108,8 @@ test("Production diagnostic fails closed on missing or admin credentials, withou
     let calls=0;
     await assert.rejects(verifyProductionRuntimePreflight({
       ...productionEnv,NITROCROP_RUNTIME_DATABASE_URL:url,
-    },()=>{calls++;throw Error("must not create a pool");}),/RUNTIME_PREFLIGHT_FAILED/);
+    },()=>{calls++;throw Error("must not create a pool");}),
+      url ? /RUNTIME_DESTINATION_OR_ROLE_INVALID/ : /RUNTIME_SECRET_MISSING/);
     assert.equal(calls,0);
   }
 });
@@ -157,6 +159,46 @@ test("Production diagnostic does not report success when pool closure fails",asy
     connect:async()=>{throw Error("synthetic connection failure");},
     end:async()=>{throw Error(runtimeUrl);},
   }) as never),/RUNTIME_PREFLIGHT_CLOSE_FAILED/);
+});
+test("safe diagnostic codes distinguish credentials, TLS and protocol failures without exposing provider details",()=>{
+  for(const [code,expected] of [
+    ["28P01","RUNTIME_AUTHENTICATION_FAILED"],
+    ["28000","RUNTIME_AUTHORIZATION_FAILED"],
+    ["SELF_SIGNED_CERT_IN_CHAIN","RUNTIME_TLS_CERTIFICATE_REJECTED"],
+    ["ERR_TLS_CERT_ALTNAME_INVALID","RUNTIME_TLS_HOSTNAME_NOT_VERIFIED"],
+    ["ENOTFOUND","RUNTIME_NETWORK_FAILED"],
+    ["08P01","RUNTIME_SESSION_STARTUP_REJECTED"],
+    ["42501","RUNTIME_METADATA_PERMISSION_DENIED"],
+  ]) {
+    const unsafe=Object.assign(Error(runtimeUrl),{code,detail:runtimeUrl,query:runtimeUrl});
+    assert.equal(runtimePreflightErrorCode(unsafe),expected);
+  }
+  for(const unsafe of [
+    Error(runtimeUrl),
+    Object.assign(Error(runtimeUrl),{code:runtimeUrl}),
+    Error(`RUNTIME_CONNECTION_INVALID ${runtimeUrl}`),
+    {code:"constructor",message:runtimeUrl},
+  ]) assert.equal(runtimePreflightErrorCode(unsafe),"RUNTIME_PREFLIGHT_FAILED");
+  assert.equal(runtimePreflightErrorCode(Error("RUNTIME_CONNECTION_INVALID")),"RUNTIME_CONNECTION_INVALID");
+});
+test("Production connection rejection preserves only its safe category and still closes the diagnostic pool",async()=>{
+  let closed=0;
+  const error=await verifyProductionRuntimePreflight(productionEnv,()=>({
+    connect:async()=>{throw Object.assign(Error(runtimeUrl),{
+      code:"28P01",detail:runtimeUrl,
+    });},
+    end:async()=>{closed++;},
+  }) as never).catch(error=>error);
+  assert.equal(error.message,"RUNTIME_AUTHENTICATION_FAILED");
+  assert.equal(error.cause,undefined);
+  assert.doesNotMatch(String(error.stack),/synthetic-password|postgresql:\/\//);
+  assert.equal(closed,1);
+});
+test("API startup emits the approved category, never the raw preflight error",()=>{
+  const source=readFileSync(new URL("../../../../artifacts/api-server/src/index.ts",import.meta.url),"utf8");
+  const handler=source.slice(source.indexOf("} catch (error)"),source.indexOf("await verifySecuritySchema()"));
+  assert.match(handler,/preflightCode: runtimePreflightErrorCode\(error\)/);
+  assert.doesNotMatch(handler,/error\.message|error\.stack|error\.detail|\{\s*(?:err|error)\s*\}/);
 });
 test("import gates restored FORCE and ACL/integrity checks before sending commit",()=>{
   const source=readFileSync(new URL("./import.ts",import.meta.url),"utf8");

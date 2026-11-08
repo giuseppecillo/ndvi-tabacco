@@ -1,7 +1,9 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { verifySecuritySchema } from "./lib/security-db";
-import { pool, verifyRuntimeIdentity, verifyProductionRuntimePreflight } from "@workspace/db";
+import {
+  pool, verifyRuntimeIdentity, verifyProductionRuntimePreflight, runtimePreflightErrorCode,
+} from "@workspace/db";
 
 const rawPort = process.env["PORT"];
 
@@ -21,9 +23,12 @@ try {
   const preflight = await verifyProductionRuntimePreflight(process.env);
   logger.info({ status: preflight }, "Supabase Production READ ONLY preflight");
   await verifyRuntimeIdentity(pool, process.env.NITROCROP_DB_BACKEND === "supabase");
-} catch {
-  // Never log driver errors, connection strings, SQL or credentials.
-  logger.error("Database connection preflight failed; startup aborted without schema changes");
+} catch (error) {
+  // Only a closed, safe category: no raw driver error, message, SQL or URL.
+  logger.error(
+    { preflightCode: runtimePreflightErrorCode(error) },
+    "Database connection preflight failed; startup aborted without schema changes",
+  );
   await pool.end();
   process.exit(1);
 }

@@ -34,6 +34,18 @@ collegamento. Se il collaudo non è eseguibile nel solo ambiente Production
 senza una pubblicazione non autorizzata, segnalarlo come bloccato e chiedere
 conferma prima di cambiare il perimetro.
 
+Un Secret riferito dal titolare nei Deployment secrets non va dichiarato
+assente dal processo pubblicato soltanto perché la vista generica dei
+metadati non lo rileva.
+
+**Why:** in questo progetto i due riscontri sono risultati divergenti;
+non è stata accertata la causa della differenza. Un errore generico
+del preflight non distingue assenza, formato, autenticazione e TLS.
+
+**How to apply:** attestare la disponibilità con il diagnostico autorizzato
+nella nuova release Production, senza acquisire il valore. Conservare
+categorie d'errore sicure, non messaggi o dettagli grezzi del driver.
+
 Per impostare password di ruoli PostgreSQL, una schermata protetta non prova
 che l'implementazione eviti SQL contenente password o verificatori SCRAM.
 Anche un verificatore va trattato come materiale di autenticazione sensibile.

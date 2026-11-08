@@ -1,14 +1,8 @@
 import pg, { type Pool, type PoolConfig } from "pg";
 import { runtimeConnectionConfig } from "./runtime-connection-config";
 import { verifyRuntimeIdentity } from "./runtime-identity";
-
-export class RuntimePreflightError extends Error {
-  constructor(public readonly code: string) {
-    // Do not attach driver errors, SQL, credentials or a cause.
-    super(code);
-    this.name = "RuntimePreflightError";
-  }
-}
+import { RuntimePreflightError, runtimePreflightErrorCode } from "./runtime-preflight-errors";
+export { RuntimePreflightError } from "./runtime-preflight-errors";
 
 type PreflightPool = Pick<Pool, "connect" | "end">;
 type PoolFactory = (config: PoolConfig) => PreflightPool;
@@ -35,6 +29,9 @@ export async function verifyProductionRuntimePreflight(
 
   let diagnosticPool: PreflightPool | undefined;
   try {
+    if (!env.NITROCROP_RUNTIME_DATABASE_URL?.trim()) {
+      throw new RuntimePreflightError("RUNTIME_SECRET_MISSING");
+    }
     // Only the separate pool uses Supabase. No mutation of process.env,
     // application pool configuration, DATABASE_URL, roles or defaults.
     diagnosticPool = makePool({
@@ -47,9 +44,9 @@ export async function verifyProductionRuntimePreflight(
       application_name: "nitrocrop_production_readonly_preflight",
     });
     await verifyRuntimeIdentity(diagnosticPool as Pool, true);
-  } catch {
-    // An authentication error can contain provider details; never propagate it.
-    throw new RuntimePreflightError("RUNTIME_PREFLIGHT_FAILED");
+  } catch (error) {
+    // Keep only an approved category, never the driver error or its cause.
+    throw new RuntimePreflightError(runtimePreflightErrorCode(error));
   } finally {
     if (diagnosticPool) {
       try { await diagnosticPool.end(); }

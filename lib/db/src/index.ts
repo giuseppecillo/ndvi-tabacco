@@ -11,3 +11,4 @@ export const db = drizzle(pool, { schema });
 export * from "./schema";
 export { verifyRuntimeIdentity } from "./runtime-identity";
 export { verifyProductionRuntimePreflight } from "./production-runtime-preflight";
+export { runtimePreflightErrorCode } from "./runtime-preflight-errors";
