@@ -9,6 +9,18 @@ Il titolare vuole un unico database Supabase e tre ruoli applicativi PostgreSQL:
 
 **How to apply:** non rendere disponibili nello sviluppo ordinario credenziali scrivibili di produzione o amministrative. Esplicitare che i test di salvataggio non sono possibili con la sola lettura; qualsiasi accesso QA aggiuntivo o database temporaneo richiede approvazione, non una deroga implicita.
 
+Per la sola pubblicazione preliminare il titolare accetta consapevolmente
+il rischio del diff SQL preventivo non verificato. Non autorizza repliche
+o altre risorse aggiuntive, nemmeno per calcolare quel diff.
+
+**Why:** il titolare vuole procedere con backend Replit, senza importazioni,
+manutenzione o modifiche volontarie allo schema.
+
+**How to apply:** non riaprire il blocco del diff già accettato né chiamare
+strumenti che possano creare repliche. Non dichiarare verificato il diff.
+Se Replit richiede esplicitamente di applicare modifiche allo schema,
+fermarsi senza confermarle. Questo consenso non autorizza il cutover.
+
 Il Secret della connessione app_runtime deve essere disponibile esclusivamente
 in Production di Replit, mai nello sviluppo ordinario, nel repository o nei
 log. Non creare copie QA del collegamento nello workspace per aggirare questo
