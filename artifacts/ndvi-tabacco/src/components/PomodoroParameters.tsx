@@ -32,7 +32,7 @@ export function PomodoroParameters(p: Props) {
         {opzioni.map((v) => <option value={v.id} key={v.id}>{v.nome}</option>)}
       </select>
     </label>
-    <p className="text-xs text-stone-600">{t("Profili trovati")}: {opzioni.length} / {Object.keys(POMODORO_DB).length}</p>
+    <p className="text-xs text-stone-600" data-testid="text-tomato-variety-count">{t("Varietà disponibili")}: {opzioni.length}</p>
     {profilo && <div className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-950">
       <strong>{profilo.nome}</strong> · {t(profilo.destinazione)} · {t(profilo.impiego)} · {t(profilo.precocita)}
       <p>{t("Riferimento del catalogo")}: {number(profilo.pianteHa)} {t("piante/ha")} · {number(profilo.resa)} t/ha · {number(profilo.azotoTotale)} kg N/ha.</p>
