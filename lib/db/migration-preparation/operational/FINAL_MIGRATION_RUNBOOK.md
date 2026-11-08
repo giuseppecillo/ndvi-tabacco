@@ -82,6 +82,12 @@ Prossimo passo: accesso manuale del titolare con l'account amministratore
 originale, senza token/password in chat né account sostitutivi.
 Nessun terzo rollout o riapertura prima del collaudo applicativo completo.
 
+Il titolare ha successivamente confermato «Accedo e vedo i rilievi».
+Accesso amministratore e consultazione dei rilievi sono attestati dal
+titolare, non da un browser automatizzato dell'Agent. Restano da collaudare
+esportazione/mappe e creazione/rilettura/aggiornamento/eliminazione del solo
+rilievo sintetico. Non dichiarare concluso il collaudo applicativo.
+
 ### Accesso al collaudo durante la manutenzione
 
 Dopo il secondo Republish e la verifica del pool operativo Supabase,
