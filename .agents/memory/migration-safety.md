@@ -46,6 +46,21 @@ del preflight non distingue assenza, formato, autenticazione e TLS.
 nella nuova release Production, senza acquisire il valore. Conservare
 categorie d'errore sicure, non messaggi o dettagli grezzi del driver.
 
+Per attestare il backend operativo effettivo, i valori predisposti nella
+configurazione Production non sostituiscono un riscontro nel processo LIVE.
+Non confondere variabili non segrete con voci che devono apparire nei Secrets.
+L'assenza momentanea di sessioni runtime sul target non dimostra da sola
+che il backend sia diverso: un pool inattivo può chiudere le connessioni.
+
+**Why:** durante il passaggio, readiness e verifica schema risultavano
+positive ma non distinguevano la sorgente dalla destinazione; iniziare
+prove di scrittura prima di sciogliere l'ambiguità comprometterebbe il
+congelamento della sorgente.
+
+**How to apply:** richiedere evidenza del backend effettivo e dell'esito
+dei controlli obbligatori della nuova revisione prima di abilitare il
+collaudo con scritture. Non risolvere l'ambiguità disattivando i controlli.
+
 Un fallimento del preflight Supabase non autorizza a disabilitarlo
 automaticamente per consentire una pubblicazione.
 

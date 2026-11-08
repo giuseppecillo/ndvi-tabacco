@@ -55,6 +55,17 @@ Occorre controllare gli eventuali override nei Deployment app secrets
 prima dell'accesso pilota. Nessuna ripetizione di backup/import/confronto.
 Terzo rollout NON predisposto, pausa ancora attiva.
 
+Controllo aggiuntivo indispensabile: la lettura READ ONLY dei metadati delle
+sessioni target non ha rilevato sessioni app_runtime al momento del controllo.
+Questo non prova da solo che Supabase non sia usato (pool inattivi possono
+chiudersi). Predisposto log di avvio non sensibile con backend effettivo,
+esito runtimeIdentity, manutenzione e numero piloti, emesso soltanto dopo
+il controllo identità esistente. Nessun controllo o collegamento modificato.
+TypeScript, build API e i 3 test offline mirati alla sicurezza dell'avvio
+superati; API sviluppo riavviata correttamente. Il riscontro di sviluppo
+non attesta Production. Richiesto rollout diagnostico ancora in manutenzione,
+prima del collaudo applicativo e della riapertura.
+
 ### Accesso al collaudo durante la manutenzione
 
 Dopo il secondo Republish e la verifica del pool operativo Supabase,

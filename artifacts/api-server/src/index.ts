@@ -23,6 +23,18 @@ try {
   const preflight = await verifyProductionRuntimePreflight(process.env);
   logger.info({ status: preflight }, "Supabase Production READ ONLY preflight");
   await verifyRuntimeIdentity(pool, process.env.NITROCROP_DB_BACKEND === "supabase");
+  // Only non-secret effective settings. Supabase "passed" is emitted only
+  // after the mandatory role/TLS/read-only/ROLLBACK check has returned.
+  logger.info(
+    {
+      backend: process.env.NITROCROP_DB_BACKEND ?? "replit",
+      runtimeIdentity: process.env.NITROCROP_DB_BACKEND === "supabase" ? "passed" : "not_required",
+      maintenance: process.env.NITROCROP_MIGRATION_PAUSE === "1",
+      pilotAccounts: (process.env.NITROCROP_MIGRATION_QA_CLERK_IDS ?? "")
+        .split(",").filter(value => value.trim()).length,
+    },
+    "Operational database verification completed",
+  );
 } catch (error) {
   // Only a closed, safe category: no raw driver error, message, SQL or URL.
   logger.error(
