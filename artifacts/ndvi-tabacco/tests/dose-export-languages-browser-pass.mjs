@@ -1,38 +1,49 @@
 /**
  * Isolated language/dose/export browser pass.
- * Run: BASE_URL=https://<running-preview-origin> node artifacts/ndvi-tabacco/tests/dose-export-languages-browser-pass.mjs
+ * Run: BROWSER=firefox BASE_URL=https://<running-preview-origin> node artifacts/ndvi-tabacco/tests/dose-export-languages-browser-pass.mjs
+ * BROWSER supports chromium (default), firefox, and webkit (not branded Safari).
  * Only the development fixture is opened. API, external HTTP, and WebSockets
  * fail closed; observation data is synthetic localStorage only.
  */
-import { chromium } from "@playwright/test";
+import { chromium, firefox, webkit } from "@playwright/test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import { doseExportRecords, doseExportStorageKey } from "./fixtures/dose-export-languages.mjs";
 
 const baseURL = process.env.BASE_URL;
 if (!baseURL) throw new Error("Set BASE_URL to the running NitroCrop preview origin.");
 const origin = new URL(baseURL).origin;
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../generated-artifacts/dose-export-languages");
+const engine = process.env.BROWSER ?? "chromium";
+const browserType = { chromium, firefox, webkit }[engine];
+assert.ok(browserType, `Unsupported BROWSER: ${engine}`);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../generated-artifacts/dose-export-languages", engine);
 await fs.mkdir(root, { recursive: true });
 const expected = JSON.stringify(doseExportRecords);
-const browser = await chromium.launch({
+const browser = await browserType.launch({
   headless: true,
-  ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}),
+  ...(engine === "chromium" && process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}),
+  ...(engine === "webkit" && process.env.PLAYWRIGHT_WEBKIT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_WEBKIT_EXECUTABLE_PATH } : {}),
 });
-const context = await browser.newContext({ acceptDownloads: true, timezoneId: "UTC", serviceWorkers: "block" });
+const context = await browser.newContext({ acceptDownloads: true, timezoneId: "UTC", serviceWorkers: "block",
+  ignoreHTTPSErrors: process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS === "1" });
 await Promise.all(["en", "es"].map(lang => fs.mkdir(path.join(root, lang), { recursive: true })));
 const blocked = [];
+const downloads = [];
+const pageErrors = [];
+let storageChecks = 0;
 await context.route("**/*", async route => {
   const u = new URL(route.request().url());
-  if (u.origin !== origin || u.pathname.startsWith("/api/")) {
+  if (u.origin !== origin || /^\/api(?:\/|$)/.test(u.pathname) || !["GET", "HEAD"].includes(route.request().method())) {
     blocked.push(u.href);
     return route.abort();
   }
   return route.continue();
 });
 const page = await context.newPage();
+page.on("pageerror", error => pageErrors.push(error.message));
 await page.routeWebSocket("**/*", ws => { blocked.push("websocket"); ws.close(); });
 await page.addInitScript(({ key, value }) => {
   // Seed once, never reset on navigation: resetting would hide data mutations.
@@ -52,12 +63,20 @@ async function unchanged() {
     writes: window.__doseFixtureWrites,
   }), doseExportStorageKey);
   if (state.json !== expected || state.writes.length) throw new Error("Synthetic observation storage changed.");
+  storageChecks++;
 }
 async function download(lang, label, file) {
   const event = page.waitForEvent("download");
   await page.getByRole("button", { name: label }).click();
   const item = await event;
-  await item.saveAs(path.join(root, lang, file));
+  assert.equal(await item.failure(), null);
+  const destination = path.join(root, lang, file);
+  await item.saveAs(destination);
+  const bytes = await fs.readFile(destination);
+  assert.ok(bytes.length > 0, `Empty download: ${lang}/${file}`);
+  assert.equal(path.extname(item.suggestedFilename()), path.extname(file));
+  downloads.push({ language: lang, file, suggestedFilename: item.suggestedFilename(),
+    bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") });
   await unchanged();
 }
 
@@ -111,7 +130,16 @@ try {
   await page.getByTestId("test-language-it").click();
   await checkTable(page.getByTestId("observation-group-table"), 9);
   await unchanged();
-  console.log(JSON.stringify({ ok: true, blocked, artifacts: root, finalUrl: page.url() }, null, 2));
+  assert.equal(downloads.length, 6);
+  assert.deepEqual(pageErrors, []);
+  await page.screenshot({ path: path.join(root, "history-it.png"), fullPage: true });
+  const report = { ok: true, engine, browserVersion: browser.version(),
+    userAgent: await page.evaluate(() => navigator.userAgent),
+    blocked, pageErrors, downloads, storageChecks, storageUnchanged: true,
+    storageSha256: createHash("sha256").update(expected).digest("hex"),
+    artifacts: root, finalUrl: page.url() };
+  await fs.writeFile(path.join(root, "browser-pass.json"), JSON.stringify(report, null, 2) + "\n");
+  console.log(JSON.stringify(report, null, 2));
 } finally {
   await context.close();
   await browser.close();

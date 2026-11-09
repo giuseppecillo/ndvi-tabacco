@@ -306,3 +306,162 @@ connessione sono previsti perché anche il suo WebSocket è bloccato.
 Nessun accesso a credenziali, Clerk, clienti o database; nessun riavvio backend.
 Non verifica login, persistenza server, produzione, altri browser, tooltip,
 recupero rete del catalogo o IDW. Non ripete il collaudo di salvataggio/reload.
+
+## Verifica aggiuntiva Firefox e WebKit — 9 novembre 2026
+
+**Esito: Firefox 159.0 e WebKit 27.2 superati.**
+WebKit è il motore di riferimento per Safari, non una prova del prodotto
+Safari distribuito da Apple su macOS o iOS.
+Questa verifica riguarda soltanto il percorso archivio/dosi/download EN/ES:
+nessuna ripetizione del recupero rete catalogo, dei calcoli interattivi o di IDW.
+Nessuna modifica al codice applicativo, nessun login o accesso a dati reali.
+
+### Firefox
+
+Eseguito lo script con Playwright Firefox **159.0**, in contesto nuovo,
+con la fixture e i sei ID sintetici già descritti sopra. Verificati registro,
+tabella accessibile del grafico, gruppo storico, dettagli dose/quota,
+EN → ES nel registro, ES → EN nello storico e ritorno IT.
+Valori per ID: `0.0`, `0.1`, storico `0.006`, senza ricalcolo.
+
+Sei eventi download effettivi, tutti conclusi senza errore, con file salvati:
+
+| File | EN, byte | ES, byte |
+| --- | ---: | ---: |
+| PDF registro | 12.714.163 | 12.714.148 |
+| CSV registro | 1.682 | 1.682 |
+| XLSX storico | 72.226 | 72.280 |
+
+Il verificatore indipendente ha riaperto i file scaricati: PDF localizzato e
+dosi per ID tramite `pdftotext`, CSV con BOM e dose/quota esatte, XLSX con
+intestazioni tradotte, dose/quota numeriche e formati risolti tramite `cellXfs`.
+CSV EN/ES identici byte per byte. Dimensioni e SHA-256 sono confrontati con
+il manifesto dei download. Quindici confronti dell'archivio locale:
+byte invariati e nessuna scrittura rilevata. Nessun errore JavaScript.
+
+API, host esterni, richieste non GET/HEAD e WebSocket bloccati prima della
+navigazione; il fetch dell'app usa soltanto la fixture. Registrati quattro
+tentativi WebSocket chiusi (HMR), nessun tentativo HTTP API/esterno.
+Per il certificato dell'anteprima, Firefox richiedeva l'opzione esplicita
+`PLAYWRIGHT_IGNORE_HTTPS_ERRORS=1` dopo `SEC_ERROR_UNKNOWN_ISSUER`.
+È una deroga TLS del solo contesto di collaudo, non una verifica del certificato;
+non modifica i blocchi di destinazione né la configurazione dell'app.
+
+Evidenze locali ignorate da Git/pubblicazione:
+`generated-artifacts/dose-export-languages/firefox/` contiene
+`browser-pass.json` (versione, user agent, dimensioni, SHA-256, isolamento),
+`download-checks.json`, `history-it.png` e i sei file sotto `en/` e `es/`.
+
+### Riproduzione per motore
+
+Lo script ora accetta `BROWSER=chromium|firefox|webkit`, con default Chromium;
+le nuove evidenze sono separate per motore e non sovrascrivono quelle precedenti.
+I binari e le librerie richieste dal motore devono essere disponibili.
+
+```sh
+BROWSER=firefox PLAYWRIGHT_IGNORE_HTTPS_ERRORS=1 \
+  BASE_URL=https://<origine-anteprima> \
+  node artifacts/ndvi-tabacco/tests/dose-export-languages-browser-pass.mjs
+python artifacts/ndvi-tabacco/tests/check-dose-export-downloads.py \
+  generated-artifacts/dose-export-languages/firefox
+```
+
+Per WebKit sostituire `firefox` con `webkit` in entrambi i comandi.
+Il verificatore senza argomento ora usa la sottocartella `chromium`;
+per le vecchie evidenze Chromium passare esplicitamente la cartella padre.
+
+### Blocco iniziale WebKit, poi risolto
+
+Il primo pacchetto Playwright WebKit **27.2, build 2388**, variante Ubuntu,
+non si avviava: inizialmente mancava `libatk-1.0.so.0`.
+L'installazione automatica delle dipendenze non riesce nell'ambiente disponibile.
+La ricerca delle librerie già presenti in Nix lascia comunque mancanti ICU 74
+(`libicudata`, `libicui18n`, `libicuuc`), `libjpeg.so.8` e `libjxl.so.0.8`;
+un percorso librerie esteso introduce inoltre incompatibilità GLIBCXX/CXXABI
+per Node. Non sono stati introdotti collegamenti a librerie ABI incompatibili.
+
+Il blocco è stato risolto nella prosecuzione usando la variante ufficiale
+Playwright **Debian 13** dello stesso WebKit 27.2/build 2388, compatibile con
+i SONAME disponibili in Nix. Non sono stati creati alias a librerie ABI diverse.
+Un wrapper limitato al processo browser rende esplicite le librerie e usa
+lo stesso loader Nix per MiniBrowser e processi figli. I soli interpreti ELF
+dei binari scaricati nella cache ignorata vengono adattati con `patchelf`;
+nessun binario applicativo viene modificato. `glib-networking` fornisce il
+modulo GIO TLS necessario per l'anteprima HTTPS. Nessun percorso librerie
+globale viene passato a Node o ai server dell'app.
+
+L'helper `artifacts/ndvi-tabacco/tests/prepare-webkit-nix.py` genera wrapper e
+inventario dipendenze in `generated-artifacts/dose-export-languages/webkit-runtime/`.
+Fallisce esplicitamente se manca un SONAME esatto. Richiede `patchelf`,
+`glib-networking` e le librerie Nix presenti nell'ambiente del collaudo;
+non è un'installazione autonoma di tutte le dipendenze per altri ambienti.
+
+```sh
+PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=debian13-x64 \
+  PLAYWRIGHT_BROWSERS_PATH="$PWD/.cache/playwright-debian13" \
+  pnpm --filter @workspace/ndvi-tabacco exec playwright install webkit
+python artifacts/ndvi-tabacco/tests/prepare-webkit-nix.py \
+  .cache/playwright-debian13/webkit-2388
+BROWSER=webkit PLAYWRIGHT_IGNORE_HTTPS_ERRORS=1 \
+  PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 \
+  PLAYWRIGHT_WEBKIT_EXECUTABLE_PATH="$PWD/generated-artifacts/dose-export-languages/webkit-runtime/webkit.sh" \
+  BASE_URL=https://<origine-anteprima> \
+  node artifacts/ndvi-tabacco/tests/dose-export-languages-browser-pass.mjs
+python artifacts/ndvi-tabacco/tests/check-dose-export-downloads.py \
+  generated-artifacts/dose-export-languages/webkit
+```
+
+`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` salta soltanto il controllo
+preventivo dei pacchetti Ubuntu: il loader verifica le dipendenze effettive,
+il motore si avvia realmente e tutte le asserzioni del percorso restano attive.
+La deroga al certificato HTTPS è identica a quella dichiarata per Firefox.
+
+### WebKit: percorso e risultati effettivi
+
+Eseguita soltanto la prosecuzione mancante WebKit; nessuna ripetizione di
+Firefox, Chromium, recupero rete catalogo o IDW.
+Versione restituita dal browser avviato: **27.2**. L'user agent presenta
+`AppleWebKit/605.1.15` e `Version/27.2 Safari/605.1.15`, ma questo **non**
+significa che sia stato eseguito Safari Apple: è WebKit Playwright su Linux.
+
+Stesse fixture, stessi sei ID e stesse verifiche su registro, tabella
+accessibile del grafico, gruppo storico, dettagli completi e ritorno IT.
+Tutti e sei gli eventi download sono conclusi con file non vuoti.
+Il verificatore indipendente eseguito sui download WebKit ha superato:
+PDF tradotto e dosi per ID; CSV con BOM, dose/quota numeriche e byte EN/ES
+identici; XLSX con intestazioni localizzate, dose/quota numeriche e formati
+`0.0` per ZERO/TENTH e General per LEGACY. Valori attesi `0 / 0.1 / 0.006`.
+
+| File | EN, byte | ES, byte |
+| --- | ---: | ---: |
+| PDF registro | 12.714.163 | 12.714.148 |
+| CSV registro | 1.682 | 1.682 |
+| XLSX storico | 69.438 | 69.492 |
+
+I byte XLSX non devono coincidere tra motori: contano contenuti OOXML e stili,
+verificati per ID. Anche il PDF può differire per metadati di generazione.
+Il contenuto CSV, invece, coincide tra lingue e tra motori.
+
+Archivio: **15 confronti superati, byte invariati, zero scritture rilevate**.
+SHA-256 archivio iniziale/finale (identico anche in Firefox):
+`52311ad28ad6103fe0c45ca668a565c133f76e3362fc91459a01c4187159153c`.
+Nessun errore JavaScript. Quattro tentativi WebSocket chiusi, nessun tentativo
+HTTP verso API o host esterni; restrizioni installate prima della navigazione.
+Nessun salvataggio, cancellazione, credenziale, dato cliente o accesso database.
+
+Evidenze: `generated-artifacts/dose-export-languages/webkit/` contiene
+`browser-pass.json`, `download-checks.json`, `history-it.png` e i sei download.
+
+SHA-256 dei file WebKit effettivamente scaricati e verificati:
+
+| File | SHA-256 |
+| --- | --- |
+| EN PDF | `3f85ea50b231a1fbf0ed1242c19edc1d788404a7453824f1e8bd5dd10cc7117d` |
+| ES PDF | `2fbece0d4cbaefe1e487c4ba59252192ec5627c7cb044075ae001f34023245f7` |
+| EN/ES CSV | `9d037006b3ed39d9a6897f587abb3bd20a5f677021bf88ac75e8b462f2b80d84` |
+| EN XLSX | `a317931d027abd2d5917104ef4fd400cbdce1140401c43344e6f2431b7ede63d` |
+| ES XLSX | `fc7f0a0f0671f018ec394d38cd73a1eceaed3cf09f836937190255ff57cfd0bf` |
+
+Il percorso richiesto sui due motori diversi da Chromium è confermato.
+Resta distinta, non coperta da questa prova, l'esecuzione su Safari reale
+macOS/iOS, inclusi interfaccia download e gestione file del sistema operativo.

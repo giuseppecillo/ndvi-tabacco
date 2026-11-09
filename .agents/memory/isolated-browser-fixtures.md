@@ -54,3 +54,19 @@ dei componenti, ma non verifica il funzionamento dell'autenticazione.
 
 **How to apply:** dichiarare questo limite nel report; intercettare le dipendenze
 prima della navigazione e mantenere API, scritture e WebSocket bloccati.
+
+Nei collaudi multi-motore, il download del binario WebKit non garantisce che
+si avvii nell'ambiente Nix. Non sostituire librerie con ABI diverse e non
+equiparare WebKit Playwright a Safari distribuito da Apple.
+
+**Why:** il MiniBrowser Ubuntu richiedeva librerie assenti; un percorso
+globale alle librerie Nix ha introdotto incompatibilità anche per Node.
+Una prova Firefox riuscita non dimostra la compatibilità Safari.
+
+**How to apply:** verificare prima la disponibilità del motore, conservare
+separatamente le evidenze e proseguire soltanto quello bloccato. Una variante
+ufficiale Playwright per altra distribuzione Linux può essere compatibile con
+i SONAME Nix disponibili. Limitare loader e librerie al browser, includendo
+i processi figli e il modulo GIO TLS; le risoluzioni virtuali hwcaps viste
+dalla shell non sono necessariamente disponibili ai processi avviati da Node.
+Dichiarare esplicitamente la differenza fra WebKit e Safari reale.

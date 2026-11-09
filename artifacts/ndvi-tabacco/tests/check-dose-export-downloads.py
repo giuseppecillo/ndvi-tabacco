@@ -1,9 +1,10 @@
 """Check actual UI downloads with stdlib XML/CSV and independent pdftotext.
 
-Run from workspace: python artifacts/ndvi-tabacco/tests/check-dose-export-downloads.py
-Optional first argument overrides the evidence directory. No network or database.
+Run from workspace: python artifacts/ndvi-tabacco/tests/check-dose-export-downloads.py generated-artifacts/dose-export-languages/firefox
+Optional first argument overrides the Chromium evidence directory. No network or database.
 """
 import csv
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -12,7 +13,20 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 
-root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parents[3] / "generated-artifacts/dose-export-languages"
+root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parents[3] / "generated-artifacts/dose-export-languages/chromium"
+manifest_path = root / "browser-pass.json"
+if manifest_path.exists():
+    manifest = json.loads(manifest_path.read_text())
+    assert manifest["ok"] and manifest["storageUnchanged"]
+    assert manifest["storageChecks"] > 0 and not manifest["pageErrors"]
+    assert len(manifest["downloads"]) == 6
+    assert {(d["language"], d["file"]) for d in manifest["downloads"]} == {
+        (lang, file) for lang in ("en", "es") for file in ("home.pdf", "home.csv", "history.xlsx")
+    }
+    for download in manifest["downloads"]:
+        data = (root / download["language"] / download["file"]).read_bytes()
+        assert len(data) == download["bytes"] > 0
+        assert hashlib.sha256(data).hexdigest() == download["sha256"]
 ns = {"s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 expected = {f"QA-{crop}-{kind}": value for crop in ("T", "K") for kind, value in (("ZERO", 0), ("TENTH", 0.1), ("LEGACY", 0.006))}
 report = {}
