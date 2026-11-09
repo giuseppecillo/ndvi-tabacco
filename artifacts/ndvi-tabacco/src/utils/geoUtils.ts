@@ -22,6 +22,7 @@ import { formatRecordedDose, usesTenthsDose } from "./observationDose";
 import { readShpLayers } from "./shapefileImport";
 import { checkGisFileSize, checkGisCount, readBoundedZip } from "./gisLimits";
 import { conservativeIdwValue, conservativeFloat32, formatIdwValue, IDW_DECIMALS } from "./idwPrecision";
+import { estimateIdwWorkload } from "./idwLimits";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -337,6 +338,8 @@ export function computeIdwGrid(
   cellSize = 10,
   power = 2,
 ): PolyIdwResult {
+  // Enforce for every caller, not just the UI. Never truncate a prescription.
+  estimateIdwWorkload(polygon, controls, cellSize, power);
   // Keep the established treatment of external controls, but never interpolate
   // from measurements belonging to explicitly excluded interior areas.
   controls = controls.filter(c => !inHole(c.lng, c.lat, polygon));

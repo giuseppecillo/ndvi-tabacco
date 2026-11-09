@@ -17,6 +17,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { formatRecordedDose } from "./utils/observationDose";
 import { formatIdwValue } from "./utils/idwPrecision";
+import { estimateIdwWorkload, IdwCalculationError, IDW_ERRORS } from "./utils/idwLimits";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Observation } from "./App";
@@ -49,8 +50,10 @@ export function renderIdwOverlay(result: PolyIdwResult): string {
   const [west, south, east, north] = result.bbox;
   const geoW = east - west  || 0.001;
   const geoH = north - south || 0.001;
-  const W = 1024;
-  const H = Math.max(1, Math.round(W * geoH / geoW));
+  // A thin north/south field can have few grid cells but an enormous aspect
+  // ratio. Bound both canvas axes; Leaflet still uses the geographic bounds.
+  const W = Math.max(1, Math.round(1024 * Math.min(1, geoW / geoH)));
+  const H = Math.max(1, Math.round(1024 * Math.min(1, geoH / geoW)));
   const canvas = document.createElement("canvas");
   canvas.width  = W;
   canvas.height = H;
@@ -411,6 +414,19 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
 
   const runIdw = useCallback(() => {
     if (!canSpatialize(polygonImport, activeControls.length, computing) || selPolyIdx === null) return;
+    // Invalidate the old selected map before any failure or quota request.
+    setResults(prev => {
+      const next = new Map(prev);
+      next.delete(selPolyIdx);
+      return next;
+    });
+    setQuotaError("");
+    try {
+      estimateIdwWorkload(polygons[selPolyIdx], activeControls, 10, power);
+    } catch (error) {
+      setQuotaError(t(error instanceof IdwCalculationError ? error.message : IDW_ERRORS.invalid));
+      return;
+    }
     const version = polygonImporter.version;
     const attempt = ++calculationVersion.current;
     const requestId = crypto.randomUUID();
@@ -437,7 +453,8 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
       } catch (error) {
         if (attempt === calculationVersion.current) {
           const message = (error as { data?: { error?: unknown } })?.data?.error;
-          setQuotaError(typeof message === "string" ? t(message) : t("Elaborazione non completata. Verifica la connessione e riprova."));
+          setQuotaError(error instanceof IdwCalculationError ? t(error.message) :
+            typeof message === "string" ? t(message) : t("Elaborazione non completata. Verifica la connessione e riprova."));
         }
       } finally { if (attempt === calculationVersion.current) setComputing(false); }
     }, 50);
