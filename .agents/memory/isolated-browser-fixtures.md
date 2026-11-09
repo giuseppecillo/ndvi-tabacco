@@ -34,6 +34,15 @@ effettivi e gli stili della fixture con quelli dell'app. Se la fixture usa
 un preambolo HMR semplificato, ricaricare il documento dopo le modifiche:
 una vista rimasta montata può mostrare ancora le vecchie classi.
 
+Nei runner Vite privati, la scoperta tardiva di dipendenze dei worker può
+ricaricare il documento anche quando HMR è disabilitato.
+
+**Why:** il parser XML del worker GIS è stato scoperto solo all'import del
+confine, causando una riottimizzazione e un reload durante il percorso sintetico.
+
+**How to apply:** preottimizzare le dipendenze scoperte in ritardo prima delle
+interazioni; non mascherare i reload inattesi con retry dei salvataggi.
+
 Quando un collaudo deve vietare tutte le API reali, simulare anche lo stato
 di autenticazione nel solo contesto browser, senza completare un login esterno.
 Non introdurre un accesso di prova nel codice dell'app.

@@ -173,6 +173,52 @@ Verifica in italiano sui componenti di sviluppo: non prova autenticazione,
 persistenza nel database, tooltip del grafico, altri browser, altre lingue
 o build di produzione. La verifica del grafico usa la sua tabella accessibile.
 
+## Regressione browser ripetibile nel repository
+
+Eseguire dalla radice:
+
+```sh
+pnpm --filter @workspace/ndvi-tabacco exec playwright install chromium
+pnpm --filter @workspace/ndvi-tabacco test:dose-browser
+```
+
+Prerequisiti: dipendenze workspace installate, Chromium Playwright e
+`pdftotext` (Poppler) nel PATH. Per usare un Chromium di sistema impostare
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/percorso/chromium`.
+Non occorrono `BASE_URL`, workflow attivi, backend, credenziali o file generati
+da verifiche precedenti.
+
+`tests/catalogue-dose-browser.mjs` avvia e chiude un Vite privato su loopback
+e porta libera, usando la configurazione/localizzazione reale e la fixture
+DEV `catalogue-calculations.html`. Un contesto browser nuovo per ogni esecuzione
+parte senza cookie né localStorage. Prima della navigazione vengono bloccati
+API reali, richieste non GET/HEAD, host esterni, WebSocket e service worker;
+un secondo blocco sul server vieta comunque `/api`. Il solo `fetch` della
+fixture continua a usare archivio sintetico locale e validatori condivisi.
+L'autenticazione applicativa non è modificata né collaudata.
+
+La regressione ripete i quattro salvataggi della tabella precedente con ID
+P06/P16/K06/K16, inserisce L006 legacy senza POST e ricarica il documento.
+Controlla dose/quota e parametri salvati, registro, tabella accessibile del
+grafico, storico raggruppato, dettagli dose/quota e tabella GPS dopo import di
+un KML generato nel test. Verifica anche che le viste e gli export non cambino
+i record persistiti. Non esegue interpolazioni.
+
+I tre download partono dai pulsanti reali e vengono acquisiti con `saveAs`:
+PDF riletto tramite `pdftotext -layout`, XLSX aperto come ZIP OOXML (celle
+numeriche N/Q e formati General/decimi), CSV UTF-8 con BOM letto come RFC4180.
+I confronti avvengono per ID, non per indice della riga; l'archivio viene
+deliberatamente riordinato prima del reload. I lettori dei file non importano
+gli helper di esportazione applicativi; i relativi test unitari includono
+righe riordinate, perdita di precisione, quote errate, duplicati e ID mancanti.
+
+Esito non zero su errore, report e download sotto
+`artifacts/ndvi-tabacco/generated-artifacts/catalogue-dose-regression/`,
+ignorato da Git e pubblicazione. I risultati precedenti vengono rimossi
+all'avvio: un vecchio report PASS non può mascherare un errore nuovo.
+Questa è una regressione italiana su Chromium in sviluppo; non sostituisce
+verifiche di autenticazione/database, altre lingue, altri browser, tooltip
+interattivi o build di produzione.
 ## Verifica EN/ES isolata del 9 novembre 2026
 
 Esito: **superata**. Usata la stessa entry di sviluppo

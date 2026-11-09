@@ -1,3 +1,32 @@
+## Dose precision after reload — standalone browser regression
+
+From the workspace root run:
+
+```sh
+pnpm --filter @workspace/ndvi-tabacco test:dose-browser
+```
+
+Requires Playwright Chromium (`pnpm --filter @workspace/ndvi-tabacco exec
+playwright install chromium`) and Poppler's `pdftotext` on PATH. Optionally set
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to an installed Chromium binary.
+The command owns a private loopback Vite server on a free port and cleans up
+the browser/server on success or failure. No running API, account, secrets,
+database, BASE_URL or previous generated fixtures are used. It never logs in
+or changes authentication; the existing DEV-only synthetic harness mounts the
+real components with its localStorage fetch substitute.
+
+Covers four real UI saves (tomato/Kiwi, residual 0.06/0.16), reload, legacy
+0.006, registry/chart accessible table/history/details/GPS, and real downloaded
+PDF/XLSX/CSV bytes compared by ID. KML is generated in the test. APIs, external
+hosts, non-read HTTP requests, service workers and WebSockets are blocked before
+navigation. Reports/downloads/screenshots go under this artifact's ignored
+`generated-artifacts/catalogue-dose-regression/`. Failures exit nonzero and
+write `failure.json` plus a screenshot.
+
+Independent export-reader positive/negative unit tests run with the usual
+artifact `test` command (`tests/catalogue-dose-exports.test.mjs`). Full scope,
+prerequisites and limitations: `docs/precisione-dosi-pomodoro-catalogo.md`.
+
 # IDW: synthetic browser verification
 
 ## Compiled GIS regression
