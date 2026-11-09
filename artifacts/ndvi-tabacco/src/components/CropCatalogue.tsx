@@ -1,22 +1,27 @@
 import { useMemo, useState } from "react";
-import { BookOpen, Search, X } from "lucide-react";
+import { BookOpen, Download, Search, X } from "lucide-react";
 import { getGetCropCatalogueQueryKey, useGetCropCatalogue } from "@workspace/api-client-react";
 import { getLocale, t, useLanguage } from "../i18n/runtime";
 import { alphabetical } from "../utils/alphabetical";
-import { ErrorNote, Skeleton } from "../security/ui";
+import { ErrorNote, Skeleton, useMyAccount } from "../security/ui";
+import type { VarietaDati } from "../calculations";
 import { catalogueCrops, filterCatalogue } from "../catalogue/filterCatalogue";
+import { completeCatalogue } from "../catalogue/completeCatalogue";
 
 const isNumeric = (v: string) => /^-?[\d.,\s-]+$/.test(v) && /\d/.test(v);
 const isPhaseCol = (c: string) => /^Fase F\d/.test(c);
 const groupStart = (c: string) => isPhaseCol(c);
 
-export function CropCatalogue({ active }: { active: boolean }) {
+export function CropCatalogue({ active, tobaccoVarieties }: { active: boolean; tobaccoVarieties: readonly VarietaDati[] }) {
   const language = useLanguage();
+  const account = useMyAccount(active);
+  const canExport = account.data?.role === "admin" && account.data.status === "active";
+  const [exportState, setExportState] = useState<"idle" | "pending" | "error">("idle");
   const [query, setQuery] = useState("");
   const [crop, setCrop] = useState("");
   const q = useGetCropCatalogue({ query: { enabled: active, queryKey: getGetCropCatalogueQueryKey(), staleTime: 60000, refetchOnMount: true } });
-  const columns = q.data?.columns ?? [];
-  const rows = q.data?.rows ?? [];
+  const complete = useMemo(() => q.data ? completeCatalogue(q.data, tobaccoVarieties) : { columns: [], rows: [] }, [q.data, tobaccoVarieties]);
+  const { columns, rows } = complete;
   const crops = useMemo(() => catalogueCrops(rows, t, getLocale()), [rows, language]);
   const filtered = useMemo(() => {
     const matching = filterCatalogue(rows, { query, crop }, t);
@@ -25,6 +30,18 @@ export function CropCatalogue({ active }: { active: boolean }) {
   }, [rows, query, crop, language]);
   const translatedCols = new Set([0, 2, 3, 4]);
   const phaseCols = new Set(columns.map((c, i) => (isPhaseCol(c) ? i : -1)).filter(i => i >= 0));
+
+  async function exportCatalogue() {
+    if (!canExport || !q.data || !rows.length || exportState === "pending") return;
+    setExportState("pending");
+    try {
+      const { downloadCatalogueWorkbook } = await import("../utils/catalogueExcel");
+      await downloadCatalogueWorkbook(q.data, tobaccoVarieties, t, getLocale());
+      setExportState("idle");
+    } catch {
+      setExportState("error");
+    }
+  }
 
   return (
     <section className="space-y-4" data-testid="module-catalogue" aria-labelledby="catalogue-title">
@@ -36,6 +53,20 @@ export function CropCatalogue({ active }: { active: boolean }) {
             <p className="text-sm text-stone-500">{t("Parametri colturali di riferimento, in sola consultazione")}</p>
           </div>
         </div>
+        {canExport && (
+          <div className="mt-4 space-y-2">
+            <button type="button" onClick={() => void exportCatalogue()}
+              disabled={!q.data || q.isError || !rows.length || exportState === "pending"}
+              data-testid="button-export-catalogue-excel"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-green-900 px-4 py-3 text-sm font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+              <Download aria-hidden="true" className="h-4 w-4 shrink-0" />
+              {t(exportState === "pending" ? "Preparazione file Excel…" : "Scarica tutte le colture e varietà (.xlsx)")}
+            </button>
+            <p className="text-xs text-stone-500">{t("Il file include tutte le colture e varietà, anche tabacco, grano duro e pomodoro, indipendentemente dai filtri.")}</p>
+            {exportState === "error" && <p role="alert" className="text-sm text-red-700">{t("Esportazione Excel non riuscita. Riprova.")}</p>}
+            {exportState === "pending" && <p role="status" className="sr-only">{t("Preparazione file Excel…")}</p>}
+          </div>
+        )}
         <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
           <label className="relative block">
             <span className="sr-only">{t("Cerca coltura, varietà o parametro")}</span>

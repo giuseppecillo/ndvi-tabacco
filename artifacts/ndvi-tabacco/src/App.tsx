@@ -782,7 +782,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
           <p className="text-amber-900 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
         </ModuleHeading>
 
-        {activeTab === "catalogo" && <CropCatalogue active />}
+        {activeTab === "catalogo" && <CropCatalogue active tobaccoVarieties={Object.values(VARIETA_DB)} />}
 
         <div hidden={activeTab !== "elaborazioni"}>
           <ElaborazioniMappe osservazioni={osservazioni} />
