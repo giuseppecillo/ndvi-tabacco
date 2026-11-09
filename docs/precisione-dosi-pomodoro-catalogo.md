@@ -61,3 +61,68 @@ invece sottoposto alla regola corrente.
   verifica dose e quota, rigetto prima della scrittura e storico invariato.
 - `/tests/dose-precision.html`: anteprima di sviluppo isolata dalla rete,
   con pomodoro e coltura del catalogo a residuo 0,06 e vecchie frazioni visibili.
+
+## Verifica browser isolata del 8 novembre 2026
+
+Esito: **superata**, in una singola verifica con prosecuzione dopo la
+correzione di un blocco nella sola fixture. L'entry di sviluppo
+`/tests/catalogue-calculations.html` monta i componenti reali, ma sostituisce
+`fetch` con un archivio sintetico in localStorage. Il mock ora seleziona il
+validatore condiviso corretto per pomodoro oppure catalogo; prima respingeva
+il pomodoro come coltura non appartenente al catalogo.
+Nessuna modifica al codice applicativo, all'autenticazione o allo storage reale.
+
+### Dati inseriti dall'interfaccia
+
+Cliente inventato, appezzamenti distinti, data 2026-11-08, cinque NDVI zero,
+fase osservata selezionata e confermata:
+
+| Coltura e profilo | Resa t/ha | N totale | N già distribuito | Residuo | Dose e quota salvate |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Pomodoro Abraracourcix | 100 | 250 | 249,94 | 0,06 | 0 |
+| Pomodoro Abraracourcix | 100 | 250 | 249,84 | 0,16 | 0,1 |
+| Kiwi Hayward | 31,3 | 151 | 150,94 | 0,06 | 0 |
+| Kiwi Hayward | 31,3 | 151 | 150,84 | 0,16 | 0,1 |
+
+Pomodoro in Fioritura (quota 75); Kiwi in F3, Accrescimento dei frutti
+(quota 68). GPS simulato: 45.123456, 12.345678.
+Quattro click effettivi su Salva, verifica di `dose` e `quotaAzoto` nel
+payload locale e ricaricamento completo del documento.
+Un quinto record storico Kiwi è stato seminato **solo nella fixture**,
+copiando un record sintetico e impostando dose/quota a 0,006, senza POST.
+
+### Collegamenti e download verificati
+
+- Risultati prima del salvataggio: 0,0 e 0,1 kg N/ha.
+- Dopo reload: cinque record con dosi invariate nel registro generale,
+  nello storico raggruppato e nella tabella accessibile del grafico.
+  Dettaglio storico espanso: dose e quota legacy restano 0.006 kg N/ha.
+- Mappe: import di un confine KML inventato per esporre la tabella dei
+  punti GPS del registro. Cinque ID, coordinate e dosi corretti, incluso
+  0.006. Nessuna interpolazione o esportazione GIS avviata.
+- Excel: click sul pulsante del gruppo storico e download `.xlsx` reale.
+  ZIP OOXML riaperto: colonne N (dose) e Q (quota) numeriche, valori
+  0 / 0,1 / 0 / 0,006 / 0,1; stile generale per il valore storico,
+  formato a un decimale per quelli nuovi.
+- PDF: click sul pulsante del registro e download reale; testo estratto
+  con `pdftotext`, cinque ID e dosi 0,0 / 0,1 / 0,006 confermati per riga.
+- CSV: click sul pulsante del registro e download reale UTF-8 con BOM;
+  dose e quota verificate per ID, compreso il valore numerico `0.006`.
+
+File effettivi, report esteso, KML e script di riproduzione sono conservati
+in `generated-artifacts/catalogue-dose-precision/`, ignorato da Git e dalla
+pubblicazione. File principali: `history.xlsx`, `observations.pdf`,
+`observations.csv`, `README.md`, `reproduce-save-block.mjs`.
+Lo script è una trascrizione riproducibile del percorso, controllata
+sintatticamente ma non rilanciata come seconda batteria.
+
+### Confini della verifica
+
+Contesto browser isolato; blocco di rete installato prima della navigazione
+su `/api/**` e host esterni, con soli worker blob dello stesso origin
+consentiti. Nessun accesso a Clerk, credenziali o dati cliente; nessun riavvio
+del backend. I file remoti sono stati acquisiti con `Download.saveAs()`
+(`Download.path()` non disponibile nel runner) e i loro byte ispezionati.
+Verifica in italiano sui componenti di sviluppo: non prova autenticazione,
+persistenza nel database, tooltip del grafico, altri browser, altre lingue
+o build di produzione. La verifica del grafico usa la sua tabella accessibile.

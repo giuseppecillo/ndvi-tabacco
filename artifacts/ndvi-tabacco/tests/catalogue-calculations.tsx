@@ -3,6 +3,7 @@ import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App, { type Observation } from "../src/App";
 import { catalogueObservationError, cropCatalogue, CROP_PROFILES, isCatalogueCrop, calculateCrop } from "@workspace/crop-calculations";
+import { erroreOsservazionePomodoro } from "@workspace/tomato-calculations";
 import { CatalogueCropParameters } from "../src/components/CatalogueCropParameters";
 import { setLanguage, useLanguage, type Language } from "../src/i18n/runtime";
 import "../src/index.css";
@@ -18,7 +19,9 @@ window.fetch = async (input, init) => {
   if (url.pathname === "/api/osservazioni" && method === "GET") return Response.json(records());
   if (url.pathname === "/api/osservazioni" && method === "POST") {
     const observation = JSON.parse(String(init?.body));
-    const error = catalogueObservationError(observation);
+    const error = observation.coltura === "pomodoro"
+      ? erroreOsservazionePomodoro(observation)
+      : catalogueObservationError(observation);
     if (error) return Response.json({ error }, { status: 400 });
     const createdAt = new Date().toISOString();
     localStorage.setItem(storage, JSON.stringify([{ ...observation, createdAt }, ...records().filter(r => r.id !== observation.id)]));
