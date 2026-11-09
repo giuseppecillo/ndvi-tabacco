@@ -170,11 +170,89 @@ l'intercettazione. Il runner richiede l'app Vite di sviluppo perché sostituisce
 la dipendenza ESM precompilata di Clerk: non è un test della build distribuita.
 
 Risultati finali in `generated-artifacts/catalogue-network/report.json`;
-24 screenshot PNG (caricamento, vuoto, 503, recupero per ogni combinazione)
-nella stessa directory. Sono output generati esclusi da Git e dalla
+il runner esteso produce 48 screenshot PNG (caricamento, vuoto ed errore/recupero
+per ciascuno dei tre tipi di guasto, in ogni combinazione) nella stessa
+directory. Sono output generati esclusi da Git e dalla
 distribuzione. Il precedente `partial-report.md`, se presente, descrive solo
 il tentativo iniziale incompleto ed è superato dalla matrice finale JSON.
 
 Ulteriori controlli superati: TypeScript, sintassi dello script e i 17 test
 di filtri catalogo/localizzazione. Nessuna garanzia estesa a dispositivi
 fisici, dati reali, autenticazione reale o condizioni di rete non simulate.
+
+## Estensione: connessione interrotta e richiesta abortita — 2026-11-08
+
+Lo stesso script mantiene il percorso HTTP 503 e aggiunge due contesti browser
+nuovi e indipendenti per ogni combinazione di viewport e lingua:
+
+- `route.abort("connectionreset")`: chiusura sintetica della connessione,
+  rilevata da Chromium come `net::ERR_CONNECTION_RESET`.
+- `route.abort("aborted")`: richiesta sintetica interrotta, rilevata come
+  `net::ERR_ABORTED`. Non è un test dell'AbortController dell'app.
+
+In questi scenari non viene fornito alcun codice HTTP: il runner registra
+gli eventi `requestfailed` e `response` del browser, oltre all'esito scelto
+nell'intercettazione. Per ciascuna interruzione sono attesi otto eventi
+`requestfailed` e **nessuna risposta HTTP fallita**; l'unica risposta HTTP
+del catalogo è il 200 successivo a Riprova. Per il confronto 503 sono attese
+otto risposte HTTP 503 e nessun `requestfailed`, poi il singolo 200.
+Questo evita di scambiare una risposta server non riuscita per una disconnessione.
+
+La rete viene ripristinata soltanto nell'intercettazione della GET catalogo:
+non si porta offline l'intero browser, così navigazione, asset e adattatore
+restano disponibili. Prima di ripristinarla si verifica l'errore tradotto,
+si torna al rilievo, si confrontano gli otto input e si riapre il catalogo.
+Si attendono tutti i retry automatici anche dopo il rimontaggio.
+Il successivo clic sul pulsante tradotto Riprova genera **una sola GET**,
+trattenuta per osservare la navigazione ancora abilitata. Il rilascio delle
+tre righe sintetiche avviene senza navigazioni o rimontaggi intermedi.
+Si verificano rimozione dell'alert, conteggio esatto localizzato, valori
+varietali/numerici invariati e, tornando al rilievo, tutti gli input originali.
+
+L'adattatore Clerk rimane esclusivamente nel browser. Nessun account reale,
+ticket, credenziale o dato reale è necessario. Lo script non avvia né utilizza
+il backend: le quattro API consentite sono risposte sintetiche; API non
+previste, scritture, richieste esterne e WebSocket restano bloccati in tutti
+i nuovi contesti, con service worker disabilitati.
+Non sono state modificate le impostazioni dei retry o il codice dell'app.
+
+Il report mantiene `error`/`recovery` per il caso 503 e aggiunge
+`errorScenarios.503`, `errorScenarios.connectionreset`,
+`errorScenarios.aborted`, con evidenze HTTP/trasporto e controlli distinti
+per tipo di guasto. Le catture nuove terminano in `connectionreset`,
+`connectionreset-recovered`, `aborted`, `aborted-recovered`; il recupero 503
+è ora `503-recovered`. Eventuali vecchie catture `recovered` non appartengono
+alla nuova matrice.
+
+### Esito della matrice estesa
+
+Esecuzione completata con Chromium, usando il comando di riproduzione sopra:
+**354/354 controlli superati, 59 per combinazione**, exit code 0.
+Sono stati verificati 18 percorsi errore/recupero indipendenti, oltre ai sei
+percorsi caricamento/vuoto già presenti.
+
+| Viewport | Lingua | HTTP 503 | Connessione interrotta | Richiesta abortita | Input conservati |
+| --- | --- | --- | --- | --- | --- |
+| 390×844 | IT | Superato | Superato | Superato | Sì, in tutti i percorsi |
+| 390×844 | EN | Superato | Superato | Superato | Sì, in tutti i percorsi |
+| 390×844 | ES | Superato | Superato | Superato | Sì, in tutti i percorsi |
+| 820×1180 | IT | Superato | Superato | Superato | Sì, in tutti i percorsi |
+| 820×1180 | EN | Superato | Superato | Superato | Sì, in tutti i percorsi |
+| 820×1180 | ES | Superato | Superato | Superato | Sì, in tutti i percorsi |
+
+In ciascun percorso: errore e Riprova nella lingua selezionata, navigazione
+durante il guasto, singolo retry manuale con rete ripristinata, tre righe
+recuperate e otto valori del rilievo identici. Zero tentativi di scrittura,
+zero API non previste e zero errori JavaScript in tutti i contesti.
+Le sole risposte HTTP del catalogo nei due nuovi scenari sono i 200 finali;
+gli otto fallimenti di trasporto per scenario sono confermati dai relativi
+eventi browser. Le risposte 503 restano invece eventi HTTP, non `requestfailed`.
+I WebSocket osservati sono chiusi dall'intercettazione prima di collegarsi.
+
+Confermati anche sintassi dello script, TypeScript e **18 test** di filtri
+catalogo/localizzazione (il totale attuale comprende un test aggiuntivo
+rispetto alla verifica storica sopra).
+Sono presenti 48 catture PNG della matrice estesa nella directory ignorata
+`generated-artifacts/catalogue-network/`, insieme al report JSON.
+La prova non certifica autenticazione reale, rete fisica, dispositivi fisici,
+altri motori browser o build di produzione.

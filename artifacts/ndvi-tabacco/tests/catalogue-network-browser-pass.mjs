@@ -54,6 +54,8 @@ const cases = [
   { width: 820, height: 1180, lang: "en" },
   { width: 820, height: 1180, lang: "es" },
 ];
+// A transport failure has no HTTP response; keep both distinct from a 503.
+const errorModes = ["503", "connectionreset", "aborted"];
 const draftFor = c => ({
   customer: `Azienda prova ${c.width}-${c.lang}`,
   plot: `Parcella Alfa ${c.width}-${c.lang}`,
@@ -70,6 +72,7 @@ async function makeContext(browser, c, mode) {
   const state = {
     mode, requests: [], attempts: [], writes: [], blockedApis: [], blockedExternal: [],
     clerkModules: 0, observations: 0, pending: [], pageErrors: [], websockets: [],
+    transportFailures: [], catalogueResponses: [],
   };
   await context.route("**/*", async route => {
     const req = route.request(), u = new URL(req.url()), method = req.method();
@@ -108,6 +111,10 @@ async function makeContext(browser, c, mode) {
         record.status = 503;
         return route.fulfill(json({ error: "synthetic unavailable" }, 503));
       }
+       if (state.mode === "connectionreset" || state.mode === "aborted") {
+         record.status = state.mode;
+         return route.abort(state.mode);
+       }
       record.status = 200;
       return route.fulfill(json(state.mode === "empty" ? { columns: [], rows: [] } : { columns, rows: syntheticRows }));
     }
@@ -136,6 +143,16 @@ export const SignUp=()=>{throw Error("SignUp outside synthetic test scope")};`,
    });
   const page = await context.newPage();
   page.on("pageerror", e => state.pageErrors.push(e.message));
+  page.on("requestfailed", req => {
+    if (new URL(req.url()).pathname === "/api/catalogo-colture") {
+      state.transportFailures.push({ method: req.method(), error: req.failure()?.errorText });
+    }
+  });
+  page.on("response", response => {
+    if (new URL(response.url()).pathname === "/api/catalogo-colture") {
+      state.catalogueResponses.push(response.status());
+    }
+  });
   page.on("websocket", ws => state.websockets.push(new URL(ws.url()).hostname === new URL(origin).hostname ? "same-origin websocket observed" : "external websocket observed"));
   return { context, page, state };
 }
@@ -199,7 +216,7 @@ try {
   for (const c of cases) {
     const draft = draftFor(c), expected = langs[c.lang];
     const checks = [];
-    const record = { case: `${c.width}x${c.height}-${c.lang}`, draft, checks, empty: {}, error: {}, recovery: {} };
+    const record = { case: `${c.width}x${c.height}-${c.lang}`, draft, checks, empty: {}, error: {}, recovery: {}, errorScenarios: {} };
 
     // Fresh isolated context: held GET -> navigate away/back -> empty success.
     const emptyRun = await makeContext(browser, c, "hold");
@@ -253,8 +270,11 @@ try {
     record.empty = { loading, emptyStatus, requestCount: state.requests.length, attempts: [...state.attempts], writes: [...state.writes], blockedApis: [...state.blockedApis], blockedExternal: [...state.blockedExternal], clerkModules: state.clerkModules, observations: state.observations, pageErrors: [...state.pageErrors], websockets: [...state.websockets] };
     await emptyRun.context.close();
 
-    // New context per requested error scenario; the same draft is re-entered.
-    const errorRun = await makeContext(browser, c, "503");
+    // Each failure gets a fresh cache/browser context, with the draft re-entered.
+    for (const errorMode of errorModes) {
+    const firstCheck = checks.length;
+    const errorRun = await makeContext(browser, c, errorMode);
+    try {
     page = errorRun.page; state = errorRun.state;
     await page.goto(`${origin}/user-portal`);
      await page.addStyleTag({ content: "#replit-dev-banner{display:none!important}" });
@@ -268,7 +288,7 @@ try {
     const retryText = (await alert.locator("button").innerText()).trim();
     const errorBusy = await page.locator('[aria-busy="true"]').count();
     const errorTable = await page.locator('[data-testid="table-catalogue-scroll"]').count();
-    await screenshot(page, c, "503");
+    await screenshot(page, c, errorMode);
     await nav(page, "portal");
     const duringErrorDraft = await readDraft(page, c.lang);
     const preRemountErrors = state.requests.length;
@@ -289,8 +309,8 @@ try {
       { name: "localized-error-message", pass: alertText.includes(expected.error) },
       { name: "localized-retry-label", pass: retryText === expected.retry, observed: retryText },
       { name: "error-no-busy-or-table", pass: errorBusy === 0 && errorTable === 0 },
-      { name: "draft-preserved-while-503", pass: sameDraft(duringErrorDraft, draft) },
-      { name: "503-persists-after-remount", pass: alertAfterRemount.includes(expected.error) && remountRequests > 0 },
+      { name: "draft-preserved-while-error", pass: sameDraft(duringErrorDraft, draft) },
+      { name: "error-persists-after-remount", pass: alertAfterRemount.includes(expected.error) && remountRequests > 0 },
     );
     const beforeRetry = state.requests.length;
     state.mode = "delayed-success";
@@ -317,7 +337,7 @@ try {
     const tableText = await page.locator('[data-testid="table-catalogue-scroll"]').innerText();
     const recoveredAlerts = await page.getByRole("alert").count();
     const countText = await page.getByTestId("text-catalogue-count").innerText();
-    await screenshot(page, c, "recovered");
+    await screenshot(page, c, `${errorMode}-recovered`);
     await nav(page, "portal");
     const afterRecoveryDraft = await readDraft(page, c.lang);
     checks.push(
@@ -325,16 +345,29 @@ try {
        { name: "retry-keeps-navigation-enabled", pass: retryPending && navigationEnabled },
        { name: "manual-retry-alone-recovers-mounted-view", pass: pendingRequests === beforeRetry + 1 && state.requests.length === beforeRetry + 1 },
       { name: "recovered-three-rows", pass: rowCount === 3 },
-      { name: "recovered-count", pass: countText.includes("3") },
+      { name: "recovered-count", pass: countText.trim() === { it: "3 di 3 varietà", en: "3 of 3 varieties", es: "3 de 3 variedades" }[c.lang] },
       { name: "error-alert-removed", pass: recoveredAlerts === 0 },
       { name: "variety-and-numeric-strings-unchanged", pass: cellValues[1] === syntheticRows[0][1] && cellValues[6] === syntheticRows[0][6] && cellValues[7] === syntheticRows[0][7] && cellValues[11] === syntheticRows[0][11] && tableText.includes("Synthetic Variety Alpha") },
       { name: "draft-preserved-after-recovery", pass: sameDraft(afterRecoveryDraft, draft) },
       { name: "zero-writes", pass: state.writes.length === 0 },
        { name: "error-flow-isolation", pass: state.blockedApis.length === 0 && state.clerkModules > 0 && state.pageErrors.length === 0 },
+      { name: "exact-failure-and-retry-sequence", pass: beforeRetry === 8 && state.requests.length === 9 && state.requests.slice(0, beforeRetry).every(r => r.status === (errorMode === "503" ? 503 : errorMode)) && state.requests.at(-1).status === 200 },
+      { name: "transport-versus-http-evidence", pass: errorMode === "503"
+        ? state.transportFailures.length === 0 && JSON.stringify(state.catalogueResponses) === JSON.stringify([...Array(8).fill(503), 200])
+        : state.transportFailures.length === 8 && state.transportFailures.every(r => r.error === (errorMode === "connectionreset" ? "net::ERR_CONNECTION_RESET" : "net::ERR_ABORTED")) && JSON.stringify(state.catalogueResponses) === "[200]" },
     );
-    record.error = { alertText, retryText, requestStatuses: state.requests.map(r => r.status), attempts: [...state.attempts], busy: errorBusy, table: errorTable, remountRequests, preservedDraft: duringErrorDraft };
-     record.recovery = { beforeRetry, requestCount: state.requests.length, retryPending, pendingState, navigationEnabled, pendingRequests, rowCount, countText, cellValues, recoveredAlerts, preservedDraft: afterRecoveryDraft, writes: [...state.writes], blockedApis: [...state.blockedApis], blockedExternal: [...state.blockedExternal], clerkModules: state.clerkModules, observations: state.observations, pageErrors: [...state.pageErrors], websockets: [...state.websockets] };
-    await errorRun.context.close();
+    const error = { alertText, retryText, requestStatuses: state.requests.map(r => r.status), attempts: [...state.attempts], busy: errorBusy, table: errorTable, remountRequests, preservedDraft: duringErrorDraft, transportFailures: [...state.transportFailures], httpResponses: [...state.catalogueResponses] };
+    const recovery = { beforeRetry, requestCount: state.requests.length, retryPending, pendingState, navigationEnabled, pendingRequests, rowCount, countText, cellValues, recoveredAlerts, preservedDraft: afterRecoveryDraft, writes: [...state.writes], blockedApis: [...state.blockedApis], blockedExternal: [...state.blockedExternal], clerkModules: state.clerkModules, observations: state.observations, pageErrors: [...state.pageErrors], websockets: [...state.websockets] };
+    record.errorScenarios[errorMode] = { error, recovery };
+    if (errorMode === "503") {
+      record.error = error;
+      record.recovery = recovery;
+    }
+    for (const check of checks.slice(firstCheck)) check.name = `${errorMode}: ${check.name}`;
+    } finally {
+      await errorRun.context.close();
+    }
+    }
     report.push(record);
      await fs.writeFile(path.join(root, "report.json"), JSON.stringify({ baseOrigin: origin, cases: report }, null, 2));
     console.log(`finished ${record.case}: ${checks.filter(x => x.pass).length}/${checks.length} checks passed`);
