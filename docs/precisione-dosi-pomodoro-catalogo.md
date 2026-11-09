@@ -172,3 +172,91 @@ del backend. I file remoti sono stati acquisiti con `Download.saveAs()`
 Verifica in italiano sui componenti di sviluppo: non prova autenticazione,
 persistenza nel database, tooltip del grafico, altri browser, altre lingue
 o build di produzione. La verifica del grafico usa la sua tabella accessibile.
+
+## Verifica EN/ES isolata del 9 novembre 2026
+
+Esito: **superata**. Usata la stessa entry di sviluppo
+`/tests/catalogue-calculations.html` e i suoi pulsanti `test-language-en`,
+`test-language-es`, `test-language-it`. Nessuna modifica al codice applicativo,
+ai calcoli, all'autenticazione, alle API o al database.
+
+### Dati e percorso
+
+Sei record inventati definiti in
+`artifacts/ndvi-tabacco/tests/fixtures/dose-export-languages.mjs`, nel solo
+archivio `nitrocrop-catalogue-synthetic-only`: cliente `Synthetic EN ES`,
+data 2026-11-09, pomodoro Abraracourcix e Kiwi Hayward.
+Per ciascuna coltura sono presenti `ZERO` (dose/quota 0), `TENTH` (0,1) e
+`LEGACY` (0,006), con ID `QA-T-*` e `QA-K-*`. I record sono seminati nella
+fixture, non creati tramite POST; lo storico non viene ricalcolato.
+
+Controllati cambio lingua, registro generale, tabella accessibile del grafico,
+gruppo storico espanso e dettagli completi di tutti i punti, inclusa quota
+azotata. ID, cliente, appezzamenti e varietà restano invariati.
+Nelle viste di archivio i numeri restano **0.0 / 0.1 / 0.006** anche in ES:
+è il formato già usato dai consumatori senza locale, non una perdita di
+precisione. Nei risultati di calcolo e nel PDF il separatore segue la lingua.
+
+Controllati anche i risultati del modulo reale, senza salvataggio, in EN e ES:
+cinque NDVI zero; pomodoro resa 100, Fioritura confermata, N distribuito
+249,94 e 249,84; Kiwi resa 31,3, F3 confermata, N distribuito 150,94 e 150,84.
+I residui 0,06 e 0,16 producono rispettivamente **0,0 e 0,1 kg N/ha**
+(in EN `0.0` e `0.1`). Il solo controllo ES Kiwi a residuo 0,06 è stato
+completato in prosecuzione nello stesso contesto, senza ripetere la batteria.
+
+### File realmente scaricati dai pulsanti
+
+Sei download, non soltanto generatori chiamati direttamente:
+
+| Controllo | EN | ES |
+| --- | --- | --- |
+| PDF del registro | `0.0 / 0.1 / 0.006` | `0,0 / 0,1 / 0,006` |
+| Excel dello storico, dose N e quota | numeri `0 / 0.1 / 0.006` | numeri `0 / 0.1 / 0.006` |
+| CSV del registro, dose N e quota | numeri con punto decimale | identici byte a EN |
+
+PDF: titolo tradotto e dose estratta **per ID** con `pdftotext -layout`;
+non esiste una colonna quota in questo PDF. Excel: ZIP OOXML riaperto,
+intestazioni tradotte, colonne N/Q numeriche; nuove dosi con formato `0.0`,
+storico con General. L'indice `s=3` è zero-based in `cellXfs` e rinvia a
+`numFmtId=165`, **non** al terzo `numFmt`: un dubbio iniziale del collaudo
+è stato ritirato dopo la verifica dei file, senza modificare l'export.
+CSV: BOM UTF-8, nomi macchina stabili, dose e quota esatte per ID,
+coltura/varietà/cliente non tradotti. I due CSV sono identici byte per byte.
+
+Archivio locale confrontato byte per byte dopo cambi lingua, navigazione,
+download e ritorno IT: invariato; zero scritture sulla chiave osservazioni.
+Anche la prosecuzione ES Kiwi ha conservato gli stessi byte, terminando
+sulla relativa vista ES. Non sono stati effettuati salvataggi o cancellazioni.
+
+### Riproduzione e regressioni
+
+- Test automatico, incluso nel normale comando `test` dell'artifact:
+  `src/utils/observationExportLanguages.test.ts`. Sequenza IT → EN → ES → IT,
+  PDF reale e righe localizzate, CSV invariato, intestazioni Excel, valori
+  numerici dose/quota e risoluzione effettiva dei formati OOXML, sorgenti immutate.
+- Controlli eseguiti:
+  `pnpm --filter @workspace/ndvi-tabacco exec tsx --test src/utils/observationExportLanguages.test.ts src/utils/observationDose.test.ts`
+  e `pnpm --filter @workspace/ndvi-tabacco typecheck`.
+- Script di riproduzione del percorso archivio/download:
+  `BASE_URL=https://<origine-anteprima> node artifacts/ndvi-tabacco/tests/dose-export-languages-browser-pass.mjs`.
+  Richiede Chromium Playwright o `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
+  È stato controllato sintatticamente, non rilanciato come seconda batteria;
+  i controlli interattivi dei risultati di calcolo sopra descritti sono manuali
+  nel collaudo browser e non fanno parte di questo script.
+- Controllo indipendente **eseguito sui file scaricati**:
+  `python artifacts/ndvi-tabacco/tests/check-dose-export-downloads.py`.
+  Usa solo libreria standard e `pdftotext`; verifica sei ID, intestazioni,
+  valori, stili Excel risolti, PDF localizzato e uguaglianza binaria dei CSV.
+
+Evidenze ignorate da Git e pubblicazione:
+`generated-artifacts/dose-export-languages/{en,es}/home.pdf`, `home.csv`,
+`history.xlsx`, `README.md` e `download-checks.json`.
+
+### Isolamento e limiti
+
+Browser Chromium isolato; API, host esterni e WebSocket bloccati prima della
+navigazione; `fetch` soddisfatto dalla fixture sintetica. Gli errori HMR di
+connessione sono previsti perché anche il suo WebSocket è bloccato.
+Nessun accesso a credenziali, Clerk, clienti o database; nessun riavvio backend.
+Non verifica login, persistenza server, produzione, altri browser, tooltip,
+recupero rete del catalogo o IDW. Non ripete il collaudo di salvataggio/reload.
