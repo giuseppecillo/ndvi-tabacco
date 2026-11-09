@@ -1,10 +1,12 @@
+import { alphabetical } from "../utils/alphabetical";
+
 export type CatalogueFilters = { query: string; crop: string };
 
 const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-/** Distinct crop values (column 0) in source order. */
-export function catalogueCrops(rows: readonly (readonly string[])[]): string[] {
-  return Array.from(new Set(rows.map(r => r[0] ?? "").filter(Boolean)));
+/** Distinct crop values (column 0), ordered by their displayed names. */
+export function catalogueCrops(rows: readonly (readonly string[])[], translate: (s: string) => string = s => s, locale = "it-IT"): string[] {
+  return alphabetical(Array.from(new Set(rows.map(r => r[0] ?? "").filter(Boolean))), translate, locale);
 }
 
 /** Pure, read-only filter: never mutates or reformats source values. */

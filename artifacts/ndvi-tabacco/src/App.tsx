@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearch } from "wouter";
 import { ModuleHeading } from "./security/ModuleHeading";
 import { getLocale, t, useLanguage } from "./i18n/runtime";
+import { alphabetical } from "./utils/alphabetical";
 const taurusLogo = `${import.meta.env.BASE_URL}taurus-logo.png`;
 import { buildObservationPdf } from "./utils/observationPdf";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
@@ -852,10 +853,11 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                 }}
                 className={inputCls}
               >
-                <option value="tabacco">Tabacco</option>
-                <option value="grano duro">Grano duro</option>
-                <option value="pomodoro">Pomodoro</option>
-                {CATALOGUE_CROPS.map(crop => <option key={crop} value={crop}>{t(crop)}</option>)}
+                {alphabetical(
+                  ["tabacco", "grano duro", "pomodoro", ...CATALOGUE_CROPS]
+                    .map(value => ({ value, label: t(value.charAt(0).toUpperCase() + value.slice(1)) })),
+                  crop => crop.label, getLocale(),
+                ).map(crop => <option key={crop.value} value={crop.value}>{crop.label}</option>)}
               </select>
             </div>
             {isCatalogueCrop(coltura) ? <CatalogueCropParameters
@@ -878,7 +880,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
             <div className="col-span-2 flex flex-col gap-1">
               <label className="text-sm font-semibold text-stone-700">Varietà</label>
               <select value={varieta} onChange={(e) => setVarieta(e.target.value)} className={inputCls}>
-                {(isGranoDuro ? Object.values(GRANO_DURO_DB) : Object.values(VARIETA_DB)).map((v) => (
+                {alphabetical<GranoVarietaDati | VarietaDati>(isGranoDuro ? Object.values(GRANO_DURO_DB) : Object.values(VARIETA_DB), v => v.label, getLocale()).map((v) => (
                   <option key={v.label} value={v.label}>
                     {v.label}
                   </option>

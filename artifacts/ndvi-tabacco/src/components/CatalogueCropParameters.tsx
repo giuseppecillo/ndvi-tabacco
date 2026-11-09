@@ -3,6 +3,7 @@ import { Info } from "lucide-react";
 import { CROP_PROFILES, getCropReference, type CatalogueCrop, type calculateCrop } from "@workspace/crop-calculations";
 import { getLocale, t, useLanguage } from "../i18n/runtime";
 import { formatRecordedDose } from "../utils/observationDose";
+import { alphabetical } from "../utils/alphabetical";
 
 type Piano = ReturnType<typeof calculateCrop>;
 type Props = {
@@ -21,8 +22,8 @@ const inputClass = "w-full min-w-0 rounded-lg border border-stone-300 bg-white p
 const num = (v: number, digits = 2) => Number.isFinite(v) ? v.toLocaleString(getLocale(), { maximumFractionDigits: digits }) : "—";
 
 export function CatalogueCropParameters(p: Props) {
-  useLanguage();
-  const varieties = useMemo(() => CROP_PROFILES.filter(x => x.crop === p.crop), [p.crop]);
+  const language = useLanguage();
+  const varieties = useMemo(() => alphabetical(CROP_PROFILES.filter(x => x.crop === p.crop), x => x.name, getLocale()), [p.crop, language]);
   const resolved = useMemo(() => getCropReference(p.crop, p.varieta), [p.crop, p.varieta]);
   const sel = resolved?.selected;
   const ref = resolved?.reference;

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { BookOpen, Search, X } from "lucide-react";
 import { getGetCropCatalogueQueryKey, useGetCropCatalogue } from "@workspace/api-client-react";
-import { t, useLanguage } from "../i18n/runtime";
+import { getLocale, t, useLanguage } from "../i18n/runtime";
+import { alphabetical } from "../utils/alphabetical";
 import { ErrorNote, Skeleton } from "../security/ui";
 import { catalogueCrops, filterCatalogue } from "../catalogue/filterCatalogue";
 
@@ -16,8 +17,12 @@ export function CropCatalogue({ active }: { active: boolean }) {
   const q = useGetCropCatalogue({ query: { enabled: active, queryKey: getGetCropCatalogueQueryKey(), staleTime: 60000, refetchOnMount: true } });
   const columns = q.data?.columns ?? [];
   const rows = q.data?.rows ?? [];
-  const crops = useMemo(() => catalogueCrops(rows), [rows]);
-  const filtered = useMemo(() => filterCatalogue(rows, { query, crop }, t), [rows, query, crop, language]);
+  const crops = useMemo(() => catalogueCrops(rows, t, getLocale()), [rows, language]);
+  const filtered = useMemo(() => {
+    const matching = filterCatalogue(rows, { query, crop }, t);
+    const byVariety = alphabetical(matching, row => row[1] ?? "", getLocale());
+    return alphabetical(byVariety, row => t(row[0] ?? ""), getLocale());
+  }, [rows, query, crop, language]);
   const translatedCols = new Set([0, 2, 3, 4]);
   const phaseCols = new Set(columns.map((c, i) => (isPhaseCol(c) ? i : -1)).filter(i => i >= 0));
 

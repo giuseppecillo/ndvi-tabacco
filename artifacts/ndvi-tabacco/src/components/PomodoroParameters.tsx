@@ -1,5 +1,6 @@
 import { FASI_POMODORO, POMODORO_DB, type calcolaPomodoro } from "@workspace/tomato-calculations";
-import { getLocale, t } from "../i18n/runtime";
+import { getLocale, t, useLanguage } from "../i18n/runtime";
+import { alphabetical } from "../utils/alphabetical";
 import { formatRecordedDose } from "../utils/observationDose";
 
 type Props = {
@@ -16,9 +17,10 @@ type Props = {
 };
 const inputClass = "w-full min-w-0 rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm";
 const number = (value: number) => Number.isFinite(value) ? value.toLocaleString(getLocale(), { maximumFractionDigits: 2 }) : "—";
-const opzioni = Object.values(POMODORO_DB);
 
 export function PomodoroParameters(p: Props) {
+  useLanguage();
+  const opzioni = alphabetical(Object.values(POMODORO_DB), v => v.nome, getLocale());
   const profilo = POMODORO_DB[p.varieta];
   const numeric = (label: string, value: number, onChange: (value: number) => void, min = 0) =>
     <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold text-stone-700">
