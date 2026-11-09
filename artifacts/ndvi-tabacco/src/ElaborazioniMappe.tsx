@@ -16,6 +16,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { formatRecordedDose } from "./utils/observationDose";
+import { formatIdwValue } from "./utils/idwPrecision";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Observation } from "./App";
@@ -174,7 +175,7 @@ export function MapView({ result }: { result: PolyIdwResult }) {
     markerRef.current = L.circleMarker([cell.lat, cell.lng], {
       radius: 9, color: "#fff8ea", weight: 3, fillColor: "#14532d", fillOpacity: 0.95,
     })
-      .bindTooltip(`${t("Cella della griglia interpolata")}: ${cell.dose.toFixed(1)} kg N/ha`, {
+      .bindTooltip(`${t("Cella della griglia interpolata")}: ${formatIdwValue(cell.dose)} kg N/ha`, {
         direction: "top", offset: [0, -8],
       })
       .addTo(map);
@@ -191,7 +192,7 @@ export function MapView({ result }: { result: PolyIdwResult }) {
       {hover ? (
         <div className="absolute bottom-3 left-3 bg-black/75 text-white text-xs rounded-lg px-3 py-2 pointer-events-none z-[1000] leading-5">
           <div className="font-mono opacity-80">📍 {hover.lat.toFixed(6)}, {hover.lng.toFixed(6)}</div>
-          <div>🌿 Dose IDW: <strong className="text-green-300">{hover.dose.toFixed(1)} kg/ha</strong></div>
+          <div>🌿 Dose IDW: <strong className="text-green-300">{formatIdwValue(hover.dose)} kg/ha</strong></div>
         </div>
       ) : (
         <div className="absolute bottom-3 left-3 bg-black/50 text-white/70 text-[11px] rounded-md px-2 py-1 pointer-events-none z-[1000]">
@@ -203,9 +204,9 @@ export function MapView({ result }: { result: PolyIdwResult }) {
       <div className="absolute top-3 right-3 bg-white/92 backdrop-blur rounded-lg px-3 py-2.5 z-[1000] shadow-md text-xs min-w-[76px]">
         <div className="font-bold text-stone-600 text-center mb-2 text-[11px]">kg/ha</div>
         {[
-          { color: "#dc2626", label: max.toFixed(0), pos: "max" },
-          { color: "#f59e0b", label: ((min + max) / 2).toFixed(0), pos: "mid" },
-          { color: "#22c55e", label: min.toFixed(0), pos: "min" },
+          { color: "#dc2626", label: formatIdwValue(max), pos: "max" },
+          { color: "#f59e0b", label: formatIdwValue((min + max) / 2), pos: "mid" },
+          { color: "#22c55e", label: formatIdwValue(min), pos: "min" },
         ].map(({ color, label, pos }) => (
           <div key={pos} className="flex items-center gap-1.5 mb-1">
             <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0 border border-white/40" style={{ background: color }} />
@@ -233,7 +234,7 @@ export function MapView({ result }: { result: PolyIdwResult }) {
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Cella della griglia interpolata (IDW), non un rilievo GPS</p>
               <p className="text-2xl font-bold tabular-nums text-green-900 [overflow-wrap:anywhere]">
-                {selected.cell.dose.toFixed(1)} <span className="text-base font-semibold">kg N/ha</span>
+                {formatIdwValue(selected.cell.dose)} <span className="text-base font-semibold">kg N/ha</span>
               </p>
               <p className="font-mono text-xs text-stone-600">
                 {selected.cell.lat.toFixed(6)}, {selected.cell.lng.toFixed(6)}
@@ -677,7 +678,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
                         <td className="px-2 py-1 font-mono">{p.obsId}</td>
                         <td className="px-2 py-1 text-right font-mono">{p.lat.toFixed(6)}</td>
                         <td className="px-2 py-1 text-right font-mono">{p.lng.toFixed(6)}</td>
-                        <td className="px-2 py-1 text-right font-bold text-green-800">{p.dose.toFixed(1)}</td>
+                        <td className="px-2 py-1 text-right font-bold text-green-800">{String(p.dose)}</td>
                       </tr>
                     ))}
                     {shpPoints.length > 100 && (
@@ -759,9 +760,9 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: "Punti griglia", value: currentResult.stats.count.toLocaleString() },
-              { label: "Dose min", value: `${currentResult.stats.min.toFixed(1)} kg/ha` },
-              { label: "Dose media", value: `${currentResult.stats.mean.toFixed(1)} kg/ha` },
-              { label: "Dose max", value: `${currentResult.stats.max.toFixed(1)} kg/ha` },
+              { label: "Dose min", value: `${formatIdwValue(currentResult.stats.min)} kg/ha` },
+              { label: "Dose media", value: `${formatIdwValue(currentResult.stats.mean)} kg/ha` },
+              { label: "Dose max", value: `${formatIdwValue(currentResult.stats.max)} kg/ha` },
             ].map(s => (
               <div key={s.label} className="bg-green-50 rounded-xl px-3 py-2 text-center">
                 <p className="text-xs text-stone-500">{s.label}</p>
@@ -796,6 +797,7 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
             </button>
           </div>
           <p className="text-xs text-stone-400">
+            Dosi derivate e riepiloghi: quattro decimali per difetto, senza modificare i rilievi. Il limite al residuo è verificabile solo con bilancio completo.<br/>
             Shapefile: layer Point con attributi dose e riepilogo azoto, più CSV riepilogativo · WGS84 (EPSG:4326)<br/>
             GeoTIFF: Float32 mono-banda con riepilogo nei metadati · NODATA = −9999 · leggibile con QGIS, ArcGIS, GDAL
           </p>

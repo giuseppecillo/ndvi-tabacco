@@ -43,10 +43,56 @@ mantengono i loro controlli. Non cambia il contratto dei campi né lo schema dat
   salvata, anche sotto il centesimo, senza alterare gli oggetti.
 
 Le **celle interpolate IDW**, le relative statistiche, i riepiloghi di risparmio
-e gli export GIS derivati non sono nuove dosi puntuali salvate: mantengono
-precisioni proprie (CSV/DBF quattro decimali, GeoTIFF Float32, riepiloghi un
-decimale). Non si modifica il modello IDW né il trattamento dei punti importati.
-Tabacco e grano mantengono i rispettivi calcoli e formati.
+e gli export GIS derivati non sono nuove dosi puntuali salvate.
+La loro regola distinta è descritta qui sotto.
+Tabacco e grano mantengono i rispettivi calcoli e formati puntuali.
+
+## Precisione dei derivati IDW
+
+Il valore canonico di ogni cella è la media IDW (Shepard, distanze UTM e
+potenza invariati), limitata al residuo interpolato quando il bilancio è
+completo, poi quantizzata **per difetto a quattro decimali** di kg N/ha.
+Non si aggiunge epsilon. La quantizzazione è idempotente e verifica il confronto
+con il numero binario d’ingresso anche ai bordi dei passi decimali.
+Non dipende dalla coltura: anche una mappa mista usa la stessa precisione.
+
+Esempio riproducibile senza dati reali: un punto con dose 0 e residuo 0,01,
+un altro con dose 0,1 e residuo 0,11. Fra loro, una dose IDW circa 0,06 ha
+residuo circa 0,07: mostrarla a un decimale produce 0,1, sopra il residuo,
+pur partendo da punti sicuri.
+
+- Dose di cella, tooltip, ispezione, legenda e DBF: lo stesso valore canonico
+  a quattro decimali, mai arrotondato al più vicino.
+- Minimo, massimo e media sono calcolati dalle dosi canoniche. La media viene
+  mostrata per difetto a quattro decimali, non viene ricalcolata dalle stringhe.
+- Risparmio: piano e già distribuito mantengono la precisione del calcolo;
+  l’indicazione è già distribuito + media delle dosi canoniche.
+  Nessun taglio nasconde un già distribuito maggiore del piano; in quel caso il
+  risparmio è zero. Totali = valori per ettaro × superficie netta non arrotondata.
+  UI, CSV, DBF e descrizione TIFF mostrano tutti i valori di azoto per difetto
+  a quattro decimali (anche kg totali e percentuali). I valori visualizzati
+  indipendentemente possono non sommarsi esattamente. Area: due decimali come prima.
+- GeoTIFF: resta Float32; se la conversione aumenta il valore si usa il
+  Float32 immediatamente inferiore. Un pixel geografico che riceve più celle UTM
+  usa la dose minima dei contributori, non la massima; non supera così nessuno
+  dei loro residui noti. Non è un nuovo campionamento IDW al centro del pixel:
+  la griglia di calcolo rimane UTM e il raster WGS84 è una rappresentazione.
+- Bilancio completo: tutti i controlli effettivamente usati hanno piano finito
+  non negativo e distribuito finito non negativo (assente = zero, come prima).
+  Piano e distribuito usano esattamente gli stessi pesi della dose.
+- Punti importati senza piano, bilanci parziali o invalidi: si produce la dose
+  IDW conservativa senza inventare residui dai soli punti completi; confronto e
+  risparmio restano non disponibili, campi riepilogo DBF vuoti e CSV omesso.
+  Non si può garantire un limite agronomico senza un bilancio.
+- Vecchie dosi oltre residuo sono limitate **solo nel derivato**, mai riscritte.
+  La lista e i tooltip dei controlli mantengono i valori registrati/importati.
+
+Verifiche sintetiche: `src/utils/idwPrecision.test.ts` legge i veri DBF,
+CSV e GeoTIFF esportati, verifica celle/residui, confini binari, colture miste,
+bilanci incompleti, immutabilità e componente del risparmio.
+`tests/holes.test.mjs` mantiene i controlli su buchi e superficie netta.
+`/tests/idw-precision.html` è un’anteprima solo sviluppo senza API o login;
+non è inclusa nella build ordinaria.
 
 ## Storico e verifiche
 

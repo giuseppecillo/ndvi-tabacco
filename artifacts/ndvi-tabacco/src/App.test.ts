@@ -4,6 +4,7 @@ import { fromArrayBuffer as readGeoTiff } from "geotiff";
 import JSZip from "jszip";
 import shpjs from "shpjs";
 import proj4 from "proj4";
+import { conservativeFloat32, formatIdwValue } from "./utils/idwPrecision";
 import {
   FASI_GRANO,
   FINESTRE_DAS_LOCALI_TEMPLATE,
@@ -562,7 +563,8 @@ describe("mappe sintetiche al confine UTM 32/33 (12° est)", () => {
           // Independent rectangular mask for raster pixel centres.
           if (west + (col + 0.5) * lon >= east || north - (row + 0.5) * lat <= south) continue;
           const index = row * cols + col;
-          expected[index] = Math.fround(Math.max(expected[index], point.dose));
+          const dose = conservativeFloat32(point.dose);
+          expected[index] = expected[index] === -9999 ? dose : Math.min(expected[index], dose);
         }
         const raster = await image.readRasters({ interleave: true });
         assert.deepEqual(Array.from(raster), Array.from(expected));
@@ -777,7 +779,8 @@ describe("campi irregolari sintetici a cavallo di 12° est", () => {
             const row = Math.floor((north - p.lat) / lat);
             if (!cultivated(west + (col + .5) * lon, north - (row + .5) * lat)) continue;
             const i = row * cols + col;
-            expected[i] = Math.fround(Math.max(expected[i], p.dose));
+            const dose = conservativeFloat32(p.dose);
+            expected[i] = expected[i] === -9999 ? dose : Math.min(expected[i], dose);
           }
           const raster = await image.readRasters({ interleave: true });
           assert.deepEqual(Array.from(raster), Array.from(expected));
@@ -977,7 +980,8 @@ describe("mappe sintetiche a cavallo dell'equatore", () => {
           assert.ok(col >= 0 && col < cols && row >= 0 && row < rows);
           if (west + (col + 0.5) * lon >= east || north - (row + 0.5) * lat <= southLat) continue;
           const index = row * cols + col;
-          expected[index] = Math.max(expected[index], Math.fround(p.dose));
+          const dose = conservativeFloat32(p.dose);
+          expected[index] = expected[index] === -9999 ? dose : Math.min(expected[index], dose);
         }
         const raster = await image.readRasters({ interleave: true });
         assert.deepEqual(Array.from(raster), Array.from(expected));
@@ -1173,7 +1177,8 @@ describe("export agronomici IDW", () => {
       const row = Math.floor((north - point.lat) / lat);
       assert.ok(col >= 0 && col < cols && row >= 0 && row < rows);
       const index = row * cols + col;
-      expected[index] = Math.max(expected[index], Math.fround(point.dose));
+      const dose = conservativeFloat32(point.dose);
+      expected[index] = expected[index] === -9999 ? dose : Math.min(expected[index], dose);
     }
     const raster = await image.readRasters({ interleave: true });
     assert.equal(image.getGDALNoData(), -9999);
@@ -1208,12 +1213,12 @@ describe("export agronomici IDW", () => {
       assert.equal(feature.properties.LNG, Number(result.grid[index].lng.toFixed(8)));
       assert.equal(feature.properties.DOSE_IDW, Number(result.grid[index].dose.toFixed(4)));
       assert.equal(feature.properties.AREA_HA, Number(summary.areaHa.toFixed(2)));
-      assert.equal(feature.properties.N_PLAN_HA, Number(summary.plannedPerHa.toFixed(1)));
-      assert.equal(feature.properties.N_IDW_HA, Number(summary.indicatedPerHa.toFixed(1)));
-      assert.equal(feature.properties.N_SAVE_HA, Number(summary.savedPerHa.toFixed(1)));
-      assert.equal(feature.properties.N_PLAN_KG, Number(summary.plannedTotalKg.toFixed(1)));
-      assert.equal(feature.properties.N_IDW_KG, Number(summary.indicatedTotalKg.toFixed(1)));
-      assert.equal(feature.properties.N_SAVE_KG, Number(summary.savedTotalKg.toFixed(1)));
+      assert.equal(feature.properties.N_PLAN_HA, Number(formatIdwValue(summary.plannedPerHa)));
+      assert.equal(feature.properties.N_IDW_HA, Number(formatIdwValue(summary.indicatedPerHa)));
+      assert.equal(feature.properties.N_SAVE_HA, Number(formatIdwValue(summary.savedPerHa)));
+      assert.equal(feature.properties.N_PLAN_KG, Number(formatIdwValue(summary.plannedTotalKg)));
+      assert.equal(feature.properties.N_IDW_KG, Number(formatIdwValue(summary.indicatedTotalKg)));
+      assert.equal(feature.properties.N_SAVE_KG, Number(formatIdwValue(summary.savedTotalKg)));
     }
   });
 
@@ -1245,20 +1250,20 @@ describe("export agronomici IDW", () => {
     assert.ok(records.length > 0);
     for (const record of records) {
       assert.equal(record.AREA_HA, summary.areaHa.toFixed(2));
-      assert.equal(record.N_PLAN_HA, summary.plannedPerHa.toFixed(1));
-      assert.equal(record.N_IDW_HA, summary.indicatedPerHa.toFixed(1));
-      assert.equal(record.N_SAVE_HA, summary.savedPerHa.toFixed(1));
-      assert.equal(record.N_PLAN_KG, summary.plannedTotalKg.toFixed(1));
-      assert.equal(record.N_IDW_KG, summary.indicatedTotalKg.toFixed(1));
-      assert.equal(record.N_SAVE_KG, summary.savedTotalKg.toFixed(1));
+      assert.equal(record.N_PLAN_HA, formatIdwValue(summary.plannedPerHa));
+      assert.equal(record.N_IDW_HA, formatIdwValue(summary.indicatedPerHa));
+      assert.equal(record.N_SAVE_HA, formatIdwValue(summary.savedPerHa));
+      assert.equal(record.N_PLAN_KG, formatIdwValue(summary.plannedTotalKg));
+      assert.equal(record.N_IDW_KG, formatIdwValue(summary.indicatedTotalKg));
+      assert.equal(record.N_SAVE_KG, formatIdwValue(summary.savedTotalKg));
     }
 
     const csv = (await zip.file(`${base}_riepilogo_azoto.csv`)!.async("string")).replace(/^\uFEFF/, "");
     assert.deepEqual(csv.split("\r\n"), [
       "Scenario;Superficie (ha);kg N/ha;kg N totali",
-      `Azoto previsto dal piano;${summary.areaHa.toFixed(2).replace(".", ",")};${summary.plannedPerHa.toFixed(1).replace(".", ",")};${summary.plannedTotalKg.toFixed(1).replace(".", ",")}`,
-      `Azoto indicato dalla IDW;${summary.areaHa.toFixed(2).replace(".", ",")};${summary.indicatedPerHa.toFixed(1).replace(".", ",")};${summary.indicatedTotalKg.toFixed(1).replace(".", ",")}`,
-      `Risparmio stimato;${summary.areaHa.toFixed(2).replace(".", ",")};${summary.savedPerHa.toFixed(1).replace(".", ",")};${summary.savedTotalKg.toFixed(1).replace(".", ",")}`,
+      `Azoto previsto dal piano;${summary.areaHa.toFixed(2).replace(".", ",")};${formatIdwValue(summary.plannedPerHa).replace(".", ",")};${formatIdwValue(summary.plannedTotalKg).replace(".", ",")}`,
+      `Azoto indicato dalla IDW;${summary.areaHa.toFixed(2).replace(".", ",")};${formatIdwValue(summary.indicatedPerHa).replace(".", ",")};${formatIdwValue(summary.indicatedTotalKg).replace(".", ",")}`,
+      `Risparmio stimato;${summary.areaHa.toFixed(2).replace(".", ",")};${formatIdwValue(summary.savedPerHa).replace(".", ",")};${formatIdwValue(summary.savedTotalKg).replace(".", ",")}`,
     ]);
   });
 
@@ -1276,9 +1281,9 @@ describe("export agronomici IDW", () => {
 
     assert.ok(records[0].POLYGON.startsWith("Campo è"));
     assert.ok(new TextEncoder().encode(records[0].POLYGON).byteLength <= 64);
-    assert.equal(records[0].N_PLAN_HA, summary.plannedPerHa.toFixed(1));
-    assert.equal(records[0].N_IDW_HA, summary.indicatedPerHa.toFixed(1));
-    assert.equal(records[0].N_SAVE_KG, summary.savedTotalKg.toFixed(1));
+    assert.equal(records[0].N_PLAN_HA, formatIdwValue(summary.plannedPerHa));
+    assert.equal(records[0].N_IDW_HA, formatIdwValue(summary.indicatedPerHa));
+    assert.equal(records[0].N_SAVE_KG, formatIdwValue(summary.savedTotalKg));
   });
 
   it("scrive nel GeoTIFF una ImageDescription completa e valida", async () => {
@@ -1293,9 +1298,9 @@ describe("export agronomici IDW", () => {
     assert.deepEqual(description.split("\n"), [
       "Mappa IDW - dose di azoto (kg N/ha)",
       `Superficie: ${summary.areaHa.toFixed(2)} ha`,
-      `Piano N: ${summary.plannedPerHa.toFixed(1)} kg N/ha; ${summary.plannedTotalKg.toFixed(1)} kg N totali`,
-      `Indicazione IDW: ${summary.indicatedPerHa.toFixed(1)} kg N/ha; ${summary.indicatedTotalKg.toFixed(1)} kg N totali`,
-      `Risparmio stimato: ${summary.savedPerHa.toFixed(1)} kg N/ha; ${summary.savedTotalKg.toFixed(1)} kg N totali`,
+      `Piano N: ${formatIdwValue(summary.plannedPerHa)} kg N/ha; ${formatIdwValue(summary.plannedTotalKg)} kg N totali`,
+      `Indicazione IDW: ${formatIdwValue(summary.indicatedPerHa)} kg N/ha; ${formatIdwValue(summary.indicatedTotalKg)} kg N totali`,
+      `Risparmio stimato: ${formatIdwValue(summary.savedPerHa)} kg N/ha; ${formatIdwValue(summary.savedTotalKg)} kg N totali`,
     ]);
   });
 
@@ -1311,9 +1316,9 @@ describe("export agronomici IDW", () => {
     const expectedDescription = [
       "Mappa IDW - dose di azoto (kg N/ha)",
       `Superficie: ${summary.areaHa.toFixed(2)} ha`,
-      `Piano N: ${summary.plannedPerHa.toFixed(1)} kg N/ha; ${summary.plannedTotalKg.toFixed(1)} kg N totali`,
-      `Indicazione IDW: ${summary.indicatedPerHa.toFixed(1)} kg N/ha; ${summary.indicatedTotalKg.toFixed(1)} kg N totali`,
-      `Risparmio stimato: ${summary.savedPerHa.toFixed(1)} kg N/ha; ${summary.savedTotalKg.toFixed(1)} kg N totali`,
+      `Piano N: ${formatIdwValue(summary.plannedPerHa)} kg N/ha; ${formatIdwValue(summary.plannedTotalKg)} kg N totali`,
+      `Indicazione IDW: ${formatIdwValue(summary.indicatedPerHa)} kg N/ha; ${formatIdwValue(summary.indicatedTotalKg)} kg N totali`,
+      `Risparmio stimato: ${formatIdwValue(summary.savedPerHa)} kg N/ha; ${formatIdwValue(summary.savedTotalKg)} kg N totali`,
     ].join("\n");
 
     assert.equal(image.getWidth(), Math.ceil(

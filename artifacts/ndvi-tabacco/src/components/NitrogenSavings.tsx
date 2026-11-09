@@ -1,6 +1,6 @@
+import * as React from "react";
 import type { PolyIdwResult } from "../utils/geoUtils";
-
-const fmt = (value: number) => value.toFixed(1);
+import { formatIdwValue as fmt } from "../utils/idwPrecision";
 
 /** Nitrogen savings for an interpolated polygon: planned N vs applied + IDW. */
 export function NitrogenSavings({ result }: { result: PolyIdwResult }) {
@@ -95,13 +95,14 @@ export function NitrogenSavings({ result }: { result: PolyIdwResult }) {
           <p className="border-t border-emerald-100 bg-white px-4 py-2 text-xs text-stone-500">
             I valori per ettaro sono medie interpolate dai punti GPS del registro NDVI.
             L’azoto già distribuito è incluso nel confronto; i totali sono calcolati sulla superficie completa del poligono.
+            Valori derivati mostrati per difetto a quattro decimali; i calcoli usano i valori non arrotondati, quindi le cifre visualizzate possono non sommarsi esattamente.
           </p>
         </>
       ) : (
         <div role="status" className="border-t border-emerald-100 px-4 py-3 text-sm text-stone-700">
           <p className="font-semibold text-emerald-950">Risparmio non disponibile.</p>
           <p className="mt-1">
-            Il piano di azoto totale manca su alcuni o tutti i punti del registro usati per l’interpolazione, quindi il risparmio non può essere calcolato.
+            Il bilancio di azoto manca o non è valido su alcuni o tutti i punti usati per l’interpolazione, quindi il residuo e il risparmio non sono verificabili.
           </p>
           <p className="mt-1">
             Completa l’azoto totale previsto in Rilievo e dati per ogni punto, poi avvia di nuovo l’elaborazione IDW.

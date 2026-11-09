@@ -11,6 +11,7 @@ import {
   pointInField, downloadGeoTiff, downloadShapefile,
 } from "../src/utils/geoUtils.ts";
 import { createPolygonImporter } from "../src/utils/polygonImport.ts";
+import { conservativeFloat32, formatIdwValue } from "../src/utils/idwPrecision.ts";
 import {
   createHoleImportFixtures, createEquatorHoleImportFixtures,
   createImportFixtures, holeRings, ring,
@@ -171,13 +172,13 @@ test("parsed point SHP/DBF/CSV exports exclude holes and use net nitrogen totals
     assert(!inExcludedRectangle(...f.geometry.coordinates));
     assert.equal(f.properties.DOSE_IDW, 30);
     near(f.properties.AREA_HA, Number(result.nitrogenSummary.areaHa.toFixed(2)));
-    near(f.properties.N_PLAN_KG, Number(result.nitrogenSummary.plannedTotalKg.toFixed(1)));
-    near(f.properties.N_IDW_KG, Number(result.nitrogenSummary.indicatedTotalKg.toFixed(1)));
-    near(f.properties.N_SAVE_KG, Number(result.nitrogenSummary.savedTotalKg.toFixed(1)));
+    near(f.properties.N_PLAN_KG, Number(formatIdwValue(result.nitrogenSummary.plannedTotalKg)));
+    near(f.properties.N_IDW_KG, Number(formatIdwValue(result.nitrogenSummary.indicatedTotalKg)));
+    near(f.properties.N_SAVE_KG, Number(formatIdwValue(result.nitrogenSummary.savedTotalKg)));
   });
   const zip = await JSZip.loadAsync(bytes);
   const csv = await zip.file("QA_holes_riepilogo_azoto.csv").async("string");
-  assert(csv.includes(result.nitrogenSummary.savedTotalKg.toFixed(1).replace(".", ",")));
+  assert(csv.includes(formatIdwValue(result.nitrogenSummary.savedTotalKg).replace(".", ",")));
 });
 
 test("GeoTIFF hole-centre pixels are NODATA, not doses from adjacent grid cells", async () => {
@@ -346,7 +347,8 @@ for (const { centre, south } of [
           const col = Math.floor((p.lng - west) / lon), row = Math.floor((north - p.lat) / lat);
           if (!cultivated(west + (col + .5) * lon, north - (row + .5) * lat)) continue;
           const i = row * cols + col;
-          expected[i] = Math.max(expected[i], Math.fround(p.dose));
+          const dose = conservativeFloat32(p.dose);
+          expected[i] = expected[i] === -9999 ? dose : Math.min(expected[i], dose);
         }
         assert.deepEqual(Array.from(raster), Array.from(expected));
         const holePixels = [], validPixels = [];

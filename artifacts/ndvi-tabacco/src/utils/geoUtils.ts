@@ -21,6 +21,7 @@ import JSZip from "jszip";
 import { formatRecordedDose, usesTenthsDose } from "./observationDose";
 import { readShpLayers } from "./shapefileImport";
 import { checkGisFileSize, checkGisCount, readBoundedZip } from "./gisLimits";
+import { conservativeIdwValue, conservativeFloat32, formatIdwValue, IDW_DECIMALS } from "./idwPrecision";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -294,14 +295,17 @@ function idwAt(
 ): number {
   let wSum = 0;
   let wzSum = 0;
+  // Algebraically identical IDW, anchored to preserve constant fields exactly
+  // and reduce cancellation before conservative decimal quantisation.
+  const anchor = controls[0]?.dose ?? 0;
   for (const c of controls) {
     const d = Math.hypot(c.utmX - qx, c.utmY - qy); // Euclidean distance in metres
     if (d < 1e-3) return c.dose; // coincident point → exact value
     const w = 1 / Math.pow(d, power);
     wSum += w;
-    wzSum += w * c.dose;
+    wzSum += w * (c.dose - anchor);
   }
-  return wSum > 0 ? wzSum / wSum : 0;
+  return wSum > 0 ? anchor + wzSum / wSum : 0;
 }
 
 function polygonAreaM2(ring: [number, number][]): number {
@@ -375,11 +379,14 @@ export function computeIdwGrid(
   const utmN    = Math.max(...utmYs);
   const areaHa  = Math.max(0, polygonAreaM2(utmRing) -
     utmHoles.reduce((sum, ring) => sum + polygonAreaM2(ring), 0)) / 10_000;
-  const planControls = utmControls
-    .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale) && c.azotoTotale >= 0)
+  // A partial budget must not become a cap for controls lacking a budget.
+  // Missing applied N retains the established meaning of zero; invalid N does not.
+  const completePlan = utmControls.every(c =>
+    c.azotoTotale != null && Number.isFinite(c.azotoTotale) && c.azotoTotale >= 0 &&
+    Number.isFinite(c.azotoGiaDistribuito ?? 0) && (c.azotoGiaDistribuito ?? 0) >= 0);
+  const planControls = (completePlan ? utmControls : [])
     .map(c => ({ utmX: c.utmX, utmY: c.utmY, dose: c.azotoTotale! }));
-  const distributedControls = utmControls
-    .filter(c => c.azotoTotale != null && Number.isFinite(c.azotoTotale) && c.azotoTotale >= 0)
+  const distributedControls = (completePlan ? utmControls : [])
     .map(c => ({
       utmX: c.utmX,
       utmY: c.utmY,
@@ -392,11 +399,16 @@ export function computeIdwGrid(
     for (let x = utmW + cellSize / 2; x <= utmE; x += cellSize) {
       const [lng, lat] = toWGS84(proj, x, y);
       if (!pointInField(lng, lat, polygon)) continue;
-      const dose = idwAt(utmControls, x, y, power);
+      const rawDose = idwAt(utmControls, x, y, power);
       const azotoTotale = planControls.length ? idwAt(planControls, x, y, power) : undefined;
       const azotoGiaDistribuito = distributedControls.length
         ? idwAt(distributedControls, x, y, power)
         : undefined;
+      // Same controls, distances and weights for dose and budget, regardless of crop.
+      // Cap historical over-budget controls only in this derived result.
+      const residual = azotoTotale != null && azotoGiaDistribuito != null
+        ? Math.max(0, azotoTotale - azotoGiaDistribuito) : Infinity;
+      const dose = conservativeIdwValue(Math.min(rawDose, residual));
       grid.push({ lng, lat, utmX: x, utmY: y, dose, azotoTotale, azotoGiaDistribuito });
     }
   }
@@ -418,12 +430,11 @@ export function computeIdwGrid(
   const distributedPerHa = distributedValues.length
     ? distributedValues.reduce((sum, value) => sum + value, 0) / distributedValues.length
     : 0;
-  const indicatedPerHa = Math.min(distributedPerHa + mean, plannedPerHa);
+  const indicatedPerHa = distributedPerHa + mean;
   const savedPerHa = Math.max(0, plannedPerHa - indicatedPerHa);
   const savedPercent = plannedPerHa > 0 ? (savedPerHa / plannedPerHa) * 100 : 0;
   // A partial baseline would compare doses from all observations with a plan
   // inferred from only some of them. Keep the map, but never invent savings.
-  const completePlan = planControls.length === utmControls.length;
   const nitrogenSummary = completePlan && plannedValues.length && areaHa > 0 ? {
     areaHa,
     plannedPerHa,
@@ -507,12 +518,12 @@ function dbf(rows: DbfRow[]): ArrayBuffer {
     { name: "LNG",      type: "N", len: 14, dec: 8 },
     { name: "DOSE_IDW", type: "N", len: 12, dec: 4 },
     { name: "AREA_HA",   type: "N", len: 12, dec: 2 },
-    { name: "N_PLAN_HA", type: "N", len: 12, dec: 1 },
-    { name: "N_IDW_HA",  type: "N", len: 12, dec: 1 },
-    { name: "N_SAVE_HA", type: "N", len: 12, dec: 1 },
-    { name: "N_PLAN_KG", type: "N", len: 14, dec: 1 },
-    { name: "N_IDW_KG",  type: "N", len: 14, dec: 1 },
-    { name: "N_SAVE_KG", type: "N", len: 14, dec: 1 },
+    { name: "N_PLAN_HA", type: "N", len: 12, dec: IDW_DECIMALS },
+    { name: "N_IDW_HA",  type: "N", len: 12, dec: IDW_DECIMALS },
+    { name: "N_SAVE_HA", type: "N", len: 12, dec: IDW_DECIMALS },
+    { name: "N_PLAN_KG", type: "N", len: 14, dec: IDW_DECIMALS },
+    { name: "N_IDW_KG",  type: "N", len: 14, dec: IDW_DECIMALS },
+    { name: "N_SAVE_KG", type: "N", len: 14, dec: IDW_DECIMALS },
   ];
   const headerLen = 32 + fields.length * 32 + 1;
   const recLen    = 1 + fields.reduce((s, f) => s + f.len, 0);
@@ -551,7 +562,7 @@ function dbf(rows: DbfRow[]): ArrayBuffer {
     ws(p, row.polygon,                    64); p += 64;
     ws(p, row.lat.toFixed(8).padStart(14), 14); p += 14;
     ws(p, row.lng.toFixed(8).padStart(14), 14); p += 14;
-    ws(p, row.dose.toFixed(4).padStart(12), 12); p += 12;
+    ws(p, formatIdwValue(row.dose).padStart(12), 12); p += 12;
     const summaryValues = row.summary
       ? [
           [row.summary.areaHa, 12, 2],
@@ -567,7 +578,7 @@ function dbf(rows: DbfRow[]): ArrayBuffer {
           [null, 14, 0], [null, 14, 0], [null, 14, 0],
         ] as const;
     for (const [value, len, decimals] of summaryValues) {
-      ws(p, value == null ? "" : value.toFixed(decimals).padStart(len), len);
+      ws(p, value == null ? "" : (decimals === 2 ? value.toFixed(2) : formatIdwValue(value)).padStart(len), len);
       p += len;
     }
   }
@@ -575,7 +586,8 @@ function dbf(rows: DbfRow[]): ArrayBuffer {
 }
 
 function nitrogenSummaryCsv(summary: NitrogenSummary): string {
-  const decimal = (value: number, digits: number) => value.toFixed(digits).replace(".", ",");
+  const decimal = (value: number, digits: number) =>
+    (digits === 2 ? value.toFixed(2) : formatIdwValue(value)).replace(".", ",");
   return [
     "Scenario;Superficie (ha);kg N/ha;kg N totali",
     `Azoto previsto dal piano;${decimal(summary.areaHa, 2)};${decimal(summary.plannedPerHa, 1)};${decimal(summary.plannedTotalKg, 1)}`,
@@ -589,9 +601,9 @@ function nitrogenSummaryDescription(summary?: NitrogenSummary): string {
   return [
     "Mappa IDW - dose di azoto (kg N/ha)",
     `Superficie: ${summary.areaHa.toFixed(2)} ha`,
-    `Piano N: ${summary.plannedPerHa.toFixed(1)} kg N/ha; ${summary.plannedTotalKg.toFixed(1)} kg N totali`,
-    `Indicazione IDW: ${summary.indicatedPerHa.toFixed(1)} kg N/ha; ${summary.indicatedTotalKg.toFixed(1)} kg N totali`,
-    `Risparmio stimato: ${summary.savedPerHa.toFixed(1)} kg N/ha; ${summary.savedTotalKg.toFixed(1)} kg N totali`,
+    `Piano N: ${formatIdwValue(summary.plannedPerHa)} kg N/ha; ${formatIdwValue(summary.plannedTotalKg)} kg N totali`,
+    `Indicazione IDW: ${formatIdwValue(summary.indicatedPerHa)} kg N/ha; ${formatIdwValue(summary.indicatedTotalKg)} kg N totali`,
+    `Risparmio stimato: ${formatIdwValue(summary.savedPerHa)} kg N/ha; ${formatIdwValue(summary.savedTotalKg)} kg N totali`,
   ].join("\n");
 }
 
@@ -654,8 +666,9 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
       // rather than letting a neighbouring valid node colour an excluded area.
       if (!pointInField(west + (col + 0.5) * csLon, north - (row + 0.5) * csLat, polygon)) continue;
       const idx = row * cols + col;
-      // Keep the higher dose if two points map to the same pixel (conservative)
-      if (data[idx] === NODATA || g.dose > data[idx]) data[idx] = g.dose;
+      // Geographic raster collisions: never exceed any contributing UTM cell.
+      const dose = conservativeFloat32(g.dose);
+      if (data[idx] === NODATA || dose < data[idx]) data[idx] = dose;
     }
   }
 
