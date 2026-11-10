@@ -37,7 +37,8 @@ async function makeContext(width, height, name) {
   });
   context.setDefaultTimeout(7000);
   const transport = { name, blockedApi: [], blockedExternal: [], blockedWrites: [], websockets: 0,
-    failNext: false, holdNext: false, pending: [], deleteFault: null, releaseDelete: null };
+    failNext: false, holdNext: false, pending: [], deleteFault: null, releaseDelete: null,
+    hangingDeletes: 0 };
   await context.route("**/*", async route => {
     const request = route.request();
     const url = new URL(request.url());
@@ -96,6 +97,11 @@ async function makeContext(width, height, name) {
         server.deleted.push(...deletedIds);
       }
       if (fault) {
+        if (["never", "never-body"].includes(fault.kind)) {
+          transport.hangingDeletes++;
+          return { status: 200, pendingForever: fault.kind === "never",
+            pendingBodyForever: fault.kind === "never-body" };
+        }
         if (fault.kind === "network") throw new TypeError("Synthetic DELETE connection lost");
         if (fault.kind === "non-json") return { status: 200, rawBody: "<html>Interrupted response</html>" };
         return { status: 200, body: fault.body };
@@ -253,6 +259,8 @@ async function deletionFailureMatrix(current, base) {
     es: "Eliminar observaciones de las últimas 24 horas",
   };
   const faults = [
+    { kind: "never" },
+    { kind: "never-body" },
     { kind: "network" },
     { kind: "non-json" },
     { kind: "missing-ids", body: { ok: true } },
@@ -299,7 +307,14 @@ async function deletionFailureMatrix(current, base) {
         assert.equal(await bulk.isDisabled(), true);
         assert.deepEqual(await registryIds(page, lang), before, "No optimistic removal while DELETE is pending");
         const beforeGets = server.trace.filter(x => x.context === current.name && x.method === "GET").length;
+        const hangingBefore = transport.hangingDeletes;
         transport.releaseDelete();
+        if (["never", "never-body"].includes(fault.kind)) {
+          await waitUntil(() => transport.hangingDeletes > hangingBefore, "DELETE never settles");
+          // Advance only the browser's clock; keep the real 15-second production
+          // deadline and avoid a test-only app timeout or real network access.
+          await page.clock.fastForward(15_001);
+        }
         await page.getByRole("alert").filter({ hasText: warnings[lang] }).waitFor();
         await waitUntil(() => server.trace.filter(x => x.context === current.name && x.method === "GET").length > beforeGets,
           "automatic reconciliation attempted");
@@ -309,6 +324,15 @@ async function deletionFailureMatrix(current, base) {
         assert.equal(await bulk.isEnabled(), true, "Bulk control recovers after failure");
         assert.deepEqual(await registryIds(page, lang), before, "Unconfirmed DELETE and failed GET retain all records");
         assert.equal(countDeletes(), beforeDeletes + 1, "No automatic DELETE retry");
+        if (["never", "never-body"].includes(fault.kind)) {
+          // Prove the recovered button really accepts input, without sending a
+          // second destructive request with an uncertain first outcome.
+          page.once("dialog", dialog => dialog.dismiss());
+          await action.click();
+          assert.equal(countDeletes(), beforeDeletes + 1, "Cancel after timeout sends no DELETE");
+          await page.screenshot({ path: path.join(screenshotDir,
+            `${current.name}-${mode}-${fault.kind}-${commit}-timeout.png`) });
+        }
         if (fault.kind === "network" && !commit) {
           await page.screenshot({ path: path.join(screenshotDir, `${current.name}-${mode}-unconfirmed.png`) });
         }
@@ -599,6 +623,7 @@ try {
   // warnings, both before-commit and after-commit response failures.
   for (const current of [desktop, mobile]) {
     await go(current.page, "Rilievo e dati");
+    await current.page.clock.install();
     await deletionFailureMatrix(current, base);
     await malformedRegistryMatrix(current, base);
   }

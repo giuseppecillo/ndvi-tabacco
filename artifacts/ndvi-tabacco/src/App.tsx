@@ -9,7 +9,7 @@ import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { ObservationDistributionChart } from "./ObservationDistributionChart";
 import { ObservationList } from "./components/ObservationList";
 import { ObservationDeleteButton } from "./components/ObservationDeleteButton";
-import { canDeleteObservation } from "./utils/observationDeletion";
+import { canDeleteObservation, waitForObservationDeletion } from "./utils/observationDeletion";
 import { useObservationRegistry } from "./hooks/useObservationRegistry";
 import { CropCatalogue } from "./components/CropCatalogue";
 import { CatalogueCropParameters, CatalogueCropResults } from "./components/CatalogueCropParameters";
@@ -763,8 +763,12 @@ function AccountApp({ storageScope, migrateLegacySettings }: { storageScope: str
     const unconfirmed = "Impossibile confermare la cancellazione. Ricarica il registro.";
     let failureMessage = unconfirmed;
     try {
-      const response = await fetch(id ? `/api/osservazioni/${encodeURIComponent(id)}` : "/api/osservazioni", { method: "DELETE" });
-      const result = await response.json();
+      // Bound both the request and body read. No state changes in the raced
+      // operation: even a response arriving after timeout is no confirmation.
+      const { response, result } = await waitForObservationDeletion((async () => {
+        const response = await fetch(id ? `/api/osservazioni/${encodeURIComponent(id)}` : "/api/osservazioni", { method: "DELETE" });
+        return { response, result: await response.json() };
+      })());
       if (!response.ok) {
         failureMessage = result?.code === "DELETION_WINDOW_CLOSED"
           ? "Cancellazione consentita solo entro 24 ore dalla creazione verificata."

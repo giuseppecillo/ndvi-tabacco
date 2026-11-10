@@ -53,3 +53,14 @@ null when persisted.
 **How to apply:** Before tightening the registry boundary, inspect serialization
 and nullability on the read path and include a realistic mixed snapshot in the
 recovery tests. Do not invent dates to satisfy a validator.
+
+Una cancellazione senza risposta ha esito incerto: limitare solo l'attesa
+del client, conservare i rilievi fino a conferma e riconciliare con GET,
+senza ritentare automaticamente DELETE.
+
+**Why:** il server potrebbe aver già cancellato i dati anche se la richiesta
+o la lettura del corpo non terminano; annullare il trasporto non prova il contrario.
+
+**How to apply:** coprire richiesta e lettura del corpo con lo stesso limite,
+tenere gli effetti sull'interfaccia fuori dalla promessa che può terminare
+in ritardo e liberare i controlli senza attendere la riconciliazione GET.

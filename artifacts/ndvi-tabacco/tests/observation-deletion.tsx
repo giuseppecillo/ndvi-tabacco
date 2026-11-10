@@ -17,7 +17,8 @@ declare global {
     qaObservationNextGet?: { body: unknown };
     qaObservationTransport?: (request: {
       method: string; pathname: string; seed: typeof records; scope: string;
-    }) => Promise<{ status: number; body?: unknown; rawBody?: string }>;
+    }) => Promise<{ status: number; body?: unknown; rawBody?: string;
+      pendingForever?: boolean; pendingBodyForever?: boolean }>;
     qaRegistryCommits?: { scope: string; ids: string[]; loading: boolean; error: boolean }[];
     qaTransportSettled?: number;
   }
@@ -44,6 +45,14 @@ window.fetch = async (input, init) => {
   if (window.qaObservationTransport && /^\/api\/osservazioni(?:\/|$)/.test(url.pathname)) {
     const result = await window.qaObservationTransport({ method, pathname: url.pathname, seed: records, scope });
     window.qaTransportSettled = (window.qaTransportSettled ?? 0) + 1;
+    // These promises deliberately ignore AbortSignal and never settle, even
+    // when the runner has already applied the synthetic server-side DELETE.
+    if (result.pendingForever) return await new Promise<Response>(() => {});
+    if (result.pendingBodyForever) {
+      const response = Response.json({ ok: true });
+      response.json = () => new Promise(() => {});
+      return response;
+    }
     // Deliberately do not honor AbortSignal here: a delayed stale response must
     // still be rejected by the real registry hook after a deletion.
     return result.rawBody !== undefined

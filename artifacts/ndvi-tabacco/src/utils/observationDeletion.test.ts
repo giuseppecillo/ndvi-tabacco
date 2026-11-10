@@ -2,12 +2,38 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { canDeleteObservation, OBSERVATION_DELETION_WINDOW_MS as DAY } from "./observationDeletion";
+import { canDeleteObservation, OBSERVATION_DELETION_WINDOW_MS as DAY, waitForObservationDeletion } from "./observationDeletion";
 import { ObservationDeleteButton } from "../components/ObservationDeleteButton";
 import type { Observation } from "../App";
 import { setLanguage, t } from "../i18n/runtime";
 
 const now = Date.parse("2026-11-10T12:00:00Z");
+test("DELETE wait ends even when the transport ignores cancellation forever", async () => {
+  await assert.rejects(waitForObservationDeletion(new Promise(() => {}), 5), /Unconfirmed/);
+});
+test("DELETE deadline includes a response body that never finishes", async () => {
+  const response = { json: () => new Promise(() => {}) };
+  await assert.rejects(waitForObservationDeletion(
+    Promise.resolve(response).then(response => response.json()), 5,
+  ), /Unconfirmed/);
+});
+test("late DELETE settlement cannot turn a timeout into confirmation or an unhandled rejection", async () => {
+  for (const rejectLate of [false, true]) {
+    let settle!: () => void;
+    const pending = new Promise<string>((resolve, reject) => {
+      settle = () => rejectLate ? reject(new Error("late failure")) : resolve("late success");
+    });
+    let confirmed = false;
+    await assert.rejects(waitForObservationDeletion(pending, 5).then(() => { confirmed = true; }), /Unconfirmed/);
+    settle();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(confirmed, false);
+  }
+});
+test("confirmed DELETE and immediate failure settle normally", async () => {
+  assert.deepEqual(await waitForObservationDeletion(Promise.resolve({ deletedIds: ["QA-123"] })), { deletedIds: ["QA-123"] });
+  await assert.rejects(waitForObservationDeletion(Promise.reject(new Error("network"))), /network/);
+});
 test("deletion window uses creation instant, includes 24h boundary, rejects future/missing/invalid dates", () => {
   assert(canDeleteObservation(new Date(now).toISOString(), now));
   assert(canDeleteObservation(new Date(now - DAY).toISOString(), now));
