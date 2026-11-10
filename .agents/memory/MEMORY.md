@@ -1,7 +1,7 @@
 - [Varietà affini](crop-affinity-models.md) — Completare i riferimenti prima dell'integrazione; per parametri mancanti usare varietà affini della stessa coltura.
 - [Ambito dati colture](crop-data-scope.md) — Escludere potassio, fosforo, acqua e note dall'integrazione richiesta.
 - [Catalogo persistente](catalogue-persistence-scope.md) — Preparazione offline, applicazione autorizzata e attivazione dei calcoli sono passaggi distinti; mai modificare rilievi.
-- [Affidabilità delle fonti varietali](variety-source-trust.md) — I vecchi domini possono cambiare editore: verificare contenuto e provenienza dopo i reindirizzamenti.
+- [Fonti e selezione varietale](variety-source-trust.md) — Verificare fonti e diffusione commerciale; non inventare dati né riportare nuovi profili incompleti.
 - [Migrazione protetta](migration-safety.md) — Unico Supabase, Clerk invariato; accesso SQL sviluppo rinviato e nessuna revoca globale TEMP/large object.
 - [TLS Supabase](supabase-tls.md) — CA ufficiale del pooler e TLS del socket: pg_stat_ssl non prova il trasporto client.
 - [TLS Replit/Neon](replit-neon-tls.md) — Dietro il proxy pg_stat_ssl non prova il TLS del client: verificare socket, catena e hostname prima dell’SQL.

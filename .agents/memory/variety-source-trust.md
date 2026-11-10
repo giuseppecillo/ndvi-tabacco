@@ -27,3 +27,12 @@ online; non presentare una selezione rappresentativa come una classifica di
 mercato senza dati che la sostengano. Non riempire campi numerici con valori
 arbitrari. Usare riferimenti per affinità della stessa coltura soltanto quando
 documentati, mantenendone la tracciabilità tecnica.
+
+I profili non completi non devono essere riportati nell'ampliamento del catalogo.
+
+**Why:** l'utente ha esplicitamente chiesto di non riportare i profili incompleti.
+
+**How to apply:** non mostrare né attivare nuovi record parziali e non inventare
+valori per superare il controllo di completezza. Tenere la ricerca tecnica
+separata dal catalogo operativo; questa regola non autorizza a cancellare
+automaticamente profili esistenti o rilievi.
