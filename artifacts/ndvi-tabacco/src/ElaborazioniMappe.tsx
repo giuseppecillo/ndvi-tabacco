@@ -218,7 +218,7 @@ export function MapView({ result }: { result: PolyIdwResult }) {
         ))}
         <div className="border-t border-stone-200 pt-1.5 mt-1 flex items-center gap-1.5">
           <div className="w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white flex-shrink-0" />
-          <span className="text-stone-500 text-[10px]">ctrl pt</span>
+          <span className="text-stone-500 text-[10px]">{t("Punto di rilievo")}</span>
         </div>
       </div>
     </div>

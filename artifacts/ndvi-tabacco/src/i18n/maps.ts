@@ -1,6 +1,7 @@
 import type { Translation } from "./runtime";
 
 export const maps: readonly Translation[] = [
+  ["Punto di rilievo", "Survey point", "Punto de muestreo"],
   ["Mappa troppo complessa per il calcolo a 10 m. Riduci l’estensione del poligono, i vertici o i punti di controllo e riprova. Nessun risultato generato.", "Map too complex to calculate at 10 m. Reduce the polygon extent, vertices or control points and try again. No result generated.", "Mapa demasiado complejo para calcular a 10 m. Reduce la extensión del polígono, los vértices o los puntos de control e inténtalo de nuevo. No se ha generado ningún resultado."],
   ["Impossibile calcolare la mappa: geometria, coordinate o parametri non validi. Nessun risultato generato.", "Unable to calculate the map: invalid geometry, coordinates or parameters. No result generated.", "No se puede calcular el mapa: geometría, coordenadas o parámetros no válidos. No se ha generado ningún resultado."],
   ["File GIS troppo grande: massimo 10 MiB.", "GIS file too large: maximum 10 MiB.", "Archivo GIS demasiado grande: máximo 10 MiB."],
