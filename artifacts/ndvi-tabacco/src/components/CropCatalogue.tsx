@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { BookOpen, Download, Search, X } from "lucide-react";
-import { getGetCropCatalogueQueryKey, useGetCropCatalogue } from "@workspace/api-client-react";
+import { getGetCropCatalogueQueryKey, useGetCropCatalogue, useGetVarietyProposals, getGetVarietyProposalsQueryKey } from "@workspace/api-client-react";
 import { getLocale, t, useLanguage } from "../i18n/runtime";
 import { alphabetical } from "../utils/alphabetical";
 import { ErrorNote, Skeleton, useMyAccount } from "../security/ui";
@@ -20,7 +20,9 @@ export function CropCatalogue({ active, tobaccoVarieties }: { active: boolean; t
   const [query, setQuery] = useState("");
   const [crop, setCrop] = useState("");
   const q = useGetCropCatalogue({ query: { enabled: active, queryKey: getGetCropCatalogueQueryKey(), staleTime: 60000, refetchOnMount: true } });
-  const complete = useMemo(() => q.data ? completeCatalogue(q.data, tobaccoVarieties) : { columns: [], rows: [] }, [q.data, tobaccoVarieties]);
+  const additions = useGetVarietyProposals({query:{queryKey:getGetVarietyProposalsQueryKey(),enabled:active,refetchInterval:30000,refetchOnWindowFocus:true}});
+  const approved = useMemo(()=>additions.data?.filter(p=>p.status==="approved").map(p=>p.profile)??[],[additions.data]);
+  const complete = useMemo(() => q.data ? completeCatalogue(q.data, tobaccoVarieties,approved) : { columns: [], rows: [] }, [q.data, tobaccoVarieties,approved]);
   const { columns, rows } = complete;
   const crops = useMemo(() => catalogueCrops(rows, t, getLocale()), [rows, language]);
   const filtered = useMemo(() => {
@@ -36,7 +38,7 @@ export function CropCatalogue({ active, tobaccoVarieties }: { active: boolean; t
     setExportState("pending");
     try {
       const { downloadCatalogueWorkbook } = await import("../utils/catalogueExcel");
-      await downloadCatalogueWorkbook(q.data, tobaccoVarieties, t, getLocale());
+      await downloadCatalogueWorkbook(q.data, tobaccoVarieties, t, getLocale(),approved);
       setExportState("idle");
     } catch {
       setExportState("error");
@@ -56,7 +58,7 @@ export function CropCatalogue({ active, tobaccoVarieties }: { active: boolean; t
         {canExport && (
           <div className="mt-4 space-y-2">
             <button type="button" onClick={() => void exportCatalogue()}
-              disabled={!q.data || q.isError || !rows.length || exportState === "pending"}
+              disabled={!q.data || q.isError || additions.isPending || additions.isError || !rows.length || exportState === "pending"}
               data-testid="button-export-catalogue-excel"
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-green-900 px-4 py-3 text-sm font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
               <Download aria-hidden="true" className="h-4 w-4 shrink-0" />
@@ -97,6 +99,7 @@ export function CropCatalogue({ active, tobaccoVarieties }: { active: boolean; t
         )}
       </div>
 
+      {additions.isError && <ErrorNote error={new Error("Impossibile caricare le varietà approvate.")} onRetry={()=>void additions.refetch()}/>}
       {q.isLoading ? <Skeleton rows={6} />
         : q.isError ? <ErrorNote error={new Error("Impossibile caricare il catalogo colture.")} onRetry={() => void q.refetch()} />
         : rows.length === 0 ? (

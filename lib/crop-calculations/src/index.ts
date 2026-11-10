@@ -12,10 +12,10 @@ export const CATALOGUE_PHASE_SOURCE = "Fase osservata in campo · modello di col
 export const PHASE_IDS = ["F1", "F2", "F3", "F4"] as const;
 
 export type CataloguePhase = {
-  id: typeof PHASE_IDS[number]; label: string; azoto: number; bbch: string; riferimento: number;
+  id: string; label: string; azoto: number; bbch: string; riferimento: number;
 };
 export type CropProfile = {
-  crop: CatalogueCrop; name: string; destination: string; use: string; earliness: string;
+  crop: string; name: string; destination: string; use: string; earliness: string;
   plants: number; yield: number; nitrogen: number; phases: CataloguePhase[];
 };
 const numeric = (value: string | undefined) => {
@@ -89,8 +89,10 @@ if (byIdentity.size !== CROP_PROFILES.length || cropCompleteness.some(p => !p.re
 export function calculateCrop(input: {
   crop: string; variety: string; phase: string; confirmed: boolean;
   yield: number; applied: number; readings: number[];
-}) {
-  const resolved = getCropReference(input.crop, input.variety);
+}, approvedProfile?: CropProfile) {
+  const resolved = approvedProfile && approvedProfile.crop === input.crop && approvedProfile.name === input.variety
+    ? {selected: approvedProfile, reference: approvedProfile, kind: "direct" as const}
+    : getCropReference(input.crop, input.variety);
   const reference = resolved?.reference;
   const readingsValid = input.readings.length === 5
     && input.readings.every(v => Number.isFinite(v) && v >= 0 && v <= 1);
@@ -130,7 +132,7 @@ export function calculateCrop(input: {
 }
 
 /** Same implementation on browser/API. No database access, no trusted client doses. */
-export function catalogueObservationError(o: Record<string, unknown>): string | null {
+export function catalogueObservationError(o: Record<string, unknown>, approvedProfile?: CropProfile): string | null {
   const dateValid = typeof o.data === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(o.data)
     && Number(o.data.slice(0, 4)) > 0 && Number.isFinite(Date.parse(o.data))
     && new Date(o.data).toISOString().slice(0, 10) === o.data;
@@ -144,16 +146,16 @@ export function catalogueObservationError(o: Record<string, unknown>): string | 
   const keys = ["resa", "azotoGiaDistribuito", "azotoTotale", "quotaAzoto", "dose", "media",
     "ottimale", "discostamento", "densitaValore", "pianteHaEquivalenti", "giorni",
     "n1", "n2", "n3", "n4", "n5"] as const;
-  if (!isCatalogueCrop(o.coltura) || keys.some(k => typeof o[k] !== "number" || !Number.isFinite(o[k]))
+  if ((!isCatalogueCrop(o.coltura) && !approvedProfile) || keys.some(k => typeof o[k] !== "number" || !Number.isFinite(o[k]))
     || o.densitaUnita !== "piante/ha" || (o.densitaValore as number) <= 0
     || o.pianteHaEquivalenti !== o.densitaValore || (o.giorni as number) < 0
     || !Number.isInteger(o.giorni) || o.bbch != null) return "Parametri della coltura incompleti o non validi.";
   const result = calculateCrop({
-    crop: o.coltura, variety: String(o.varieta), phase: String(o.faseFenologica),
-    confirmed: o.faseFonte === cropPhaseSource(o.coltura, String(o.varieta)),
+    crop: String(o.coltura), variety: String(o.varieta), phase: String(o.faseFenologica),
+    confirmed: o.faseFonte === (approvedProfile ? CUSTOM_VARIETY_PHASE_SOURCE : cropPhaseSource(String(o.coltura), String(o.varieta))),
     yield: o.resa as number, applied: o.azotoGiaDistribuito as number,
     readings: [o.n1, o.n2, o.n3, o.n4, o.n5] as number[],
-  });
+  }, approvedProfile);
   if (!result.pronta || o.faseFenologica !== `${result.attiva?.id} · ${result.attiva?.label}`) {
     return "Seleziona una varietà e conferma la fase della coltura in campo.";
   }
@@ -165,3 +167,5 @@ export function catalogueObservationError(o: Record<string, unknown>): string | 
   if (Math.abs((o.quotaAzoto as number) - result.dose) > .00001) return "La dose non coincide con il modello della coltura.";
   return null;
 }
+
+export const CUSTOM_VARIETY_PHASE_SOURCE = "Varietà proposta e approvata · fase confermata in campo";

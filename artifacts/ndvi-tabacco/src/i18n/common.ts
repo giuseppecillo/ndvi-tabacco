@@ -1,6 +1,20 @@
+import {varietyTranslations} from "./variety-translations";
 import type { Translation } from "./runtime";
 
 export const common: readonly Translation[] = [
+  ...varietyTranslations,
+  ["Quote di azoto proposte dall’utente e approvate. Gli altri parametri, inclusi i riferimenti NDVI di fase, derivano dalla varietà affine", "User-proposed nitrogen amounts, approved by the administrator. Other parameters, including phase NDVI references, come from the related variety", "Dosis de nitrógeno propuestas por el usuario y aprobadas. Los demás parámetros, incluidas las referencias NDVI por fase, proceden de la variedad afín"],
+  ["Impossibile caricare le varietà approvate.", "Unable to load approved varieties.", "No se pudieron cargar las variedades aprobadas."],
+  ["{0} giorni dal trapianto", "{0} days after transplanting", "{0} días después del trasplante"],
+  ["Varietà approvate dagli utenti", "Approved community varieties", "Variedades de usuarios aprobadas"],
+  ["Varietà del catalogo originale", "Original catalogue varieties", "Variedades del catálogo original"],
+  ["Servizio varietà non disponibile.", "The variety service is unavailable.", "El servicio de variedades no está disponible."],
+  ["Varietà non approvata o non presente.", "This variety is not approved or does not exist.", "Esta variedad no está aprobada o no existe."],
+  ["Dati della varietà non validi.", "Invalid variety details.", "Los datos de la variedad no son válidos."],
+  ["Varietà già presente o in attesa di approvazione.", "This variety already exists or is awaiting approval.", "Esta variedad ya existe o está pendiente de aprobación."],
+  ["Salvataggio della proposta non riuscito.", "Unable to save the proposal.", "No se pudo guardar la propuesta."],
+  ["Proposta non più in attesa.", "This proposal has already been reviewed.", "Esta propuesta ya se ha revisado."],
+  ["Revisione della proposta non riuscita.", "Unable to review the proposal.", "No se pudo revisar la propuesta."],
   ["Aggiornamento del registro non riuscito. Verifica la connessione e torna alla pagina per riprovare.", "Unable to refresh the register. Check your connection and return to the page to try again.", "No se pudo actualizar el registro. Comprueba la conexión y vuelve a la página para reintentarlo."],
   ["Elimina rilievo {0}", "Delete observation {0}", "Eliminar observación {0}"],
   ["Elimina entro 24 ore", "Delete within 24 hours", "Eliminar en un plazo de 24 horas"],

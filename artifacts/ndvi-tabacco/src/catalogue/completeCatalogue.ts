@@ -1,6 +1,7 @@
 import { FASI_POMODORO, POMODORO_DB } from "@workspace/tomato-calculations";
 import { GRANO_DURO_DB, fasiGranoPerVarieta } from "@workspace/grain-calculations";
 import type { VarietaDati } from "../calculations";
+import type {CropProfile} from "@workspace/crop-calculations";
 
 export type CatalogueSnapshot = { columns: readonly string[]; rows: readonly (readonly string[])[] };
 const extraFields = [
@@ -21,7 +22,7 @@ const extraFields = [
 ] as const;
 
 /** Display union only: never changes operational models, IDs, observations or SQL. */
-export function completeCatalogue(snapshot: CatalogueSnapshot, tobacco: readonly VarietaDati[]): { columns: string[]; rows: string[][] } {
+export function completeCatalogue(snapshot: CatalogueSnapshot, tobacco: readonly VarietaDati[], approved: readonly CropProfile[]=[]): { columns: string[]; rows: string[][] } {
   const columns = [...snapshot.columns];
   const addColumn = (name: string) => { if (!columns.includes(name)) columns.push(name); };
   const grainPhases = Math.max(...Object.keys(GRANO_DURO_DB).map(name => fasiGranoPerVarieta(name).length));
@@ -72,5 +73,15 @@ export function completeCatalogue(snapshot: CatalogueSnapshot, tobacco: readonly
     ...extra(p), Coltura: "Tabacco", "Varietà": p.label, "Piante/ha": p.densitaPianteDefault,
     "Resa media (t/ha)": p.resaDefault, "Azoto Totale (kg/ha)": p.azotoDefault, "Unità resa di riferimento": "t/ha",
   }));
+  for(const p of approved) {
+    const values:Record<string,string|number>={Coltura:p.crop==="grano duro"?"Grano duro":p.crop.charAt(0).toUpperCase()+p.crop.slice(1),
+      "Varietà":p.name,Destinazione:p.destination,Impiego:p.use,"Precocità":p.earliness,
+      "Piante/ha":p.plants,"Resa media (t/ha)":p.yield,"Azoto Totale (kg/ha)":p.nitrogen};
+    p.phases.forEach((phase,i)=>{
+      Object.assign(values,{[`Fase F${i+1}`]:phase.label,[`BBCH F${i+1}`]:phase.bbch,
+        [`NDVI F${i+1}`]:phase.riferimento,[`N F${i+1} (kg/ha)`]:phase.azoto});
+    });
+    rows.push(row(values));
+  }
   return { columns, rows };
 }

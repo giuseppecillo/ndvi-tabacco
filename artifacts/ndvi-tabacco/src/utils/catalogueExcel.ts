@@ -2,6 +2,7 @@ import JSZip from "jszip";
 import type { VarietaDati } from "../calculations";
 import { alphabetical } from "./alphabetical";
 import { completeCatalogue } from "../catalogue/completeCatalogue";
+import type {CropProfile} from "@workspace/crop-calculations";
 
 type Value = string | number | boolean | null | undefined;
 type Table = { name: string; columns: string[]; rows: Value[][] };
@@ -19,8 +20,8 @@ function column(i: number): string {
   return s;
 }
 
-export function catalogueExportTables(snapshot: Snapshot, tobacco: readonly VarietaDati[], t: Translate, locale: string): Table[] {
-  const complete = completeCatalogue(snapshot, tobacco);
+export function catalogueExportTables(snapshot: Snapshot, tobacco: readonly VarietaDati[], t: Translate, locale: string, approved: readonly CropProfile[]=[]): Table[] {
+  const complete = completeCatalogue(snapshot, tobacco,approved);
   const translated = new Set([0, 2, 3, 4, ...complete.columns.flatMap((c, i) => /^Fase F\d/.test(c) ? [i] : [])]);
   const rows = alphabetical(alphabetical(complete.rows, r => r[1], locale), r => t(r[0]), locale);
   return [
@@ -34,8 +35,8 @@ export function catalogueExportTables(snapshot: Snapshot, tobacco: readonly Vari
 }
 
 /** Actual .xlsx (OOXML), not CSV renamed to Excel. Strings are never formulas. */
-export async function buildCatalogueWorkbook(snapshot: Snapshot, tobacco: readonly VarietaDati[], t: Translate, locale: string): Promise<Uint8Array> {
-  const tables = catalogueExportTables(snapshot, tobacco, t, locale);
+export async function buildCatalogueWorkbook(snapshot: Snapshot, tobacco: readonly VarietaDati[], t: Translate, locale: string, approved: readonly CropProfile[]=[]): Promise<Uint8Array> {
+  const tables = catalogueExportTables(snapshot, tobacco, t, locale,approved);
   if (!tables[0].rows.length || !tobacco.length) throw new Error("Catalogo incompleto.");
   const zip = new JSZip();
   zip.file("[Content_Types].xml", `${xml}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${tables.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`);
@@ -59,8 +60,8 @@ export async function buildCatalogueWorkbook(snapshot: Snapshot, tobacco: readon
   return zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
 }
 
-export async function downloadCatalogueWorkbook(snapshot: Snapshot, tobacco: readonly VarietaDati[], t: Translate, locale: string) {
-  const bytes = await buildCatalogueWorkbook(snapshot, tobacco, t, locale);
+export async function downloadCatalogueWorkbook(snapshot: Snapshot, tobacco: readonly VarietaDati[], t: Translate, locale: string, approved: readonly CropProfile[]=[]) {
+  const bytes = await buildCatalogueWorkbook(snapshot, tobacco, t, locale,approved);
   const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   try {
     const a = document.createElement("a");

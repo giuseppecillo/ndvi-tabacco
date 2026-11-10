@@ -27,6 +27,7 @@ import type {
   ExportMyData200,
   GeneratedMapInput,
   GetAccessSetup200,
+  GetVarietyTemplatesParams,
   HealthStatus,
   ListPendingRegistrationsParams,
   ListSecurityEvents200Item,
@@ -37,7 +38,11 @@ import type {
   PrivacyRequest,
   UpdateManagedPrivacyRequestBody,
   UpdateManagedUserBody,
-  UserUsage
+  UserUsage,
+  VarietyProposal,
+  VarietyProposalInput,
+  VarietyReviewInput,
+  VarietyTemplate
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -51,6 +56,286 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+
+export const getGetVarietyTemplatesUrl = (params: GetVarietyTemplatesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/variety-templates?${stringifiedParams}` : `/api/variety-templates`
+}
+
+export const getVarietyTemplates = async (params: GetVarietyTemplatesParams, options?: RequestInit): Promise<VarietyTemplate[]> => {
+
+  return customFetch<VarietyTemplate[]>(getGetVarietyTemplatesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetVarietyTemplatesQueryKey = (params?: GetVarietyTemplatesParams,) => {
+    return [
+    `/api/variety-templates`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetVarietyTemplatesQueryOptions = <TData = Awaited<ReturnType<typeof getVarietyTemplates>>, TError = ErrorType<unknown>>(params: GetVarietyTemplatesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVarietyTemplates>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetVarietyTemplatesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVarietyTemplates>>> = ({ signal }) => getVarietyTemplates(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVarietyTemplates>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetVarietyTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof getVarietyTemplates>>>
+export type GetVarietyTemplatesQueryError = ErrorType<unknown>
+
+
+
+export function useGetVarietyTemplates<TData = Awaited<ReturnType<typeof getVarietyTemplates>>, TError = ErrorType<unknown>>(
+ params: GetVarietyTemplatesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVarietyTemplates>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetVarietyTemplatesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetVarietyProposalsUrl = () => {
+
+
+
+
+  return `/api/variety-proposals`
+}
+
+export const getVarietyProposals = async ( options?: RequestInit): Promise<VarietyProposal[]> => {
+
+  return customFetch<VarietyProposal[]>(getGetVarietyProposalsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetVarietyProposalsQueryKey = () => {
+    return [
+    `/api/variety-proposals`
+    ] as const;
+    }
+
+
+export const getGetVarietyProposalsQueryOptions = <TData = Awaited<ReturnType<typeof getVarietyProposals>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVarietyProposals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetVarietyProposalsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVarietyProposals>>> = ({ signal }) => getVarietyProposals({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVarietyProposals>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetVarietyProposalsQueryResult = NonNullable<Awaited<ReturnType<typeof getVarietyProposals>>>
+export type GetVarietyProposalsQueryError = ErrorType<unknown>
+
+
+
+export function useGetVarietyProposals<TData = Awaited<ReturnType<typeof getVarietyProposals>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVarietyProposals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetVarietyProposalsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getSubmitVarietyProposalUrl = () => {
+
+
+
+
+  return `/api/variety-proposals`
+}
+
+export const submitVarietyProposal = async (varietyProposalInput: VarietyProposalInput, options?: RequestInit): Promise<VarietyProposal> => {
+
+  return customFetch<VarietyProposal>(getSubmitVarietyProposalUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      varietyProposalInput,)
+  }
+);}
+
+
+
+
+export const getSubmitVarietyProposalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitVarietyProposal>>, TError,{data: BodyType<VarietyProposalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitVarietyProposal>>, TError,{data: BodyType<VarietyProposalInput>}, TContext> => {
+
+const mutationKey = ['submitVarietyProposal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitVarietyProposal>>, {data: BodyType<VarietyProposalInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  submitVarietyProposal(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitVarietyProposalMutationResult = NonNullable<Awaited<ReturnType<typeof submitVarietyProposal>>>
+    export type SubmitVarietyProposalMutationBody = BodyType<VarietyProposalInput>
+    export type SubmitVarietyProposalMutationError = ErrorType<unknown>
+
+    export const useSubmitVarietyProposal = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitVarietyProposal>>, TError,{data: BodyType<VarietyProposalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitVarietyProposal>>,
+        TError,
+        {data: BodyType<VarietyProposalInput>},
+        TContext
+      > => {
+      return useMutation(getSubmitVarietyProposalMutationOptions(options));
+    }
+
+export const getReviewVarietyProposalUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/variety-proposals/${id}/decision`
+}
+
+export const reviewVarietyProposal = async (id: string,
+    varietyReviewInput: VarietyReviewInput, options?: RequestInit): Promise<VarietyProposal> => {
+
+  return customFetch<VarietyProposal>(getReviewVarietyProposalUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      varietyReviewInput,)
+  }
+);}
+
+
+
+
+export const getReviewVarietyProposalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewVarietyProposal>>, TError,{id: string;data: BodyType<VarietyReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewVarietyProposal>>, TError,{id: string;data: BodyType<VarietyReviewInput>}, TContext> => {
+
+const mutationKey = ['reviewVarietyProposal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewVarietyProposal>>, {id: string;data: BodyType<VarietyReviewInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reviewVarietyProposal(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewVarietyProposalMutationResult = NonNullable<Awaited<ReturnType<typeof reviewVarietyProposal>>>
+    export type ReviewVarietyProposalMutationBody = BodyType<VarietyReviewInput>
+    export type ReviewVarietyProposalMutationError = ErrorType<unknown>
+
+    export const useReviewVarietyProposal = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewVarietyProposal>>, TError,{id: string;data: BodyType<VarietyReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewVarietyProposal>>,
+        TError,
+        {id: string;data: BodyType<VarietyReviewInput>},
+        TContext
+      > => {
+      return useMutation(getReviewVarietyProposalMutationOptions(options));
+    }
 
 export const getGetCropCatalogueUrl = () => {
 

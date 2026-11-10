@@ -31,3 +31,4 @@
 - [Immagine di accesso](login-artwork.md) — Nei tre riquadri, i sensori devono restare visibili sopra la scheda introduttiva sovrapposta.
 - [Portabilità RLS Replit](replit-policy-portability.md) — Le policy locali entrano nel diff Publish anche con backend operativo Supabase; non vincolarle a ruoli esclusivi dello sviluppo.
 - [Instradamento database](backend-routing-verification.md) — Il preflight Supabase non prova che ogni modulo usi quella connessione; verificare i consumer prima di dichiarare migrazioni concluse.
+- [Varietà proposte](user-variety-approval.md) — Salvataggio esplicito dell’utente, revisione in Amministrazione, catalogo condiviso solo dopo approvazione.

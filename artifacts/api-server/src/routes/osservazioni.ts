@@ -2,6 +2,8 @@ import { Router } from "express";
 import { erroreOsservazionePomodoro } from "@workspace/tomato-calculations";
 import { isCatalogueCrop, catalogueObservationError } from "@workspace/crop-calculations";
 import {operationalCatalogue} from "../lib/catalogue-storage";
+import {approvedVariety} from "../lib/variety-store";
+import {varietyTemplates} from "../lib/variety-templates";
 import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
 import { saveWithUsage } from "../lib/plan-store";
@@ -232,8 +234,15 @@ router.post("/osservazioni", async (req, res) => {
     try { await operationalCatalogue(); }
     catch { res.status(503).json({error:"Catalogo temporaneamente non disponibile. Riprova."}); return; }
   }
-  const errore = isCatalogueCrop(coltura)
-    ? catalogueObservationError({ ...o, coltura })
+  let customProfile;
+  if(typeof o.varieta==="string" && varietyTemplates.some(t=>t.profile.crop===coltura)
+    && !varietyTemplates.some(t=>t.profile.crop===coltura&&t.profile.name===o.varieta)) {
+    try { customProfile=await approvedVariety(coltura,o.varieta); }
+    catch { res.status(503).json({error:"Servizio varietà non disponibile."});return; }
+    if(!customProfile){res.status(400).json({error:"Varietà non approvata o non presente."});return;}
+  }
+  const errore = isCatalogueCrop(coltura) || customProfile
+    ? catalogueObservationError({ ...o, coltura },customProfile)
     : coltura === "pomodoro"
     ? erroreOsservazionePomodoro(o)
     : coltura === "grano duro"

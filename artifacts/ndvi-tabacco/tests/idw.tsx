@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import {QueryClient,QueryClientProvider} from "@tanstack/react-query";
 import { Link } from "wouter";
 import { LanguageSelector } from "../src/i18n/LanguageSelector";
 import { setLanguage, t, useLanguage } from "../src/i18n/runtime";
@@ -21,6 +22,7 @@ const fixture = observations.map((o, i) =>
 window.fetch = async (input, init) => {
   const url = new URL(input instanceof Request ? input.url : String(input), location.href);
   const method = init?.method ?? (input instanceof Request ? input.method : "GET");
+  if(method==="GET"&&["/api/variety-proposals","/api/variety-templates"].includes(url.pathname))return Response.json([]);
   if (url.origin === location.origin && url.pathname === "/api/osservazioni" && method === "GET") {
     return Response.json(fixture);
   }
@@ -45,4 +47,4 @@ function SyntheticApp() {
   </>
   );
 }
-createRoot(document.getElementById("root")!).render(<SyntheticApp />);
+createRoot(document.getElementById("root")!).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><SyntheticApp /></QueryClientProvider>);

@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import {QueryClient,QueryClientProvider} from "@tanstack/react-query";
 import { Link } from "wouter";
 import { LanguageSelector } from "../src/i18n/LanguageSelector";
 import { observations } from "./fixtures/idw";
@@ -17,6 +18,7 @@ let records = [
 window.fetch = async (input, init) => {
   const url = new URL(input instanceof Request ? input.url : String(input), location.href);
   const method = init?.method ?? (input instanceof Request ? input.method : "GET");
+  if(method==="GET"&&["/api/variety-proposals","/api/variety-templates"].includes(url.pathname))return Response.json([]);
   if (url.origin !== location.origin) throw new Error("External requests disabled.");
   if (url.pathname === "/api/osservazioni" && method === "GET") return Response.json(records);
   if (url.pathname.startsWith("/api/osservazioni") && method === "DELETE") {
@@ -30,10 +32,10 @@ window.fetch = async (input, init) => {
   throw new Error(`Network disabled in deletion harness: ${method} ${url.pathname}`);
 };
 const { default: App } = await import("../src/App");
-createRoot(document.getElementById("root")!).render(<>
+createRoot(document.getElementById("root")!).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
   <header className="flex flex-wrap gap-4 bg-amber-100 p-4">
     <strong>QA — synthetic deletion only</strong><LanguageSelector />
     <Link href="?module=history">Storico Rilievi</Link><Link href="?module=survey">Rilievo e dati</Link>
   </header>
   <App storageScope="qa-deletion-synthetic-only" />
-</>);
+</QueryClientProvider>);

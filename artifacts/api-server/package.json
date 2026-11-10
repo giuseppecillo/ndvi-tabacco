@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:varieties": "esbuild src/routes/variety-proposals.test.ts --bundle --platform=node --format=cjs --outfile=/tmp/nitrocrop-variety-tests.cjs && node --test /tmp/nitrocrop-variety-tests.cjs",
     "test:plans": "esbuild src/lib/plan-model.test.ts src/lib/plan-store.test.ts src/lib/usage-report.test.ts --bundle --platform=node --format=cjs --outdir=/tmp/nitrocrop-plan-tests && node --test /tmp/nitrocrop-plan-tests/plan-model.test.js /tmp/nitrocrop-plan-tests/plan-store.test.js /tmp/nitrocrop-plan-tests/usage-report.test.js",
     "bench:plans": "esbuild src/lib/usage-report.bench.ts --bundle --platform=node --format=cjs --outfile=../../generated-artifacts/usage-report.bench.cjs && node ../../generated-artifacts/usage-report.bench.cjs",
     "test:catalogue": "esbuild src/routes/crop-catalogue.test.ts --bundle --platform=node --format=cjs --outfile=/tmp/nitrocrop-catalogue-tests.cjs && node --test /tmp/nitrocrop-catalogue-tests.cjs",

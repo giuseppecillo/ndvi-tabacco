@@ -16,6 +16,7 @@ const records = (): Observation[] => JSON.parse(localStorage.getItem(storage) ??
 window.fetch = async (input, init) => {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, location.href);
   const method = init?.method ?? "GET";
+  if(method==="GET"&&["/api/variety-proposals","/api/variety-templates"].includes(url.pathname))return Response.json([]);
   if (url.pathname === "/api/osservazioni" && method === "GET") return Response.json(records());
   if (url.pathname === "/api/osservazioni" && method === "POST") {
     const observation = JSON.parse(String(init?.body));

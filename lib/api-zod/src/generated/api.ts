@@ -8,6 +8,130 @@
 import * as zod from 'zod';
 
 
+export const GetVarietyTemplatesQueryParams = zod.object({
+  "crop": zod.coerce.string()
+})
+
+export const GetVarietyTemplatesResponseItem = zod.object({
+  "id": zod.string(),
+  "referenceName": zod.string(),
+  "profile": zod.object({
+  "crop": zod.string(),
+  "name": zod.string(),
+  "destination": zod.string(),
+  "use": zod.string(),
+  "earliness": zod.string(),
+  "plants": zod.number(),
+  "yield": zod.number(),
+  "nitrogen": zod.number(),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "label": zod.string(),
+  "bbch": zod.string(),
+  "azoto": zod.number(),
+  "riferimento": zod.number()
+}))
+})
+})
+export const GetVarietyTemplatesResponse = zod.array(GetVarietyTemplatesResponseItem)
+
+
+export const GetVarietyProposalsResponseItem = zod.object({
+  "isOwn": zod.boolean().optional(),
+  "id": zod.string(),
+  "crop": zod.string(),
+  "name": zod.string(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "referenceId": zod.string(),
+  "referenceName": zod.string(),
+  "profile": zod.object({
+  "crop": zod.string(),
+  "name": zod.string(),
+  "destination": zod.string(),
+  "use": zod.string(),
+  "earliness": zod.string(),
+  "plants": zod.number(),
+  "yield": zod.number(),
+  "nitrogen": zod.number(),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "label": zod.string(),
+  "bbch": zod.string(),
+  "azoto": zod.number(),
+  "riferimento": zod.number()
+}))
+}),
+  "createdAt": zod.string(),
+  "reviewNote": zod.string().nullable()
+})
+export const GetVarietyProposalsResponse = zod.array(GetVarietyProposalsResponseItem)
+
+
+export const submitVarietyProposalBodyCropMax = 80;
+
+export const submitVarietyProposalBodyNameMax = 100;
+
+export const submitVarietyProposalBodyReferenceIdMin = 64;
+export const submitVarietyProposalBodyReferenceIdMax = 64;
+
+export const submitVarietyProposalBodyPhaseNitrogenItemMin = 0;
+export const submitVarietyProposalBodyPhaseNitrogenItemMax = 1000;
+
+export const submitVarietyProposalBodyPhaseNitrogenMax = 12;
+
+
+
+export const SubmitVarietyProposalBody = zod.object({
+  "crop": zod.string().min(1).max(submitVarietyProposalBodyCropMax),
+  "name": zod.string().min(1).max(submitVarietyProposalBodyNameMax),
+  "referenceId": zod.string().min(submitVarietyProposalBodyReferenceIdMin).max(submitVarietyProposalBodyReferenceIdMax),
+  "phaseNitrogen": zod.array(zod.number().min(submitVarietyProposalBodyPhaseNitrogenItemMin).max(submitVarietyProposalBodyPhaseNitrogenItemMax)).min(1).max(submitVarietyProposalBodyPhaseNitrogenMax)
+})
+
+
+export const ReviewVarietyProposalParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const reviewVarietyProposalBodyNoteMax = 500;
+
+
+
+export const ReviewVarietyProposalBody = zod.object({
+  "decision": zod.enum(['approved', 'rejected']),
+  "note": zod.string().max(reviewVarietyProposalBodyNoteMax).optional()
+})
+
+export const ReviewVarietyProposalResponse = zod.object({
+  "isOwn": zod.boolean().optional(),
+  "id": zod.string(),
+  "crop": zod.string(),
+  "name": zod.string(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "referenceId": zod.string(),
+  "referenceName": zod.string(),
+  "profile": zod.object({
+  "crop": zod.string(),
+  "name": zod.string(),
+  "destination": zod.string(),
+  "use": zod.string(),
+  "earliness": zod.string(),
+  "plants": zod.number(),
+  "yield": zod.number(),
+  "nitrogen": zod.number(),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "label": zod.string(),
+  "bbch": zod.string(),
+  "azoto": zod.number(),
+  "riferimento": zod.number()
+}))
+}),
+  "createdAt": zod.string(),
+  "reviewNote": zod.string().nullable()
+})
+
+
 /**
  * @summary Read-only selected crop catalogue, separate from calculation profiles
  */

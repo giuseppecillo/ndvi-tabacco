@@ -13,7 +13,9 @@ import { canDeleteObservation } from "./utils/observationDeletion";
 import { useObservationRegistry } from "./hooks/useObservationRegistry";
 import { CropCatalogue } from "./components/CropCatalogue";
 import { CatalogueCropParameters, CatalogueCropResults } from "./components/CatalogueCropParameters";
-import { CROP_PROFILES, CATALOGUE_CROPS, cropPhaseSource, isCatalogueCrop, getCropReference, calculateCrop } from "@workspace/crop-calculations";
+import { CROP_PROFILES, CATALOGUE_CROPS, cropPhaseSource, isCatalogueCrop, getCropReference, calculateCrop, CUSTOM_VARIETY_PHASE_SOURCE } from "@workspace/crop-calculations";
+import {useGetVarietyProposals,getGetVarietyProposalsQueryKey} from "@workspace/api-client-react";
+import {VarietyProposalForm} from "./components/VarietyProposalForm";
 import { PomodoroParameters, PomodoroResults } from "./components/PomodoroParameters";
 import { POMODORO_DB, PRIMO_POMODORO, calcolaPomodoro } from "@workspace/tomato-calculations";
 import { formatRecordedDose } from "./utils/observationDose";
@@ -405,9 +407,12 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   const [parametriAziendali, setParametriAziendali] = useState<Record<string, ParametriAziendali>>(
     () => caricaParametriAziendali(storageScope, migrateLegacySettings)
   );
-  const isGranoDuro = coltura === "grano duro";
-  const isPomodoro = coltura === "pomodoro";
-  const isCatalogo = isCatalogueCrop(coltura);
+  const proposed = useGetVarietyProposals({query:{queryKey:getGetVarietyProposalsQueryKey(),staleTime:15000,refetchInterval:30000,refetchOnWindowFocus:true}});
+  const approvedProfiles = useMemo(()=>proposed.data?.filter(p=>p.status==="approved").map(p=>p.profile)??[],[proposed.data]);
+  const customProfile = approvedProfiles.find(p=>p.crop===coltura&&p.name===varieta);
+  const isGranoDuro = coltura === "grano duro" && !customProfile;
+  const isPomodoro = coltura === "pomodoro" && !customProfile;
+  const isCatalogo = isCatalogueCrop(coltura) || !!customProfile;
   const datiGrano = GRANO_DURO_DB[varieta] ?? GRANO_DURO_DB.Redidenari;
   const fasiGrano = fasiGranoPerVarieta(varieta);
   const pianoVarietaleGrano = !!datiGrano.fasiAzoto;
@@ -440,6 +445,14 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
 
   // Auto-fill resa, azoto e densità quando cambia la varietà.
   useEffect(() => {
+    if(customProfile) {
+      setResa(customProfile.yield);
+      setDensitaValore(customProfile.plants);
+      setDensitaUnita("piante/ha");
+      setFaseCatalogo("");
+      setFaseCatalogoConfermata(false);
+      return;
+    }
     if (isCatalogueCrop(coltura)) {
       const profile = getCropReference(coltura, varieta)?.reference;
       if (profile) {
@@ -482,7 +495,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       setAzotoTot(dati.azotoDefault);
       setDensitaValore(densitaUnita === "piante/ha" ? riferimento.densitaPianteHa : riferimento.kgSemiHa);
     }
-  }, [varieta, isGranoDuro, isPomodoro, coltura]);
+  }, [varieta, isGranoDuro, isPomodoro, coltura, customProfile]);
 
   const densita = useMemo(
     () => calcolaDensita(densitaValore, densitaUnita, datiVarieta),
@@ -590,7 +603,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   const risultatiCatalogo = calculateCrop({
     crop: coltura, variety: varieta, phase: faseCatalogo, confirmed: faseCatalogoConfermata,
     yield: resa, applied: azotoGiaDistribuito, readings: [n1, n2, n3, n4, n5],
-  });
+  }, customProfile);
 
   const salvaOsservazione = useCallback(() => {
     const newErrors: Record<string, string> = {};
@@ -638,7 +651,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         etaPiantina,
         faseFenologica: isCatalogo ? `${risultatiCatalogo.attiva?.id} · ${risultatiCatalogo.attiva?.label}` : isPomodoro ? fasePomodoro : isGranoDuro ? risultatiGrano.fase?.label : ndviOttimale(giorni, etaPiantina).label,
         bbch: isGranoDuro ? bbchGrano : null,
-        faseFonte: isCatalogo ? cropPhaseSource(coltura, varieta) : isPomodoro ? "Fase osservata in campo" : isGranoDuro ? "BBCH confermato in campo" : null,
+        faseFonte: customProfile ? CUSTOM_VARIETY_PHASE_SOURCE : isCatalogo ? cropPhaseSource(coltura, varieta) : isPomodoro ? "Fase osservata in campo" : isGranoDuro ? "BBCH confermato in campo" : null,
         cliente: cliente.trim(),
         appezzamento: appezzamento.trim(),
         resa,
@@ -860,6 +873,19 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
 
           </div>
 
+          <div className="col-span-2 min-w-0">
+            <VarietyProposalForm crop={coltura} />
+            {approvedProfiles.some(p=>p.crop===coltura) && <label className="mt-3 flex flex-col gap-1 text-sm font-semibold">
+              {t("Varietà approvate dagli utenti")}
+              <select className={inputCls} value={customProfile?.name??""} onChange={e=>{
+                if(e.target.value)setVarieta(e.target.value);
+                else setVarieta(isCatalogueCrop(coltura)?CROP_PROFILES.find(p=>p.crop===coltura)!.name:coltura==="pomodoro"?PRIMO_POMODORO:coltura==="grano duro"?"Redidenari":"Burley (Non Cimato)");
+              }}>
+                <option value="">{t("Varietà del catalogo originale")}</option>
+                {approvedProfiles.filter(p=>p.crop===coltura).sort((a,b)=>a.name.localeCompare(b.name,getLocale())).map(p=><option key={p.name} value={p.name}>{p.name}</option>)}
+              </select>
+            </label>}
+          </div>
           {/* — Parametri Colturali — */}
           <h2 className="text-lg font-bold text-green-900 border-b border-stone-100 pb-2">Parametri Colturali</h2>
           <div className="grid grid-cols-2 gap-4">
@@ -893,8 +919,10 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                 ).map(crop => <option key={crop.value} value={crop.value}>{crop.label}</option>)}
               </select>
             </div>
-            {isCatalogueCrop(coltura) ? <CatalogueCropParameters
-              crop={coltura} varieta={varieta} onVarieta={setVarieta}
+            {isCatalogo ? <CatalogueCropParameters
+              crop={coltura} customProfiles={approvedProfiles}
+              customReferenceName={customProfile?proposed.data?.find(p=>p.crop===coltura&&p.name===varieta&&p.status==="approved")?.referenceName:undefined}
+              varieta={varieta} onVarieta={setVarieta}
               resa={resa} onResa={setResa} densita={densitaValore} onDensita={setDensitaValore}
               fase={faseCatalogo} onFase={setFaseCatalogo}
               confermata={faseCatalogoConfermata} onConferma={setFaseCatalogoConfermata}

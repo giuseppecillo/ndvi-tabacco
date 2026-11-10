@@ -4,6 +4,7 @@ import osservazioniRouter from "./osservazioni";
 import securityRouter from "./security";
 import cropCatalogueRouter from "./crop-catalogue";
 import plansRouter from "./plans";
+import varietyProposalsRouter from "./variety-proposals";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(securityRouter);
 router.use(osservazioniRouter);
 router.use(cropCatalogueRouter);
 router.use(plansRouter);
+router.use(varietyProposalsRouter);
 
 export default router;

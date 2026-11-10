@@ -5,6 +5,92 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface VarietyPhase {
+  id: string;
+  label: string;
+  bbch: string;
+  azoto: number;
+  riferimento: number;
+}
+
+export interface VarietyProfile {
+  crop: string;
+  name: string;
+  destination: string;
+  use: string;
+  earliness: string;
+  plants: number;
+  yield: number;
+  nitrogen: number;
+  phases: VarietyPhase[];
+}
+
+export interface VarietyTemplate {
+  id: string;
+  referenceName: string;
+  profile: VarietyProfile;
+}
+
+export type VarietyProposalStatus = typeof VarietyProposalStatus[keyof typeof VarietyProposalStatus];
+
+
+export const VarietyProposalStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface VarietyProposal {
+  isOwn?: boolean;
+  id: string;
+  crop: string;
+  name: string;
+  status: VarietyProposalStatus;
+  referenceId: string;
+  referenceName: string;
+  profile: VarietyProfile;
+  createdAt: string;
+  /** @nullable */
+  reviewNote: string | null;
+}
+
+export interface VarietyProposalInput {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  crop: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+  /**
+     * @minLength 64
+     * @maxLength 64
+     */
+  referenceId: string;
+  /**
+     * @minItems 1
+     * @maxItems 12
+     */
+  phaseNitrogen: number[];
+}
+
+export type VarietyReviewInputDecision = typeof VarietyReviewInputDecision[keyof typeof VarietyReviewInputDecision];
+
+
+export const VarietyReviewInputDecision = {
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface VarietyReviewInput {
+  decision: VarietyReviewInputDecision;
+  /** @maxLength 500 */
+  note?: string;
+}
+
 export interface CropCatalogue {
   columns: string[];
   rows: string[][];
@@ -209,6 +295,10 @@ export interface PrivacyRequest {
 export interface HealthStatus {
   status: string;
 }
+
+export type GetVarietyTemplatesParams = {
+crop: string;
+};
 
 export type GetAccessSetup200 = {
   activationAvailable: boolean;

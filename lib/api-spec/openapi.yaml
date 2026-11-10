@@ -11,6 +11,55 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /variety-templates:
+    get:
+      operationId: getVarietyTemplates
+      parameters:
+        - { name: crop, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Same-crop reference profiles for a new proposal
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/VarietyTemplate" } }
+  /variety-proposals:
+    get:
+      operationId: getVarietyProposals
+      responses:
+        "200":
+          description: Approved profiles and own proposals, or all proposals for administrators
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/VarietyProposal" } }
+    post:
+      operationId: submitVarietyProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VarietyProposalInput" }
+      responses:
+        "201":
+          description: Persisted pending proposal
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VarietyProposal" }
+  /admin/variety-proposals/{id}/decision:
+    post:
+      operationId: reviewVarietyProposal
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VarietyReviewInput" }
+      responses:
+        "200":
+          description: Administrator decision, only pending proposals can change
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VarietyProposal" }
   /catalogo-colture:
     get:
       operationId: getCropCatalogue
@@ -305,6 +354,63 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    VarietyPhase:
+      type: object
+      required: [id, label, bbch, azoto, riferimento]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        bbch: { type: string }
+        azoto: { type: number }
+        riferimento: { type: number }
+    VarietyProfile:
+      type: object
+      required: [crop, name, destination, use, earliness, plants, yield, nitrogen, phases]
+      properties:
+        crop: { type: string }
+        name: { type: string }
+        destination: { type: string }
+        use: { type: string }
+        earliness: { type: string }
+        plants: { type: number }
+        yield: { type: number }
+        nitrogen: { type: number }
+        phases: { type: array, items: { $ref: "#/components/schemas/VarietyPhase" } }
+    VarietyTemplate:
+      type: object
+      required: [id, referenceName, profile]
+      properties:
+        id: { type: string }
+        referenceName: { type: string }
+        profile: { $ref: "#/components/schemas/VarietyProfile" }
+    VarietyProposal:
+      type: object
+      required: [id, crop, name, status, referenceId, referenceName, profile, createdAt, reviewNote]
+      properties:
+        isOwn: { type: boolean }
+        id: { type: string }
+        crop: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [pending, approved, rejected] }
+        referenceId: { type: string }
+        referenceName: { type: string }
+        profile: { $ref: "#/components/schemas/VarietyProfile" }
+        createdAt: { type: string }
+        reviewNote: { type: ["string", "null"] }
+    VarietyProposalInput:
+      type: object
+      required: [crop, name, referenceId, phaseNitrogen]
+      properties:
+        crop: { type: string, minLength: 1, maxLength: 80 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        referenceId: { type: string, minLength: 64, maxLength: 64 }
+        phaseNitrogen: { type: array, minItems: 1, maxItems: 12, items: { type: number, minimum: 0, maximum: 1000 } }
+    VarietyReviewInput:
+      type: object
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approved, rejected] }
+        note: { type: string, maxLength: 500 }
     CropCatalogue:
       type: object
       required: [columns, rows]

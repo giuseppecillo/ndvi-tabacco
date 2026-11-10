@@ -1,13 +1,15 @@
 import { useMemo } from "react";
 import { Info } from "lucide-react";
-import { CROP_PROFILES, getCropReference, type CatalogueCrop, type calculateCrop } from "@workspace/crop-calculations";
+import { CROP_PROFILES, getCropReference, type CropProfile, type calculateCrop } from "@workspace/crop-calculations";
 import { getLocale, t, useLanguage } from "../i18n/runtime";
 import { formatRecordedDose } from "../utils/observationDose";
 import { alphabetical } from "../utils/alphabetical";
 
 type Piano = ReturnType<typeof calculateCrop>;
 type Props = {
-  crop: CatalogueCrop;
+  crop: string;
+  customProfiles?: CropProfile[];
+  customReferenceName?: string;
   varieta: string; onVarieta: (value: string) => void;
   resa: number; onResa: (value: number) => void;
   densita: number; onDensita: (value: number) => void;
@@ -23,8 +25,11 @@ const num = (v: number, digits = 2) => Number.isFinite(v) ? v.toLocaleString(get
 
 export function CatalogueCropParameters(p: Props) {
   const language = useLanguage();
-  const varieties = useMemo(() => alphabetical(CROP_PROFILES.filter(x => x.crop === p.crop), x => x.name, getLocale()), [p.crop, language]);
-  const resolved = useMemo(() => getCropReference(p.crop, p.varieta), [p.crop, p.varieta]);
+  const varieties = useMemo(() => alphabetical([...CROP_PROFILES,...p.customProfiles??[]].filter(x => x.crop === p.crop), x => x.name, getLocale()), [p.crop, p.customProfiles, language]);
+  const resolved = useMemo(() => {
+    const custom=p.customProfiles?.find(profile=>profile.crop===p.crop&&profile.name===p.varieta);
+    return custom?{selected:custom,reference:custom,kind:"direct" as const}:getCropReference(p.crop,p.varieta);
+  }, [p.crop, p.varieta,p.customProfiles]);
   const sel = resolved?.selected;
   const ref = resolved?.reference;
 
@@ -69,6 +74,10 @@ export function CatalogueCropParameters(p: Props) {
           )}
         </section>
       )}
+      {p.customReferenceName && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+        {t("Quote di azoto proposte dall’utente e approvate. Gli altri parametri, inclusi i riferimenti NDVI di fase, derivano dalla varietà affine")}: <strong>{p.customReferenceName}</strong>.
+        {" "}{t("Non è una curva sperimentale validata per questa varietà.")}
+      </p>}
 
       <div className="grid gap-4 sm:grid-cols-2">
         {numeric("Resa Desiderata (t/ha)", "input-catalogue-yield", p.resa, p.onResa, "0.1")}

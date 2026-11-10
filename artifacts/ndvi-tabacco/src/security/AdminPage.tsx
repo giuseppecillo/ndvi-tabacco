@@ -1,3 +1,4 @@
+import {VarietyReviewPanel} from "./VarietyReviewPanel";
 import { useState } from "react";
 import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import {
@@ -215,6 +216,7 @@ export function AdminWorkspace({ account }: { account: Account }) {
         <ModuleHeading title="Amministrazione"><Eyebrow>Chi può vedere i campi</Eyebrow></ModuleHeading>
         <p className="mt-2 max-w-2xl text-[var(--nc-muted)]">Gestisci gli accessi. Come amministratore vedi nello strumento solo i tuoi rilievi, non quelli degli altri utenti.</p>
       </div>
+      <VarietyReviewPanel />
       <InviteForm key={prefill?.email ?? "new"} prefill={prefill} writable={writable} onClearPrefill={() => setPrefill(null)} />
       <PendingRegistrationsCard onApprove={approve} canApprove={writable === true} />
       <UsageOverview users={users.data} />
