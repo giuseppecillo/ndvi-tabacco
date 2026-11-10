@@ -29,3 +29,4 @@
 - [Risorse GIS](gis-resource-policy.md) — Non fidarsi delle dimensioni ZIP dichiarate; contare i byte reali e isolare i parser interrompibili, senza import parziali.
 - [Costo griglie IDW](idw-calculation-budgets.md) — Limitare celle del rettangolo, vertici e controlli prima del calcolo; mai ridurre risoluzione o risultati in silenzio.
 - [Immagine di accesso](login-artwork.md) — Nei tre riquadri, i sensori devono restare visibili sopra la scheda introduttiva sovrapposta.
+- [Portabilità RLS Replit](replit-policy-portability.md) — Le policy locali entrano nel diff Publish anche con backend operativo Supabase; non vincolarle a ruoli esclusivi dello sviluppo.
