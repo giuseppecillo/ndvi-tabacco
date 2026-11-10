@@ -9,6 +9,12 @@ L’accesso alla soluzione è riservato agli utenti autorizzati dall’amministr
 
 **How to apply:** non introdurre registrazione applicativa libera, elenchi di rilievi condivisi o visibilità trasversale implicita. La gestione amministrativa degli account non attribuisce automaticamente accesso ai rilievi degli altri utenti.
 
+Al cambio account privilegiare l'isolamento dell'intera vista rispetto alla conservazione delle bozze non salvate del precedente account.
+
+**Why:** svuotare soltanto il registro lascia vivi selezioni, errori e operazioni pendenti; il riuso di uno stesso ID rilievo in account diversi rende pericolosa anche una risposta di cancellazione senza dati personali.
+
+**How to apply:** non trasferire stato transitorio fra account per preservare il lavoro non salvato. Nei collaudi usare anche ID sintetici uguali nei due account e risposte tardive di successo e di errore.
+
 I rilievi precedenti all’introduzione degli account appartengono all’amministratore iniziale e non sono dati dimostrativi condivisi.
 
 **Why:** preservare il lavoro esistente senza esporlo ai nuovi clienti.

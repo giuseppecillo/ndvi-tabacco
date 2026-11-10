@@ -6,16 +6,25 @@ export function useObservationRegistry(scope: string) {
   const [observations, setObservations] = useState<Observation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [stateScope, setStateScope] = useState(scope);
+  if (stateScope !== scope) {
+    // Reset before React commits the new account, not in a later passive effect.
+    setStateScope(scope);
+    setObservations([]);
+    setLoading(true);
+    setError(false);
+  }
   const active = useRef(true);
-  const currentScope = useRef(scope);
-  currentScope.current = scope;
+  const currentScope = useRef({ scope });
+  if (currentScope.current.scope !== scope) currentScope.current = { scope };
+  const scopeInstance = currentScope.current;
   const requestId = useRef(0);
   const controller = useRef<AbortController | null>(null);
   const mutations = useRef(0);
   const refreshRef = useRef<() => void>(() => {});
 
   const refresh = useCallback(async () => {
-    if (!active.current || currentScope.current !== scope || mutations.current) return;
+    if (!active.current || currentScope.current !== scopeInstance || mutations.current) return;
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
@@ -25,20 +34,20 @@ export function useObservationRegistry(scope: string) {
       if (!response.ok) throw new Error("Registry read failed");
       const rows: unknown = await response.json();
       if (!Array.isArray(rows)) throw new Error("Invalid registry response");
-      if (active.current && !abort.signal.aborted && id === requestId.current && currentScope.current === scope) {
+      if (active.current && !abort.signal.aborted && id === requestId.current && currentScope.current === scopeInstance) {
         // Preserve derived maps and open views when the server data is unchanged.
         setObservations(previous => JSON.stringify(previous) === JSON.stringify(rows) ? previous : rows);
         setError(false);
       }
     } catch {
-      if (active.current && !abort.signal.aborted && id === requestId.current && currentScope.current === scope) {
+      if (active.current && !abort.signal.aborted && id === requestId.current && currentScope.current === scopeInstance) {
         // Never turn a failed refresh into an empty history.
         setError(true);
       }
     } finally {
-      if (active.current && id === requestId.current && currentScope.current === scope) setLoading(false);
+      if (active.current && id === requestId.current && currentScope.current === scopeInstance) setLoading(false);
     }
-  }, [scope]);
+  }, [scopeInstance]);
   refreshRef.current = () => { void refresh(); };
 
   useEffect(() => {
@@ -72,11 +81,11 @@ export function useObservationRegistry(scope: string) {
     return () => {
       if (finished) return;
       finished = true;
-      if (!active.current || currentScope.current !== scope) return;
+      if (!active.current || currentScope.current !== scopeInstance) return;
       mutations.current = Math.max(0, mutations.current - 1);
       if (!mutations.current) refreshRef.current();
     };
-  }, [scope]);
+  }, [scopeInstance]);
 
   return { observations, setObservations, loading, error, beginMutation, refresh };
 }

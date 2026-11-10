@@ -10,6 +10,7 @@ import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { runStorageScopePass } from "./observation-scope-browser-pass.mjs";
 
 const baseURL = process.env.BASE_URL;
 if (!baseURL) throw new Error("Set BASE_URL to the running NitroCrop preview.");
@@ -530,6 +531,10 @@ try {
     await deletionFailureMatrix(current, base);
   }
   assert.deepEqual(pageErrors, [], `Page errors: ${pageErrors.join("; ")}`);
+  const scopePass = await runStorageScopePass({
+    browser, origin, output: path.join(output, "account-switch"),
+  });
+  result("account-switch isolation regressions", scopePass.checks);
   const isolation = {
     contexts: isolatedContexts.map(x => x.transport.name),
     actualApiNetworkRequests: isolatedContexts.reduce((n, x) => n + x.transport.blockedApi.length, 0),

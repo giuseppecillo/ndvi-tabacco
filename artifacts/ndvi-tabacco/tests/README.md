@@ -254,6 +254,33 @@ overflow. The runner used request-context synthetic JSON payloads because local
 Node helper imports were unavailable; API abort routing stayed enabled. These
 checks do not claim an authenticated-account or database verification.
 
+## Account-switch races in observation history
+
+Run the isolated regression against the already-running NitroCrop preview:
+
+```sh
+BASE_URL=https://<preview> node artifacts/ndvi-tabacco/tests/observation-scope-browser-pass.mjs
+```
+
+This pass is also included in `observation-deletion-browser-pass.mjs`.
+It uses the development-only deletion harness with synthetic account buttons,
+not authentication. The runner supplies separate in-memory records per account,
+including an intentionally identical observation ID in both accounts.
+Real API traffic, network writes, external hosts and WebSockets remain blocked;
+no API server, database, credentials or localStorage observation seed is needed.
+
+The hook probe changes `storageScope` without remounting and records committed
+renders. It checks immediate clearing while B's GET is held, rejection of A's
+late GET, and an A→B→A→B round trip with an obsolete error. The real App cases
+hold both A's GET and its single/bulk DELETE, switch to B, then release successful
+and failed mutations before or after B's response. B must keep its own shared-ID
+record, show no stale error, have enabled controls and receive no refresh from
+A's mutation completion. The synthetic transport intentionally ignores aborts.
+
+Reports and screenshots go to `generated-artifacts/observation-scope/` (or the
+full deletion pass's `account-switch/` directory), outside Git. Chromium results
+do not verify real authentication, physical iPhones, Safari or production data.
+
 ## Interior exclusions (holes)
 
 `pnpm --filter @workspace/ndvi-tabacco test` includes `holes.test.mjs`, using only

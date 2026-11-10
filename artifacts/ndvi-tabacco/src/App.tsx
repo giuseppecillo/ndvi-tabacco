@@ -341,6 +341,11 @@ function NumberInput({
 const today = new Date().toISOString().slice(0, 10);
 
 export default function App({ storageScope, migrateLegacySettings = false }: { storageScope: string; migrateLegacySettings?: boolean }) {
+  // Reset every account-owned view even when a caller changes scope in place.
+  return <AccountApp key={storageScope} storageScope={storageScope} migrateLegacySettings={migrateLegacySettings} />;
+}
+
+function AccountApp({ storageScope, migrateLegacySettings }: { storageScope: string; migrateLegacySettings: boolean }) {
   const [deletionNow, setDeletionNow] = useState(Date.now);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletionError, setDeletionError] = useState("");
