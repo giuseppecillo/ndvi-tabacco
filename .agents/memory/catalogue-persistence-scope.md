@@ -26,3 +26,16 @@ funzionamento e formato delle colture già presenti, non sola consultazione.
 **How to apply:** non riapplicare il vecchio limite di sola preparazione a
 questo contenuto autorizzato; non estendere però il consenso ad altri dataset,
 piani utenti, account, cambi di connessione o pubblicazioni.
+
+Il titolare vuole tutte le colture e varietà presenti prima degli aggiornamenti
+più le nuove, sia nel catalogo sia nel rilievo, nei parametri colturali.
+Quando la tabella è completa, autorizza la migrazione su Supabase e poi
+commit e push su Git.
+
+**Why:** richiesta esplicita del titolare, con completezza della tabella come
+condizione precedente alla migrazione.
+
+**How to apply:** verificare conservazione del catalogo precedente e copertura
+delle aggiunte prima di applicare la release del solo catalogo. Non anticipare
+la migrazione con profili incompleti e non estendere il consenso a modifiche
+dei rilievi, degli account o a una pubblicazione dell'app.

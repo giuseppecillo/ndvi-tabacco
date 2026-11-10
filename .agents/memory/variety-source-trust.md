@@ -36,3 +36,11 @@ I profili non completi non devono essere riportati nell'ampliamento del catalogo
 valori per superare il controllo di completezza. Tenere la ricerca tecnica
 separata dal catalogo operativo; questa regola non autorizza a cancellare
 automaticamente profili esistenti o rilievi.
+
+Per i nuovi profili vanno bene anche i valori NDVI rilevati da satellite o drone.
+
+**Why:** l'utente ha esplicitamente autorizzato queste modalità di misura.
+
+**How to apply:** non escludere una fonte soltanto perché aerea o satellitare;
+conservare piattaforma, metodo e associazione alle fasi nella traccia tecnica,
+senza dedurre automaticamente equivalenza con un sensore da terra.

@@ -21,6 +21,28 @@ Questo documento è un rapporto sulle fonti, non un catalogo di profili parziali
 Non certifica l'assenza di altri studi: descrive i limiti delle fonti effettivamente
 consultate. Non dichiara completata l'integrazione richiesta.
 
+## Aggiornamento del criterio di misura NDVI
+
+Il titolare ha successivamente autorizzato anche **NDVI da satellite e drone**.
+Non è quindi richiesta una fonte da sensore portatile come condizione di
+ammissione. Il metodo di acquisizione resta documentato nella traccia tecnica:
+piattaforma, bande, risoluzione, eventuale mascheratura di suolo/interfila,
+date e fasi fenologiche. La diversa piattaforma, da sola, non esclude un dato.
+
+Non si deduce però l'equivalenza numerica fra piattaforme e non si confondono
+NDVI con NDRE, SPAD, fluorescenza o rapporti normalizzati rispetto a una
+parcella di riferimento. Restano necessari densità, resa, N fertilizzante
+totale e per fase, con NDVI associato alle medesime fasi. È ammessa la
+composizione di riferimenti documentati della stessa coltura, verificandone
+la compatibilità; non occorre che tutti i parametri provengano dallo stesso
+esperimento. Non si richiede una nuova calibrazione sperimentale per ogni
+varietà per poter applicare le medie autorizzate.
+
+La ricerca aggiuntiva e la situazione dei 23 gruppi sono riportate nel
+[registro tecnico di approfondimento](catalogue-expansion-research-update.md).
+Quel registro non aggiunge profili al catalogo e non costituisce una release
+da applicare al database.
+
 ## Perimetro richiesto
 
 Ventiquattro gruppi colturali: grano tenero, orzo, avena, triticale, melanzana,
@@ -95,7 +117,9 @@ attuale di quote di mercato.
   0,70–0,75 a GS32, GS37 e GS65, ma non stabilisce con precisione la soglia a
   GS30. La semina è espressa in kg di seme/ha: non va convertita in piante/ha
   senza i dati necessari. Il lavoro non giustifica un profilo completo con
-  quattro soglie ottimali trasferibile automaticamente a ogni frumento tenero.
+  quattro soglie ottimali trasferibile automaticamente a ogni frumento tenero;
+  può concorrere al completamento con altre fonti compatibili della stessa
+  coltura.
 - **Povh et al., 2008 — Behavior of NDVI obtained from an active optical sensor
   in cereals**, Pesquisa Agropecuária Brasileira 43, 1075–1083,
   [DOI 10.1590/S1678-3921.pab2008.v43.194](https://apct.sede.embrapa.br/pab/article/view/194).
@@ -115,7 +139,9 @@ attuale di quote di mercato.
   [DOI 10.3390/horticulturae11080961](https://www.mdpi.com/2311-7524/11/8/961/htm).
   Distingue fluorimetria prossimale e indice ottenuto da rilievo aereo. Non è
   corretto usare automaticamente i risultati di questi due strumenti come
-  soglie equivalenti a un sensore NDVI portatile.
+  soglie equivalenti a un sensore NDVI portatile. Dopo l'autorizzazione agli
+  NDVI aerei, la componente NDVI da drone è una fonte ammissibile in sé;
+  rimane da completare la copertura delle fasi e degli altri parametri.
 
 ### 4. Assorbimento e concimazione non sono la stessa grandezza
 
