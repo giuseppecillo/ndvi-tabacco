@@ -7,6 +7,15 @@ import "../src/index.css";
 import "../src/security/security.css";
 
 if (!import.meta.env.DEV) throw new Error("Development-only synthetic deletion harness.");
+// Optional browser-runner binding: both isolated contexts share invented state
+// in the runner, never via an API, account, localStorage or database.
+declare global {
+  interface Window {
+    qaObservationTransport?: (request: {
+      method: string; pathname: string; seed: typeof records;
+    }) => Promise<{ status: number; body: unknown }>;
+  }
+}
 const now = Date.now();
 let records = [
   { ...observations[0], id: "QA-recent", createdAt: new Date(now - 3600000).toISOString() },
@@ -20,6 +29,12 @@ window.fetch = async (input, init) => {
   const method = init?.method ?? (input instanceof Request ? input.method : "GET");
   if(method==="GET"&&["/api/variety-proposals","/api/variety-templates"].includes(url.pathname))return Response.json([]);
   if (url.origin !== location.origin) throw new Error("External requests disabled.");
+  if (window.qaObservationTransport && /^\/api\/osservazioni(?:\/|$)/.test(url.pathname)) {
+    const result = await window.qaObservationTransport({ method, pathname: url.pathname, seed: records });
+    // Deliberately do not honor AbortSignal here: a delayed stale response must
+    // still be rejected by the real registry hook after a deletion.
+    return Response.json(result.body, { status: result.status });
+  }
   if (url.pathname === "/api/osservazioni" && method === "GET") return Response.json(records);
   if (url.pathname.startsWith("/api/osservazioni") && method === "DELETE") {
     const id = url.pathname === "/api/osservazioni" ? null : decodeURIComponent(url.pathname.split("/").pop()!);

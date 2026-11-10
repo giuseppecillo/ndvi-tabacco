@@ -3,6 +3,17 @@ name: Fixture nei collaudi browser isolati
 description: Trasferire fixture sintetiche senza indebolire i blocchi di rete quando il runner browser non importa moduli Node locali.
 ---
 
+Per provare una risposta obsoleta dopo una cancellazione, lasciare che il
+trasporto sintetico completi il vecchio GET anche dopo l'annullamento.
+
+**Why:** se la fixture rispetta soltanto AbortSignal, una prova positiva può
+dimostrare esclusivamente l'annullamento e non la protezione dell'interfaccia
+contro una risposta già in arrivo.
+
+**How to apply:** condividere lo stato inventato tra contesti nel runner,
+trattenere uno snapshot precedente alla mutazione e rilasciarlo dopo il suo
+aggiornamento successivo, senza aprire accessi alle API reali.
+
 Il runner browser può non riuscire a importare un helper Node dal workspace. In quel caso trasferire i soli payload sintetici tramite una risorsa statica di sviluppo, anziché allentare i blocchi API o ripetere l'intero collaudo.
 
 **Why:** Un collaudo degli import GIS si è fermato al caricamento dell'helper, pur potendo proseguire con buffer sintetici forniti separatamente. Il blocco delle chiamate di rete nella pagina impediva intenzionalmente anche un normale fetch dei payload.

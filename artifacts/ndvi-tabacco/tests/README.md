@@ -1,3 +1,36 @@
+## Storico e cancellazione — due contesti browser isolati
+
+Con il workflow web NitroCrop attivo, dalla radice del workspace:
+
+```sh
+BASE_URL="https://<preview-di-sviluppo>" \
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/repl/tools/bin/chromium \
+node artifacts/ndvi-tabacco/tests/observation-deletion-browser-pass.mjs
+```
+
+Il percorso Chromium è opzionale se il browser Playwright è già installato.
+Il comando non avvia backend, non effettua login e non consulta database.
+Monta il vero `App` nell'entry DEV `observation-deletion.html`; due contesti
+separati condividono soltanto record inventati nella memoria del runner tramite
+`qaObservationTransport`. API reali, richieste esterne, scritture di rete,
+service worker e WebSocket sono bloccati prima della navigazione.
+
+Verificati con esito positivo: sincronizzazione dopo focus e intervallo reale
+di 30 secondi; GET ritardati ignorati dopo cancellazione su entrambe le viste;
+storico conservato dopo errore di rete e ripristino dell'aggiornamento; conferma
+annullata senza DELETE; rifiuto della cancellazione singola senza perdita del
+record; cancellazione massiva dei soli recenti; uguaglianza degli ID tra registro
+e storico, senza duplicati. Pulsanti scaduti/legacy e spiegazioni controllati in
+IT/EN/ES a 1280×900 e 390×844. Tabelle larghe scorrono internamente; il documento
+mobile non presenta overflow orizzontale.
+
+Report JSON/Markdown e screenshot sono salvati sotto
+`generated-artifacts/observation-deletion/` (ignorato da Git e deployment).
+Questa è una simulazione Chromium, non una prova di Safari o di dispositivi
+fisici. Gli inserimenti sono sintetici: non verifica salvataggio reale,
+autenticazione o sincronizzazione del backend. Dettagli e limiti:
+[`docs/observation-deletion-verification.md`](../docs/observation-deletion-verification.md).
+
 ## Dose precision after reload — standalone browser regression
 
 From the workspace root run:
