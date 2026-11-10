@@ -15,3 +15,15 @@ generici non pertinenti, invece delle descrizioni ASHS attese.
 Cercare la pubblicazione presso l'editore o un conservatore identificabile;
 se non recuperabile, dichiarare il limite anziché attribuire al sito nuovo
 l'autorevolezza della fonte originaria.
+
+Per il catalogo verificare sempre le fonti, dare priorità alle varietà
+maggiormente diffuse sul mercato e in rete e non inventare dati.
+
+**Why:** istruzione esplicita dell'utente per l'ampliamento del catalogo.
+
+**How to apply:** verificare identità e caratteristiche nelle fonti effettivamente
+consultate. Distinguere evidenze di diffusione commerciale dalla sola visibilità
+online; non presentare una selezione rappresentativa come una classifica di
+mercato senza dati che la sostengano. Non riempire campi numerici con valori
+arbitrari. Usare riferimenti per affinità della stessa coltura soltanto quando
+documentati, mantenendone la tracciabilità tecnica.
