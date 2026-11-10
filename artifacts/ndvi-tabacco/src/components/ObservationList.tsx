@@ -5,6 +5,7 @@ import type { Observation } from "../App";
 import { isCatalogueCrop } from "@workspace/crop-calculations";
 import { getLocale, t, useLanguage } from "../i18n/runtime";
 import { formatRecordedDose } from "../utils/observationDose";
+import { ObservationDeleteButton, type ObservationDeletionProps } from "./ObservationDeleteButton";
 
 /** Persisted values (IDs, clients, varieties, units) are never translated. */
 type Row = { label: string; value: string };
@@ -70,7 +71,7 @@ type ExportState = { status: "idle" | "pending" | "error"; message?: string };
 const signed = (v: number | null, digits: number, suffix = "") =>
   v === null || !Number.isFinite(v) ? "" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(digits)}${suffix}`;
 
-function GroupTable({ group, locale }: { group: Group; locale: string }) {
+function GroupTable({ group, locale, ...deletion }: { group: Group; locale: string } & ObservationDeletionProps) {
   const [state, setState] = useState<ExportState>({ status: "idle" });
   const points = useMemo(() => {
     // Timestamp order when known; points without timestamp keep register order at the end.
@@ -165,6 +166,7 @@ function GroupTable({ group, locale }: { group: Group; locale: string }) {
             <summary className="cursor-pointer px-3 py-2 text-sm">
               <span className="font-mono text-green-800">#{o.id}</span>{" · "}{o.appezzamento || "—"}
             </summary>
+            {deletion.onDelete && <div className="px-3 pt-2"><ObservationDeleteButton observation={o} {...deletion} /></div>}
             <dl className="grid grid-cols-1 gap-x-6 gap-y-2 border-t border-stone-100 px-3 py-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
               {details(o, locale).map(row => (
                 <div key={row.label} className="min-w-0">
@@ -180,7 +182,7 @@ function GroupTable({ group, locale }: { group: Group; locale: string }) {
   );
 }
 
-export function ObservationList({ osservazioni }: { osservazioni: Observation[] }) {
+export function ObservationList({ osservazioni, ...deletion }: { osservazioni: Observation[] } & ObservationDeletionProps) {
   useLanguage(); // re-render on language change
   const locale = getLocale();
   const [query, setQuery] = useState("");
@@ -203,6 +205,7 @@ export function ObservationList({ osservazioni }: { osservazioni: Observation[] 
         <div>
           <h2 id="observation-list-title" className="text-base font-semibold text-green-900">Raggruppati per cliente e data di rilievo</h2>
           <p className="text-xs text-stone-500">Dalla data di rilievo più recente.</p>
+          {deletion.onDelete && <p className="mt-1 text-xs text-stone-500">{t("Puoi eliminare i tuoi rilievi entro 24 ore dalla creazione, aprendo i dettagli del punto.")}</p>}
         </div>
         <label className="flex flex-col text-xs font-semibold text-stone-600 sm:w-64">
           Cerca
@@ -239,7 +242,7 @@ export function ObservationList({ osservazioni }: { osservazioni: Observation[] 
                     <span aria-hidden="true" className="text-stone-400 transition-transform group-open:rotate-90">›</span>
                   </div>
                 </summary>
-                <GroupTable group={g} locale={locale} />
+                <GroupTable group={g} locale={locale} {...deletion} />
               </details>
             </li>
           ))}

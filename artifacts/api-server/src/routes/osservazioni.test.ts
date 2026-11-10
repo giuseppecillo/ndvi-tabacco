@@ -6,6 +6,59 @@ import pool from "../lib/db";
 import { PRIMO_POMODORO } from "@workspace/tomato-calculations";
 import { CATALOGUE_CROPS, CROP_PROFILES, cropPhaseSource } from "@workspace/crop-calculations";
 
+test("single and bulk deletion enforce owner and server-clock window; no legacy/expired/future or foreign deletion", async () => {
+  const single = router.stack.find(layer => layer.route?.path === "/osservazioni/:id"
+    && layer.route.stack.some(handler => handler.method === "delete"))!.route!.stack[0].handle;
+  const bulk = router.stack.find(layer => layer.route?.path === "/osservazioni"
+    && layer.route.stack.some(handler => handler.method === "delete"))!.route!.stack[0].handle;
+  const now = Date.parse("2026-11-10T12:00:00Z"), day = 86400000;
+  let data = [
+    { id: "recent", owner: "own", created: now - 1000 },
+    { id: "boundary", owner: "own", created: now - day },
+    { id: "expired", owner: "own", created: now - day - 1 },
+    { id: "legacy", owner: "own", created: null },
+    { id: "future", owner: "own", created: now + 1 },
+    { id: "foreign", owner: "other", created: now - 1000 },
+  ];
+  const mocked = mock.method(pool, "query", async (sql: string, values: unknown[]) => {
+    if (sql.startsWith("SELECT")) {
+      assert(sql.includes("owner_id=$2"));
+      return { rows: data.filter(r => r.id === values[0] && r.owner === values[1]).map(() => ({ exists: 1 })) };
+    }
+    assert(sql.includes("created_at IS NOT NULL"));
+    assert(sql.includes("created_at <= statement_timestamp()"));
+    assert(sql.includes("created_at >= statement_timestamp() - interval '24 hours'"));
+    assert(sql.includes("RETURNING observation_id"));
+    const single = sql.includes("observation_id=$1");
+    assert(sql.includes(single ? "owner_id=$2" : "owner_id=$1"));
+    const owner = values[single ? 1 : 0];
+    const selected = data.filter(r => r.owner === owner && (!single || r.id === values[0])
+      && r.created !== null && r.created <= now && r.created >= now - day);
+    data = data.filter(r => !selected.includes(r));
+    return { rows: selected.map(r => ({ observation_id: r.id })) };
+  });
+  const run = async (handler: any, id?: string) => {
+    let status = 200, body: any;
+    const res = { locals: { account: { id: "own", role: "admin" } },
+      status(s: number) { status = s; return this; }, json(value: unknown) { body = value; return this; } };
+    await handler({ params: { id } }, res, () => {});
+    return { status, body };
+  };
+  try {
+    for (const id of ["expired", "legacy", "future"]) {
+      const result = await run(single, id);
+      assert.equal(result.status, 403);
+      assert.equal(result.body.code, "DELETION_WINDOW_CLOSED");
+    }
+    assert.equal((await run(single, "foreign")).status, 404);
+    assert.equal((await run(single, "missing")).status, 404);
+    assert.deepEqual((await run(single, "recent")).body.deletedIds, ["recent"]);
+    assert.deepEqual((await run(bulk)).body.deletedIds, ["boundary"]);
+    assert.deepEqual((await run(bulk)).body.deletedIds, []);
+    assert.deepEqual(data.map(r => r.id), ["expired", "legacy", "future", "foreign"]);
+  } finally { mocked.mock.restore(); }
+});
+
 test("tomato and every catalogue crop: safe fractional POST/GET, blocked new overruns, legacy GET unchanged", async () => {
   const post = router.stack.find(layer => layer.route?.path === "/osservazioni"
     && layer.route.stack.some(handler => handler.method === "post"))!.route!.stack[0].handle;

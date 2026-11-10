@@ -10,6 +10,7 @@ import { ObservationDistributionChart } from "./ObservationDistributionChart";
 import { ObservationList } from "./components/ObservationList";
 import { ObservationDeleteButton } from "./components/ObservationDeleteButton";
 import { canDeleteObservation } from "./utils/observationDeletion";
+import { useObservationRegistry } from "./hooks/useObservationRegistry";
 import { CropCatalogue } from "./components/CropCatalogue";
 import { CatalogueCropParameters, CatalogueCropResults } from "./components/CatalogueCropParameters";
 import { CROP_PROFILES, CATALOGUE_CROPS, cropPhaseSource, isCatalogueCrop, getCropReference, calculateCrop } from "@workspace/crop-calculations";
@@ -399,8 +400,8 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
   const [n4, setN4] = useState(0.39);
   const [n5, setN5] = useState(0.4);
   const [etaPiantina, setEtaPiantina] = useState<EtaPiantina>("standard");
-  const [osservazioni, setOsservazioni] = useState<Observation[]>([]);
-  const [loadingOss, setLoadingOss] = useState(true);
+  const { observations: osservazioni, setObservations: setOsservazioni,
+    loading: loadingOss, error: registryError, beginMutation } = useObservationRegistry(storageScope);
   const [parametriAziendali, setParametriAziendali] = useState<Record<string, ParametriAziendali>>(
     () => caricaParametriAziendali(storageScope, migrateLegacySettings)
   );
@@ -420,23 +421,6 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     densitaPianteDefault: riferimentoAziendale.densitaPianteHa,
     kgSemiDefault: riferimentoAziendale.kgSemiHa,
   };
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/osservazioni", { signal: controller.signal })
-      .then((r) => {
-        if (!r.ok) throw new Error("Caricamento non riuscito.");
-        return r.json();
-      })
-      .then((data: Observation[]) => {
-        if (!controller.signal.aborted) setOsservazioni(data);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setErrors(current => ({ ...current, save: "Impossibile caricare il registro. Verifica l’accesso e aggiorna la pagina." }));
-      })
-      .finally(() => setLoadingOss(false));
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     try {
@@ -695,6 +679,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         lat,
         lng,
       };
+      const finishMutation = beginMutation();
       fetch("/api/osservazioni", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -711,7 +696,8 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         .catch(() => setErrors((current) => ({
           ...current,
           save: "Impossibile salvare l’osservazione. Riprova tra qualche istante.",
-        })));
+        })))
+        .finally(finishMutation);
     };
 
     if (navigator.geolocation) {
@@ -736,7 +722,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     } else {
       doSave(null, null);
     }
-  }, [isCatalogo, risultatiCatalogo, obsId, coltura, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, densitaGrano.semiHaEquivalenti, n1, n2, n3, n4, n5, risultati, risultatiGrano, risultatiPomodoro, fasePomodoro, isPomodoro, azotoGiaDistribuito, dataTrapiantoFutura, isGranoDuro, bbchGrano, bbchGranoConfermato, faseGrano, faseGranoSelezionata]);
+  }, [isCatalogo, risultatiCatalogo, obsId, coltura, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, densitaGrano.semiHaEquivalenti, n1, n2, n3, n4, n5, risultati, risultatiGrano, risultatiPomodoro, fasePomodoro, isPomodoro, azotoGiaDistribuito, dataTrapiantoFutura, isGranoDuro, bbchGrano, bbchGranoConfermato, faseGrano, faseGranoSelezionata, beginMutation]);
 
   const deleteObservations = useCallback(async (id?: string) => {
     if (deletionBusy.current) return;
@@ -755,6 +741,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     deletionBusy.current = true;
     setDeletingId(id ?? "*");
     setDeletionError("");
+    const finishMutation = beginMutation();
     try {
       const response = await fetch(id ? `/api/osservazioni/${encodeURIComponent(id)}` : "/api/osservazioni", { method: "DELETE" });
       const result = await response.json();
@@ -774,13 +761,14 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
       if (activeAccountView.current) setDeletionError(error instanceof Error
         ? error.message : "Impossibile eliminare l’osservazione. Verifica l’accesso e riprova.");
     } finally {
+      finishMutation();
       deletionBusy.current = false;
       if (activeAccountView.current) {
         setDeletingId(null);
         setDeletionNow(Date.now());
       }
     }
-  }, [osservazioni]);
+  }, [osservazioni, beginMutation]);
   const eliminaOsservazione = useCallback((id: string) => { void deleteObservations(id); }, [deleteObservations]);
   const resetRegistro = useCallback(() => { void deleteObservations(); }, [deleteObservations]);
 
@@ -825,6 +813,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
         </ModuleHeading>
 
         {deletionError && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{t(deletionError)}</p>}
+        {registryError && <p role="alert" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{t("Aggiornamento del registro non riuscito. Verifica la connessione e torna alla pagina per riprovare.")}</p>}
 
         {activeTab === "catalogo" && <CropCatalogue active tobaccoVarieties={Object.values(VARIETA_DB)} />}
 
@@ -1507,9 +1496,10 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <button
                   onClick={resetRegistro}
-                  className="flex items-center gap-2 bg-white hover:bg-red-50 active:bg-red-100 text-red-600 border border-red-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                  disabled={!!deletingId || !osservazioni.some(o => canDeleteObservation(o.createdAt, deletionNow))}
+                  className="flex min-h-11 items-center gap-2 bg-white hover:bg-red-50 active:bg-red-100 text-red-600 border border-red-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  🗑 Reset Registro
+                  {t("Elimina rilievi delle ultime 24 ore")}
                 </button>
                 <button
                   onClick={() => exportObservationsCsv(osservazioni)}
@@ -1627,13 +1617,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                         ) : <span className="text-stone-300">—</span>}
                       </td>
                       <td className="px-2 py-2 text-center">
-                        <button
-                          onClick={() => eliminaOsservazione(obs.id)}
-                          className="text-red-400 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50 transition-colors"
-                          title="Elimina osservazione"
-                        >
-                          🗑
-                        </button>
+                        <ObservationDeleteButton observation={obs} onDelete={eliminaOsservazione} deletionNow={deletionNow} deletingId={deletingId} />
                       </td>
                     </tr>
                     );

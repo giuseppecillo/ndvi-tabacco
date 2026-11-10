@@ -353,6 +353,15 @@ export function ElaborazioniMappe({ osservazioni }: Props) {
     })),
   [gpsObs]);
 
+  // Saved, updated or deleted observations invalidate maps made from that set.
+  useEffect(() => {
+    if (pointSource !== "db") return;
+    calculationVersion.current++;
+    clearTimeout(computationTimer.current);
+    setComputing(false);
+    setResults(new Map());
+  }, [dbControls, pointSource]);
+
   const activeControls: ControlPoint[] = pointSource === "db" ? dbControls : shpPoints;
 
   // ── Polygon file upload (KML / KMZ / Shapefile ZIP) ─────────────────────────

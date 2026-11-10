@@ -1,6 +1,18 @@
 import type { Translation } from "./runtime";
 
 export const common: readonly Translation[] = [
+  ["Aggiornamento del registro non riuscito. Verifica la connessione e torna alla pagina per riprovare.", "Unable to refresh the register. Check your connection and return to the page to try again.", "No se pudo actualizar el registro. Comprueba la conexión y vuelve a la página para reintentarlo."],
+  ["Elimina rilievo {0}", "Delete observation {0}", "Eliminar observación {0}"],
+  ["Elimina entro 24 ore", "Delete within 24 hours", "Eliminar en un plazo de 24 horas"],
+  ["Eliminazione in corso…", "Deleting…", "Eliminando…"],
+  ["Elimina rilievi delle ultime 24 ore", "Delete observations from the last 24 hours", "Eliminar observaciones de las últimas 24 horas"],
+  ["Puoi eliminare i tuoi rilievi entro 24 ore dalla creazione, aprendo i dettagli del punto.", "You can delete your observations within 24 hours of creation by opening the point details.", "Puedes eliminar tus observaciones en un plazo de 24 horas desde su creación, abriendo los detalles del punto."],
+  ["Data di creazione non disponibile: cancellazione non consentita.", "Creation time unavailable: deletion is not allowed.", "Fecha de creación no disponible: no se permite eliminar."],
+  ["Cancellazione consentita solo entro 24 ore dalla creazione.", "Deletion is only allowed within 24 hours of creation.", "Solo se permite eliminar en un plazo de 24 horas desde la creación."],
+  ["Cancellazione consentita solo entro 24 ore dalla creazione verificata.", "Deletion is only allowed within 24 hours of the verified creation time.", "Solo se permite eliminar en un plazo de 24 horas desde la fecha de creación verificada."],
+  ["Eliminare questo rilievo? L’operazione è irreversibile.", "Delete this observation? This cannot be undone.", "¿Eliminar esta observación? Esta acción no se puede deshacer."],
+  ["Eliminare i rilievi creati nelle ultime 24 ore? I rilievi precedenti saranno conservati. L’operazione è irreversibile.", "Delete observations created in the last 24 hours? Older observations will be kept. This cannot be undone.", "¿Eliminar las observaciones creadas en las últimas 24 horas? Se conservarán las anteriores. Esta acción no se puede deshacer."],
+  ["Impossibile confermare la cancellazione. Ricarica il registro.", "Unable to confirm deletion. Reload the register.", "No se pudo confirmar la eliminación. Vuelve a cargar el registro."],
   ["Lingua", "Language", "Idioma"],
   ["Supporto tecnico", "Technical support", "Soporte técnico"],
   ["Scrivi al supporto tecnico", "Contact technical support", "Contactar con soporte técnico"],
