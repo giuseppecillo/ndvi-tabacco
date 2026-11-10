@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import {
   getGetVarietyProposalsQueryKey, getGetVarietyTemplatesQueryKey,
   useGetVarietyProposals, useGetVarietyTemplates, useSubmitVarietyProposal, type VarietyProposal,
@@ -71,11 +71,15 @@ export function VarietyProposalForm({ crop }: { crop: string }) {
   };
 
   return (
-    <section className="min-w-0 space-y-4 rounded-2xl border border-[var(--nc-line)] bg-[#fbf8f1] p-4 sm:p-6" data-testid="variety-proposal-form" aria-label={t("Proponi una nuova varietà")}>
-      <div>
-        <h3 className="nc-display text-xl font-semibold">{t("Proponi una nuova varietà")}</h3>
+    <details className="group min-w-0 rounded-2xl border border-[var(--nc-line)] bg-[#fbf8f1] p-4 sm:p-6" data-testid="variety-proposal-form">
+      <summary className="cursor-pointer list-none rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--nc-leaf)] [&::-webkit-details-marker]:hidden" data-testid="toggle-variety-proposal">
+        <h3 className="nc-display flex items-center justify-between gap-3 text-lg font-semibold">
+          <span>{t("Proponi una nuova varietà")}</span>
+          <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--nc-leaf)] transition-transform group-open:rotate-180" />
+        </h3>
+      </summary>
+      <div className="mt-4 space-y-4">
         <p className="mt-1 text-sm text-[var(--nc-muted)]">{t("Inserisci il piano azoto per fase di una varietà non presente nel catalogo. Prima dell'uso la proposta deve essere approvata dall'amministratore.")}</p>
-      </div>
       <form className="space-y-4" onSubmit={e => { e.preventDefault(); save(); }}>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold">{t("Nome della varietà")}
@@ -120,6 +124,7 @@ export function VarietyProposalForm({ crop }: { crop: string }) {
         </div>
       </form>
       {proposals.isPending ? <Skeleton rows={2} /> : proposals.isError ? <ErrorNote error={proposals.error} onRetry={() => void proposals.refetch()} /> : <OwnList items={own} />}
-    </section>
+      </div>
+    </details>
   );
 }

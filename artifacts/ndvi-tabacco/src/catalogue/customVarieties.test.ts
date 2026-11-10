@@ -6,6 +6,15 @@ import {catalogueExportTables,buildCatalogueWorkbook} from "../utils/catalogueEx
 import JSZip from "jszip";
 import {readFileSync} from "node:fs";
 import type {VarietaDati} from "../calculations";
+test("proposal widget uses a closed native disclosure with its form inside",()=>{
+  const source=readFileSync(new URL("../components/VarietyProposalForm.tsx",import.meta.url),"utf8");
+  const disclosure=source.match(/<details\b[^>]*>/)?.[0];
+  assert.ok(disclosure);
+  assert.doesNotMatch(disclosure,/\bopen(?:=|\s|>)/);
+  assert.match(source,/<summary\b[^>]*data-testid="toggle-variety-proposal"/);
+  assert.ok(source.indexOf("<form")>source.indexOf("</summary>"));
+  assert.ok(source.indexOf("</form>")<source.indexOf("</details>"));
+});
 import {hasTranslation} from "../i18n/runtime";
 import {varietyTranslations} from "../i18n/variety-translations";
 
