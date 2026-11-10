@@ -10,7 +10,37 @@ import observationsRouter from "./osservazioni";
 import { cropCatalogue as snapshot } from "@workspace/crop-calculations";
 import { CATALOGUE_CROPS, CROP_PROFILES, calculateCrop, cropPhaseSource } from "@workspace/crop-calculations";
 import pool from "../lib/db";
+import { pool as runtimePool } from "@workspace/db";
+import { operationalCatalogue } from "../lib/catalogue-storage";
+import { catalogueRecords, catalogueVersion } from "../lib/catalogue-manifest";
 import { requireAccount, requirePrivacyAck, requireSubscription } from "../middlewares/access";
+
+test("Supabase catalogue uses the selected runtime connection, never the legacy DATABASE_URL pool", async () => {
+  const originalBackend = process.env.NITROCROP_DB_BACKEND;
+  process.env.NITROCROP_DB_BACKEND = "supabase";
+  const legacyQuery = mock.method(pool, "query", () => {
+    throw new Error("Legacy application connection must not read the Supabase catalogue");
+  });
+  let attempts = 0;
+  const runtimeQuery = mock.method(runtimePool, "query", async (sql: string, parameters: unknown[]) => {
+    assert.match(sql, /^SELECT .* FROM agronomy_catalogue\.model_profiles WHERE version=\$1$/);
+    assert.deepEqual(parameters, [catalogueVersion]);
+    if (++attempts === 1) throw new Error("Synthetic temporary connection failure");
+    return { rows: catalogueRecords };
+  });
+  try {
+    await assert.rejects(operationalCatalogue(), /CATALOGUE_DATABASE_RELEASE_UNAVAILABLE/);
+    assert.strictEqual(await operationalCatalogue(), snapshot);
+    assert.strictEqual(await operationalCatalogue(), snapshot);
+    assert.equal(runtimeQuery.mock.calls.length, 2, "retry after error, reuse verified immutable release after success");
+    assert.equal(legacyQuery.mock.calls.length, 0);
+  } finally {
+    runtimeQuery.mock.restore();
+    legacyQuery.mock.restore();
+    if (originalBackend === undefined) delete process.env.NITROCROP_DB_BACKEND;
+    else process.env.NITROCROP_DB_BACKEND = originalBackend;
+  }
+});
 
 test("catalogue GET is protected, read-only and returns exactly the selected display snapshot", async () => {
   const route = catalogueRouter.stack.find(layer => layer.route)?.route;

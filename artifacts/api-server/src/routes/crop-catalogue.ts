@@ -5,7 +5,7 @@ import { requireAccount, requirePrivacyAck, requireSubscription } from "../middl
 import {operationalCatalogue} from "../lib/catalogue-storage";
 
 // The consulted profiles and the calculation models share one versioned source.
-// This response does not query or modify observations or Supabase.
+// A read-only release check uses the selected backend; observations are untouched.
 const catalogue = GetCropCatalogueResponse.parse(snapshot);
 const router = Router();
 router.get("/catalogo-colture", requireAccount, requireSubscription, requirePrivacyAck, async (_req, res) => {

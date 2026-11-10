@@ -1,4 +1,4 @@
-import pool from "./db";
+import {pool} from "@workspace/db";
 import {cropCatalogue} from "@workspace/crop-calculations";
 import {assertCatalogueRows,catalogueVersion} from "./catalogue-manifest";
 
