@@ -21,7 +21,7 @@ const tobacco = Object.values(runInNewContext(`(${literal})`)) as VarietaDati[];
 test("the displayed catalogue contains every operational variety exactly once and retains all original values", () => {
   const original = JSON.stringify(cropCatalogue);
   const complete = completeCatalogue(cropCatalogue, tobacco);
-  assert.equal(complete.rows.length, 1396);
+  assert.equal(complete.rows.length, 1399);
   assert.equal(new Set(complete.rows.map(r => r[0])).size, 18);
   assert.equal(complete.rows.filter(r => r[0] === "Pomodoro").length, Object.keys(POMODORO_DB).length);
   assert.equal(complete.rows.filter(r => r[0] === "Grano duro").length, Object.keys(GRANO_DURO_DB).length);
@@ -44,13 +44,13 @@ test("the displayed catalogue contains every operational variety exactly once an
   assert.equal(JSON.stringify(cropCatalogue), original);
 });
 
-test("complete Excel workbook is valid OOXML in Italian, English and Spanish, with all 1396 varieties", async () => {
+test("complete Excel workbook is valid OOXML in Italian, English and Spanish, with all 1399 varieties", async () => {
   try {
     for (const language of ["it", "en", "es"] as const) {
       setLanguage(language);
       const tables = catalogueExportTables(cropCatalogue, tobacco, t, getLocale());
       assert.equal(tables.length, 1);
-      assert.equal(tables[0].rows.length, 1396);
+      assert.equal(tables[0].rows.length, 1399);
       const collator = new Intl.Collator(getLocale(), { sensitivity: "base", numeric: true });
       assert.deepEqual(tables[0].rows, [...tables[0].rows].sort((a, b) =>
         collator.compare(String(a[0]), String(b[0])) || collator.compare(String(a[1]), String(b[1]))));
@@ -63,7 +63,7 @@ test("complete Excel workbook is valid OOXML in Italian, English and Spanish, wi
         assert.ok(doc.documentElement);
       }
       const sheet = await zip.file("xl/worksheets/sheet1.xml")!.async("string");
-      assert.equal((sheet.match(/<row /g) ?? []).length, 1398);
+      assert.equal((sheet.match(/<row /g) ?? []).length, 1401);
       assert.ok(sheet.includes(t("Tutti i diritti Riservati")));
       assert.ok(sheet.includes(t("Tabacco")) && sheet.includes(t("Pomodoro")) && sheet.includes(t("Grano duro")));
       assert.ok(sheet.includes("<v>0.4</v>"));

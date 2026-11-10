@@ -4,9 +4,9 @@ import {CROP_PROFILES,completeProfile,calculateCrop,cropCatalogue,catalogueObser
 import {catalogueRecords,catalogueCounts,assertCatalogueRows} from "./catalogue-manifest";
 const additions=["Aglio","Cipolla","Olivo","Zucchino","Melanzana","Ciliegio"];
 for(const crop of additions) {
-  test(`${crop}: all60 varieties, four phases, exact total N and proportional point doses`,()=>{
+  test(`${crop}: all varieties, four phases, reference total N and proportional point doses`,()=>{
     const profiles=CROP_PROFILES.filter(p=>p.crop===crop);
-    assert.equal(profiles.length,60);
+    assert.equal(profiles.length,crop==="Melanzana"?63:60);
     for(const p of profiles) {
       assert.ok(completeProfile(p),p.name);
       for(const ph of p.phases) {
@@ -26,11 +26,11 @@ for(const crop of additions) {
   });
 }
 test("old profiles remain unchanged, exclusions remain excluded, all models have one database identity",()=>{
-  assert.equal(cropCatalogue.rows.length,848);
+  assert.equal(cropCatalogue.rows.length,851);
   assert.ok(!cropCatalogue.columns.some(c=>/P2O5|K2O|Acqua|Note/.test(c)));
   assert.equal(CROP_PROFILES.filter(p=>!additions.includes(p.crop)).length,488);
   assert.ok(!CROP_PROFILES.some(p=>p.crop==="Kiwi"&&["Tomuri","Matua","Chieftain","Belen","Bounty71"].includes(p.name)));
-  for(const crop of additions)assert.equal(catalogueCounts[crop],60);
+  for(const crop of additions)assert.equal(catalogueCounts[crop],crop==="Melanzana"?63:60);
   assert.ok(catalogueCounts["grano duro"]>0&&catalogueCounts.pomodoro>0&&catalogueCounts.tabacco>0);
   assertCatalogueRows(catalogueRecords);
   assert.throws(()=>assertCatalogueRows(catalogueRecords.slice(1)),/MISMATCH/);

@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {cropCatalogue,CROP_PROFILES} from "@workspace/crop-calculations";
+import {cropCatalogue,CROP_PROFILES,cropMeanExpansion} from "@workspace/crop-calculations";
 import {GRANO_DURO_DB,fasiGranoPerVarieta,NDVI_GRANO_CURVA} from "@workspace/grain-calculations";
 import {POMODORO_DB,FASI_POMODORO} from "@workspace/tomato-calculations";
 import {NDVI_CURVA,ETA_GIORNI_EQUIVALENTI} from "@workspace/tobacco-calculations";
@@ -22,8 +22,11 @@ const record=(crop:string,variety:string,model:string,parameters:unknown):Catalo
   crop,variety,model,parameters,record_hash:digest({crop,variety,model,parameters}),
 });
 export const catalogueRecords:CatalogueRecord[]=[
-  ...CROP_PROFILES.map((profile,i)=>record(profile.crop,profile.name,"phase-ndvi-v1",
-    {profile,display:cropCatalogue.rows[i]})),
+  ...CROP_PROFILES.map((profile,i)=>{
+    const reference=cropMeanExpansion.trace.find(row=>row.crop===profile.crop&&row.name===profile.name);
+    return record(profile.crop,profile.name,"phase-ndvi-v1",
+      {profile,display:cropCatalogue.rows[i],...(reference?{reference}: {})});
+  }),
   ...Object.entries(GRANO_DURO_DB).map(([name,defaults])=>record("grano duro",name,"grain-v1",
     {defaults,phases:fasiGranoPerVarieta(name),ndvi:NDVI_GRANO_CURVA})),
   ...Object.entries(POMODORO_DB).map(([identity,profile])=>record("pomodoro",identity,"tomato-v1",

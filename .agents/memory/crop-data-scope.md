@@ -75,3 +75,12 @@ destinazione, mercato, consumo, impiego o altri suffissi informativi.
 **How to apply:** cambiare solo le etichette dei menu. Non eliminare metadati,
 varietà omonime o identificativi composti: possono rappresentare profili diversi.
 La richiesta riguarda le liste, non la cancellazione dei dettagli varietali.
+
+Per tutte le nuove colture e varietà usare come formato quello di grano duro
+e pomodoro.
+
+**Why:** istruzione esplicita dell'utente per l'ampliamento del catalogo.
+
+**How to apply:** mantenere coerenti selezione varietale, dettagli dei parametri,
+piano azotato per fase e risultati NDVI. Non cambiare unità o significato dei
+parametri per imitare il formato.

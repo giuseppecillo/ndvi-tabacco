@@ -1,11 +1,21 @@
 # Ampliamento del catalogo: verifica delle evidenze
 
-## Esito
+## Esito dopo l'autorizzazione alle medie di coltura
 
-La ricerca svolta non ha ancora prodotto nuovi profili che soddisfino **tutti**
-i requisiti di completezza e tracciabilità richiesti. Non è quindi stata
-modificata la sorgente del catalogo operativo, non sono state eseguite scritture
-su Supabase e non sono stati attivati nuovi calcoli.
+Sono stati aggiunti alla sorgente applicativa tre profili completi di
+melanzana: Melana F1, Tasca F1 ed Egle F1. Identità e precocità sono state
+verificate nel catalogo del costitutore citato sotto. Gli altri valori sono
+medie aritmetiche dei **60 profili originari di melanzana** forniti dall'utente
+e già utilizzati dal modello. Non sono nuove calibrazioni sperimentali.
+
+Le altre 23 colture richieste restano escluse dall'ampliamento visibile:
+negli archivi forniti non esiste un campione completo per queste colture e
+le fonti finora consultate non completano tutti i parametri operativi. Non
+vengono utilizzati dati del tabacco, del pomodoro o del grano duro per creare
+medie di specie diverse.
+
+Non sono state eseguite scritture su Supabase, pubblicazioni o modifiche ai
+rilievi. Il lavoro non completa ancora l'intero ampliamento richiesto.
 
 Questo documento è un rapporto sulle fonti, non un catalogo di profili parziali.
 Non certifica l'assenza di altri studi: descrive i limiti delle fonti effettivamente
@@ -18,8 +28,8 @@ melone, carciofo, cavolo cappuccio, cavolo verza, cavolo nero, cavolini di
 Bruxelles, cavolfiore, patata, carota, rucola, fragola, pesco, albicocco,
 peperone, miglio, fagiolino, fava, favino ed erba medica.
 
-La melanzana è già presente con 60 profili; non sono stati duplicati o
-ricertificati come risultato di questa ricerca. Fava e favino restano distinti;
+La melanzana passa da 60 a 63 profili nella sorgente applicativa; gli originali
+non sono stati duplicati o ricertificati. Fava e favino restano distinti;
 non si confondono produzioni da granella, prodotto fresco o foraggio. Per la
 rucola occorre inoltre distinguere Eruca sativa da Diplotaxis tenuifolia.
 
@@ -133,11 +143,67 @@ attuale di quote di mercato.
 4. Le leguminose richiedono un contesto che distingua nutrizione complessiva,
    azotofissazione ed eventuali apporti di fertilizzante. Un NDVI basso non
    diagnostica da solo una carenza risolvibile con N minerale.
-5. Il catalogo operativo attuale e lo storico restano invariati. Nessuna
-   migrazione può essere dichiarata necessaria o conclusa sulla base di una
-   lista di colture o di una bibliografia.
+5. Il catalogo attualmente pubblicato, il database Supabase e lo storico
+   restano invariati. La sorgente locale contiene i tre nuovi profili, ma
+   la release persistente corrispondente non è stata applicata.
 
 Per sbloccare un nuovo profilo occorre completarne le evidenze parametro per
 parametro, inclusa una relazione utilizzabile e documentata fra fase, NDVI e
 azoto fertilizzante. In mancanza di queste evidenze il profilo resta escluso,
 come richiesto dall'utente.
+
+## Medie introdotte e tracciabilità
+
+I tre nuovi profili condividono densità 16.000 piante/ha, resa di riferimento
+45,23 t/ha e azoto totale di riferimento 179,28 kg N/ha. Le quote per le quattro
+fasi sono 35,86 / 53,78 / 71,71 / 17,93 kg N/ha; gli NDVI medi corrispondenti
+sono 0,351 / 0,698 / 0,851 / 0,752.
+
+Queste cifre sono **medie del catalogo fornito**, non valori sperimentali
+pubblicati per i tre ibridi. La precocità rimane quella descritta dal costitutore:
+precoce per Melana F1, medio-precoce per Tasca F1 ed Egle F1. Non è dedotta
+facendo una media delle etichette.
+
+Le fasi e i codici BBCH sono conservati soltanto perché tutti i donatori
+condividono lo stesso schema. Non vengono mediati codici o nomi di fase.
+La precisione numerica del calcolo della media non rappresenta accuratezza
+agronomica o strumentale.
+
+La traccia tecnica restituita da `cropMeanExpansion` conserva donatori,
+numerosità, minimo, massimo, media, fonte dell'identità e assenza di
+validazione sperimentale. Per i nuovi record la stessa traccia entra nel
+manifest versionato destinato alla persistenza.
+
+I nuovi profili riutilizzano il modulo esistente di parametri colturali,
+piano per fase, confronto NDVI e dose, senza creare un'interfaccia differente.
+Le esportazioni includono gli stessi dati dei calcoli.
+
+## Pubblicazione e Supabase
+
+Il totale del catalogo base nella sorgente applicativa passa da 1.396 a 1.399
+varietà, ancora su 18 colture complessive. Eventuali proposte già approvate
+dagli amministratori restano separate e non sono incluse in questo conteggio.
+Le nuove 23 colture non risultano aggiunte.
+
+Il manifest cambia versione: **non ripubblicare questa revisione prima di
+avere autorizzato e applicato la corrispondente release del catalogo su
+Supabase**. Il controllo esistente rifiuta una release persistente assente o
+diversa; non è stato indebolito né aggirato.
+
+L'eventuale aggiornamento deve inserire la nuova release immutabile della sola
+tabella del catalogo e verificarne integralmente contenuto, hash e protezioni.
+Non occorrono nuove colonne né modifiche ai rilievi. Lo strumento manuale
+esistente resta soggetto ad autorizzazione: non è stato eseguito.
+
+## Verifiche eseguite
+
+- TypeScript dell'intero workspace e del frontend: superati.
+- 27 test mirati: superati; medie, esclusioni, invariabilità degli originali,
+  calcoli per fase, ricomputazione API, collegamento persistente simulato,
+  esportazioni Excel complete in italiano, inglese e spagnolo.
+- Compilazioni di frontend e API: superate.
+- Avvio dei workflow di sviluppo: riuscito; controllo schema in sola lettura,
+  migrazioni automatiche disabilitate, backend di preview Replit.
+- Anteprima mobile a 390 px del modulo condiviso con Melana F1: verificata
+  visivamente con dati locali e richieste di rete isolate, senza login né dati
+  dei clienti. Non è un collaudo autenticato o una prova su Safari reale.

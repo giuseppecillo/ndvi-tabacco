@@ -54,7 +54,8 @@ function DetailsPreview() {
   const params = new URLSearchParams(location.search);
   const requested = params.get("crop");
   const crop = isCatalogueCrop(requested) ? requested : "Kiwi";
-  const first = CROP_PROFILES.find(p => p.crop === crop)!;
+  const first = CROP_PROFILES.find(p => p.crop === crop && p.name === params.get("variety"))
+    ?? CROP_PROFILES.find(p => p.crop === crop)!;
   const [varieta, setVarieta] = useState(first.name);
   const [resa, setResa] = useState(first.yield);
   const [densita, setDensita] = useState(first.plants);

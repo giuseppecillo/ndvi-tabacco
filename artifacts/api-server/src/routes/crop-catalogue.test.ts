@@ -56,7 +56,7 @@ test("catalogue GET is protected, read-only and returns exactly the selected dis
       json(value: unknown) { payload = value; },
     } as Response, () => {});
     assert.deepEqual(GetCropCatalogueResponse.parse(payload), snapshot);
-    assert.equal(snapshot.rows.length, 848);
+    assert.equal(snapshot.rows.length, 851);
     assert.equal(snapshot.columns.length, 24);
     assert.equal(query.mock.calls.length, 0);
     assert.deepEqual(Object.keys(payload as object).sort(), ["columns", "rows"]);

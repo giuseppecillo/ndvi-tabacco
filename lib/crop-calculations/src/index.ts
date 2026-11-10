@@ -1,7 +1,13 @@
 import source from "./catalogue.json";
 import additional from "./extra-catalogue.json";
+import { buildCropMeanProfiles } from "./crop-means";
+import { researchedVarieties } from "./researched-varieties";
 
-export const cropCatalogue = {columns: source.columns, rows: [...source.rows, ...additional.rows]};
+const originalRows = [...source.rows, ...additional.rows];
+export const cropMeanExpansion = buildCropMeanProfiles({ columns: source.columns, rows: originalRows }, researchedVarieties);
+if (cropMeanExpansion.excluded.length) throw new Error("CATALOGUE_RESEARCHED_PROFILE_INCOMPLETE");
+export const cropCatalogue = {columns: source.columns, rows: [...originalRows, ...cropMeanExpansion.rows]};
+export { buildCropMeanProfiles } from "./crop-means";
 export const CATALOGUE_CROPS = ["Kiwi", "Vite da vino", "Vite da tavola", "Pere", "Mele",
   "Lattuga", "Spinacio", "Spinacino (4 gamma)", "Broccoli",
   "Aglio", "Cipolla", "Olivo", "Zucchino", "Melanzana", "Ciliegio"] as const;

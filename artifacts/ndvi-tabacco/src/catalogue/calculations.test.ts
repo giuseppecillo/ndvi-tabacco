@@ -6,10 +6,10 @@ import { serieDistribuzioneOsservazioni } from "../observationDistribution";
 import { catalogue } from "../i18n/catalogue";
 import { setLanguage, t, hasTranslation } from "../i18n/runtime";
 
-test("all 848 profiles of fifteen crops are complete before enabling calculation", () => {
-  assert.equal(CROP_PROFILES.length, 848);
+test("all 851 profiles of fifteen crops are complete before enabling calculation", () => {
+  assert.equal(CROP_PROFILES.length, 851);
   assert.equal(CATALOGUE_CROPS.length, 15);
-  assert.equal(new Set(CROP_PROFILES.map(p => `${p.crop}/${p.name}`)).size, 848);
+  assert.equal(new Set(CROP_PROFILES.map(p => `${p.crop}/${p.name}`)).size, 851);
   assert.ok(CROP_PROFILES.every(completeProfile));
   assert.ok(cropCompleteness.every(p => p.reference?.kind === "direct"));
   for (const crop of CATALOGUE_CROPS) assert.ok(CROP_PROFILES.some(p => p.crop === crop));
