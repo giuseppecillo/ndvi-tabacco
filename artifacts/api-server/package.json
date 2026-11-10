@@ -10,6 +10,7 @@
     "bench:plans": "esbuild src/lib/usage-report.bench.ts --bundle --platform=node --format=cjs --outfile=../../generated-artifacts/usage-report.bench.cjs && node ../../generated-artifacts/usage-report.bench.cjs",
     "test:catalogue": "esbuild src/routes/crop-catalogue.test.ts --bundle --platform=node --format=cjs --outfile=/tmp/nitrocrop-catalogue-tests.cjs && node --test /tmp/nitrocrop-catalogue-tests.cjs",
     "test:catalogue-excel": "esbuild src/lib/catalogue-excel.test.ts --bundle --platform=node --format=cjs --outfile=/tmp/nitrocrop-excel-test.cjs && node --test /tmp/nitrocrop-excel-test.cjs",
+    "test:catalogue-readiness": "esbuild src/lib/catalogue-expansion-readiness.test.ts --bundle --platform=node --format=cjs --outfile=/tmp/nitrocrop-catalogue-readiness.test.cjs && node --test /tmp/nitrocrop-catalogue-readiness.test.cjs",
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",

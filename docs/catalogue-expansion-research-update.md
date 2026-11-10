@@ -367,3 +367,76 @@ destinazione, densità con unità, resa e base del prodotto, N minerale totale
 e quote per fase, fasi/BBCH e NDVI con piattaforma e metodo. Per le leguminose
 deve distinguere anche il contributo di fissazione. In assenza di questo
 contenuto, l'incarico rimane **non completato**.
+
+## Avanzamento dei sei punti autorizzati
+
+Il titolare ha autorizzato la prosecuzione di tutti i passaggi: completare la
+tabella, conservare il catalogo precedente, integrare catalogo e rilievo,
+verificare calcoli/API/Excel/traduzioni, migrare il catalogo completo su
+Supabase e infine eseguire commit e push. La completezza resta il prerequisito:
+l'autorizzazione non fornisce parametri agronomici mancanti.
+
+### Conservazione del catalogo precedente: riscontro locale effettivo
+
+Il manifest locale, tolte soltanto le tre nuove melanzane nominativamente
+identificate, contiene i 1.396 record della release precedentemente applicata.
+Il digest canonico dell'intero contenuto, inclusi modelli, parametri,
+identificatori e hash dei record, è:
+
+```text
+d28bdc2a58ae971aa9b7d95bf79aad98d0f18028ff8d0d5c333aaeab616fbd25
+```
+
+Il prefisso della versione coincide con il rapporto di applicazione già
+conservato nel workspace. Questo è un confronto riproducibile del contenuto
+locale con la release precedente attestata dal rapporto, **non una nuova
+interrogazione al database attivo**. Non riguarda le proposte varietali
+approvate successivamente dagli amministratori, che hanno un percorso
+separato e non devono essere cancellate o sostituite.
+
+Anche le due copie dell'Excel allegato sono state riesaminate: entrambe
+contengono 360 righe, 60 per ciascuna delle sei colture già integrate
+(aglio, cipolla, olivo, zucchino, melanzana e ciliegio). Non contengono il
+campione mancante dei 23 gruppi.
+
+### Controllo eseguibile prima della migrazione
+
+Il nuovo controllo locale distingue:
+
+- conservazione dei 1.396 profili precedenti, con confronto del digest;
+- conteggio dei 23 gruppi aggiuntivi effettivamente coperti;
+- completezza strutturale dei profili e validità degli hash;
+- revisione agronomica, che resta necessaria anche se i controlli numerici
+  e di copertura dovessero passare.
+
+Non è collegato all'avvio dell'app: l'assenza delle nuove colture non blocca
+l'uso delle colture precedenti. Lo strumento manuale di applicazione ora
+controlla l'intero ambito **prima di leggere il Secret amministrativo o
+aprire una connessione**; anche il vecchio argomento di applicazione Excel
+non può aggirare il nuovo prerequisito. La modalità di verifica in sola
+lettura mantiene il comportamento precedente.
+
+Comandi dalla radice del repository:
+
+```sh
+pnpm --filter @workspace/api-server run test:catalogue-readiness
+pnpm --filter @workspace/api-server exec esbuild \
+  src/tools/apply-catalogue.ts --bundle --platform=node --format=cjs \
+  --outfile=../../generated-artifacts/catalogue/apply-complete.cjs
+node generated-artifacts/catalogue/apply-complete.cjs --check-complete-catalogue
+```
+
+L'ultimo comando è esclusivamente offline: attualmente restituisce codice
+**2**, `legacyPreserved: true`, **0 gruppi nuovi coperti su 23** e
+`databaseConnected: false`. Non è un errore da correggere riempiendo celle
+arbitrarie. Un'uscita strutturalmente positiva non certifica le fonti.
+Il confronto della baseline è fissato, non rigenerato dai dati correnti:
+nuove aggiunte future alle colture storiche richiederanno una distinzione
+esplicita e revisionata fra identità preesistenti e aggiunte, senza
+rimuovere dal confronto dati storici alterati.
+
+Verifiche eseguite per questa modifica: sei test mirati superati, typecheck
+dell'API superato, compilazione dello strumento manuale riuscita e comando
+offline bloccato correttamente senza connessione al database. Queste prove
+non sono test di nuove colture nell'interfaccia, né attestazioni di
+migrazione, commit o push.

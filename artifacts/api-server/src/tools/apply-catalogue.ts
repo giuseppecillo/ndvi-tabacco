@@ -9,6 +9,7 @@ import {Client} from "pg";
 import {inventoryConfig} from "../../../../lib/db/migration-preparation/inventory/guard";
 import {SUPABASE_RUNTIME_CA} from "../../../../lib/db/src/supabase-runtime-ca";
 import {catalogueRecords,catalogueVersion,catalogueCounts,assertCatalogueRows} from "../lib/catalogue-manifest";
+import {assessCatalogueExpansion,assertCompleteCatalogueScope} from "../lib/catalogue-expansion-readiness";
 
 const HOST="aws-0-eu-west-1.pooler.supabase.com";
 const PROJECT="bhnaarbzpmcniesxyldx";
@@ -16,9 +17,20 @@ async function main() {
   let client:Client|undefined; let transaction=false;let stage="approval";
   let rollbackConfirmed=false;let commitConfirmed=false;
   try {
+    if(process.argv.length===3&&process.argv[2]==="--check-complete-catalogue"){
+      const readiness=assessCatalogueExpansion(catalogueRecords);
+      console.log(JSON.stringify({status:readiness.structuralScopeComplete?"scope-complete-evidence-review-required":"blocked-incomplete",
+        version:catalogueVersion,...readiness,databaseConnected:false,supabaseWrites:false},null,2));
+      if(!readiness.structuralScopeComplete)process.exitCode=2;
+      return;
+    }
     const verifyOnly=process.argv.length===3&&process.argv[2]==="--verify-catalogue-only";
-    if(!verifyOnly&&(process.argv.length!==3||process.argv[2]!=="--apply-approved-excel-catalogue"))
+    const applyApproved=process.argv.length===3&&["--apply-approved-excel-catalogue","--apply-approved-complete-catalogue"].includes(process.argv[2]);
+    if(!verifyOnly&&!applyApproved)
       throw new Error("EXPLICIT_CATALOGUE_APPROVAL_REQUIRED");
+    // Owner approval is conditional on the full expansion, not just the three
+    // existing eggplant additions. Stop locally before reading admin credentials.
+    if(!verifyOnly){stage="complete_catalogue_scope";assertCompleteCatalogueScope(catalogueRecords);}
     if(process.env.NODE_TLS_REJECT_UNAUTHORIZED==="0")throw new Error("TLS_DISABLED");
     const secret=process.env.SUPABASE_QA_ADMIN_URL;
     if(!secret)throw new Error("DEDICATED_ADMIN_SECRET_MISSING");
