@@ -755,24 +755,32 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     setDeletingId(id ?? "*");
     setDeletionError("");
     const finishMutation = beginMutation();
+    const unconfirmed = "Impossibile confermare la cancellazione. Ricarica il registro.";
+    let failureMessage = unconfirmed;
     try {
       const response = await fetch(id ? `/api/osservazioni/${encodeURIComponent(id)}` : "/api/osservazioni", { method: "DELETE" });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.code === "DELETION_WINDOW_CLOSED"
+        failureMessage = result?.code === "DELETION_WINDOW_CLOSED"
           ? "Cancellazione consentita solo entro 24 ore dalla creazione verificata."
-          : "Impossibile eliminare l’osservazione. Verifica l’accesso e riprova.");
+          : "Impossibile eliminare l’osservazione. Verifica l’accesso e riprova.";
+        throw new Error(failureMessage);
       }
-      if (!Array.isArray(result.deletedIds) || result.deletedIds.some((value: unknown) => typeof value !== "string")) {
-        throw new Error("Impossibile confermare la cancellazione. Ricarica il registro.");
+      const eligibleIds = new Set(osservazioni.filter(o =>
+        (!id || o.id === id) && canDeleteObservation(o.createdAt)).map(o => o.id));
+      if (!result || !Array.isArray(result.deletedIds)
+        || result.deletedIds.some((value: unknown) => typeof value !== "string" || !eligibleIds.has(value))
+        || new Set(result.deletedIds).size !== result.deletedIds.length) {
+        throw new Error(unconfirmed);
       }
       if (activeAccountView.current) {
         const deleted = new Set<string>(result.deletedIds);
         setOsservazioni(prev => prev.filter(o => !deleted.has(o.id)));
       }
-    } catch (error) {
-      if (activeAccountView.current) setDeletionError(error instanceof Error
-        ? error.message : "Impossibile eliminare l’osservazione. Verifica l’accesso e riprova.");
+    } catch {
+      // A lost or unreadable response does not prove whether the server deleted
+      // anything. Keep the snapshot; reconcile with GET, never retry DELETE here.
+      if (activeAccountView.current) setDeletionError(failureMessage);
     } finally {
       finishMutation();
       deletionBusy.current = false;

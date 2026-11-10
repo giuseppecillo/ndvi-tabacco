@@ -13,7 +13,7 @@ declare global {
   interface Window {
     qaObservationTransport?: (request: {
       method: string; pathname: string; seed: typeof records;
-    }) => Promise<{ status: number; body: unknown }>;
+    }) => Promise<{ status: number; body?: unknown; rawBody?: string }>;
   }
 }
 const now = Date.now();
@@ -33,7 +33,9 @@ window.fetch = async (input, init) => {
     const result = await window.qaObservationTransport({ method, pathname: url.pathname, seed: records });
     // Deliberately do not honor AbortSignal here: a delayed stale response must
     // still be rejected by the real registry hook after a deletion.
-    return Response.json(result.body, { status: result.status });
+    return result.rawBody !== undefined
+      ? new Response(result.rawBody, { status: result.status, headers: { "Content-Type": "text/html" } })
+      : Response.json(result.body, { status: result.status });
   }
   if (url.pathname === "/api/osservazioni" && method === "GET") return Response.json(records);
   if (url.pathname.startsWith("/api/osservazioni") && method === "DELETE") {

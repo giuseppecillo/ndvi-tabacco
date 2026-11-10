@@ -36,7 +36,7 @@ async function makeContext(width, height, name) {
   });
   context.setDefaultTimeout(7000);
   const transport = { name, blockedApi: [], blockedExternal: [], blockedWrites: [], websockets: 0,
-    failNext: false, holdNext: false, pending: [] };
+    failNext: false, holdNext: false, pending: [], deleteFault: null, releaseDelete: null };
   await context.route("**/*", async route => {
     const request = route.request();
     const url = new URL(request.url());
@@ -75,15 +75,30 @@ async function makeContext(width, height, name) {
       return { status: 200, body: snapshot };
     }
     if (request.method === "DELETE") {
+      const fault = transport.deleteFault;
+      transport.deleteFault = null;
+      if (fault) {
+        // Hold the response independently of the server-side commit, so the
+        // real UI can be checked before it receives any confirmation.
+        await new Promise(resolve => { transport.releaseDelete = resolve; });
+        transport.releaseDelete = null;
+      }
       const id = request.pathname === "/api/osservazioni"
         ? null : decodeURIComponent(request.pathname.split("/").pop());
-      if (id === "QA-denied") return { status: 403, body: { code: "DELETION_WINDOW_CLOSED" } };
+      if (!fault && id === "QA-denied") return { status: 403, body: { code: "DELETION_WINDOW_CLOSED" } };
       const selected = server.records.filter(row =>
         (!id || row.id === id) && row.createdAt &&
         Date.now() - Date.parse(row.createdAt) <= 86_400_000);
-      server.records = server.records.filter(row => !selected.includes(row));
       const deletedIds = selected.map(row => row.id);
-      server.deleted.push(...deletedIds);
+      if (!fault || fault.commit) {
+        server.records = server.records.filter(row => !selected.includes(row));
+        server.deleted.push(...deletedIds);
+      }
+      if (fault) {
+        if (fault.kind === "network") throw new TypeError("Synthetic DELETE connection lost");
+        if (fault.kind === "non-json") return { status: 200, rawBody: "<html>Interrupted response</html>" };
+        return { status: 200, body: fault.body };
+      }
       return { status: 200, body: { ok: true, deletedIds } };
     }
     throw new TypeError(`Blocked synthetic method: ${request.method}`);
@@ -144,6 +159,104 @@ async function saveLanguageScreenshots(pageCase, phase) {
     const file = `${pageCase.width}x${pageCase.height}-${lang}-${phase}.png`;
     await pageCase.page.screenshot({ path: path.join(screenshotDir, file), fullPage: false });
     result(`screenshot-${file}`, file);
+  }
+}
+
+async function waitUntil(predicate, message) {
+  const deadline = Date.now() + 7000;
+  while (!predicate() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 10));
+  assert.ok(predicate(), message);
+}
+
+async function deletionFailureMatrix(current, base) {
+  const { page, transport } = current;
+  const warnings = {
+    it: "Impossibile confermare la cancellazione. Ricarica il registro.",
+    en: "Unable to confirm deletion. Reload the register.",
+    es: "No se pudo confirmar la eliminación. Vuelve a cargar el registro.",
+  };
+  const bulkLabels = {
+    it: "Elimina rilievi delle ultime 24 ore",
+    en: "Delete observations from the last 24 hours",
+    es: "Eliminar observaciones de las últimas 24 horas",
+  };
+  const faults = [
+    { kind: "network" },
+    { kind: "non-json" },
+    { kind: "missing-ids", body: { ok: true } },
+    { kind: "null-body", body: null },
+    { kind: "non-array", body: { deletedIds: "QA-fault-target" } },
+    { kind: "mixed-types", body: { deletedIds: ["QA-fault-target", 42] } },
+    { kind: "foreign-id", body: { deletedIds: ["QA-fault-target", "QA-expired"] } },
+    { kind: "empty-id", body: { deletedIds: [""] } },
+    { kind: "duplicate-id", body: { deletedIds: ["QA-fault-target", "QA-fault-target"] } },
+  ];
+  let index = 0;
+  for (const mode of ["single", "bulk"]) {
+    for (const fault of faults) {
+      for (const commit of [false, true]) {
+        const lang = languages[index++ % languages.length];
+        // Reset only invented runner-memory data; no API writes or account.
+        server.records = [
+          { ...base, id: "QA-fault-target", createdAt: new Date().toISOString() },
+          { ...base, id: "QA-fault-other", createdAt: new Date().toISOString() },
+          { ...base, id: "QA-expired", createdAt: new Date(Date.now() - 90_000_000).toISOString() },
+          { ...base, id: "QA-legacy", createdAt: null },
+        ];
+        await page.reload();
+        await setLanguage(page, lang);
+        const before = server.records.map(row => row.id);
+        await page.waitForFunction(() => document.body.textContent.includes("QA-fault-target"));
+        await assertUniqueSame(await registryIds(page, lang), before,
+          `${current.name} ${mode}/${fault.kind}/${commit} initial`);
+        const singleLabel = { it: "Elimina rilievo QA-fault-target",
+          en: "Delete observation QA-fault-target", es: "Eliminar observación QA-fault-target" }[lang];
+        const single = page.getByRole("button", { name: singleLabel, exact: true });
+        const bulk = page.getByRole("button", { name: bulkLabels[lang], exact: true });
+        const action = mode === "single" ? single : bulk;
+        const countDeletes = () => server.trace.filter(x => x.context === current.name && x.method === "DELETE").length;
+        const beforeDeletes = countDeletes();
+        transport.deleteFault = { ...fault, commit };
+        // The automatic reconciliation also loses connection. Only a later
+        // reliable focus GET may replace the retained snapshot.
+        transport.failNext = true;
+        page.once("dialog", dialog => dialog.accept());
+        await action.click();
+        await waitUntil(() => transport.releaseDelete !== null, "DELETE held");
+        assert.equal(await single.isDisabled(), true);
+        assert.equal(await bulk.isDisabled(), true);
+        assert.deepEqual(await registryIds(page, lang), before, "No optimistic removal while DELETE is pending");
+        const beforeGets = server.trace.filter(x => x.context === current.name && x.method === "GET").length;
+        transport.releaseDelete();
+        await page.getByRole("alert").filter({ hasText: warnings[lang] }).waitFor();
+        await waitUntil(() => server.trace.filter(x => x.context === current.name && x.method === "GET").length > beforeGets,
+          "automatic reconciliation attempted");
+        await page.waitForFunction(() => !Array.from(document.querySelectorAll("button"))
+          .some(button => button.textContent.includes("…") && button.disabled));
+        assert.equal(await single.isEnabled(), true, "Single control recovers after failure");
+        assert.equal(await bulk.isEnabled(), true, "Bulk control recovers after failure");
+        assert.deepEqual(await registryIds(page, lang), before, "Unconfirmed DELETE and failed GET retain all records");
+        assert.equal(countDeletes(), beforeDeletes + 1, "No automatic DELETE retry");
+        if (fault.kind === "network" && !commit) {
+          await page.screenshot({ path: path.join(screenshotDir, `${current.name}-${mode}-unconfirmed.png`) });
+        }
+        const expected = commit
+          ? before.filter(id => mode === "single" ? id !== "QA-fault-target" : ["QA-expired", "QA-legacy"].includes(id))
+          : before;
+        await focusRefresh(page);
+        await page.waitForFunction(expectedIds => {
+          const table = Array.from(document.querySelectorAll("table")).find(el =>
+            el.querySelector("tbody")?.textContent.includes("QA-expired"));
+          const ids = Array.from(table?.querySelectorAll("tbody tr td:first-child") ?? []).map(el => el.textContent.trim());
+          return JSON.stringify(ids.sort()) === JSON.stringify([...expectedIds].sort());
+        }, expected);
+        await assertUniqueSame(await registryIds(page, lang), expected,
+          `${current.name} ${mode}/${fault.kind} committed=${commit}: reliable GET recovery`);
+        assert.equal(countDeletes(), beforeDeletes + 1, "Refresh must never repeat DELETE");
+        result(`${current.name} ${mode}/${fault.kind} committed=${commit} safety`,
+          { language: lang, warning: warnings[lang], retained: before, recovered: expected, deletes: 1 });
+      }
+    }
   }
 }
 
@@ -410,6 +523,12 @@ try {
     }
   }
 
+  // A single repeatable pass covers desktop/mobile and all three translated
+  // warnings, both before-commit and after-commit response failures.
+  for (const current of [desktop, mobile]) {
+    await go(current.page, "Rilievo e dati");
+    await deletionFailureMatrix(current, base);
+  }
   assert.deepEqual(pageErrors, [], `Page errors: ${pageErrors.join("; ")}`);
   const isolation = {
     contexts: isolatedContexts.map(x => x.transport.name),

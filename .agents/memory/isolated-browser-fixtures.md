@@ -3,6 +3,17 @@ name: Fixture nei collaudi browser isolati
 description: Trasferire fixture sintetiche senza indebolire i blocchi di rete quando il runner browser non importa moduli Node locali.
 ---
 
+Nei collaudi di cancellazione con risposta persa, simulare separatamente
+richieste applicate e non applicate, rendendo indisponibile anche il primo
+aggiornamento successivo.
+
+**Why:** un errore di trasporto non dimostra se la cancellazione sia avvenuta;
+un GET immediato riuscito può nascondere una rimozione locale prematura.
+
+**How to apply:** trattenere la DELETE per osservare i controlli occupati,
+verificare la conservazione dopo l'errore e riconciliare con un GET affidabile,
+contando che nessuna DELETE venga ripetuta automaticamente.
+
 Per provare una risposta obsoleta dopo una cancellazione, lasciare che il
 trasporto sintetico completi il vecchio GET anche dopo l'annullamento.
 
