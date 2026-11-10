@@ -169,6 +169,77 @@ async function waitUntil(predicate, message) {
   assert.ok(predicate(), message);
 }
 
+async function malformedRegistryMatrix(current, base) {
+  const { page } = current;
+  await go(page, "Rilievo e dati");
+  await setLanguage(page, "it");
+  const original = clone(server.records);
+  const faults = [
+    ["null-record", rows => [...rows, null]],
+    ["missing-id", rows => [...rows, { ...base, id: undefined }]],
+    ["blank-id", rows => [...rows, { ...base, id: " " }]],
+    ["duplicate-id", rows => [...rows, { ...rows[0], cliente: "Must not replace original" }]],
+    ["incomplete-record", rows => [...rows, { id: "QA-incomplete" }]],
+    ["missing-gps", rows => [...rows, { ...base, id: "QA-no-gps", lat: undefined }]],
+    ["invalid-number", rows => [...rows, { ...base, id: "QA-string-dose", dose: "20" }]],
+    ["invalid-client", rows => [...rows, { ...base, id: "QA-object-client", cliente: {} }]],
+  ];
+  const warnings = {
+    it: "Aggiornamento del registro non riuscito: i dati ricevuti sono incompleti o non validi. I rilievi già caricati non sono stati modificati. Torna alla pagina per riprovare.",
+    en: "Unable to refresh the register: the received data is incomplete or invalid. Previously loaded observations have not been changed. Return to the page to try again.",
+    es: "No se pudo actualizar el registro: los datos recibidos están incompletos o no son válidos. Los registros ya cargados no se han modificado. Vuelve a la página para reintentarlo.",
+  };
+  const beforeDeletes = server.trace.filter(x => x.method === "DELETE").length;
+  for (const [name, corrupt] of faults) {
+    const before = clone(server.records);
+    const beforeTable = await (await registryTable(page, "it")).innerText();
+    // Include legitimate new data before the bad record: no partial import.
+    // Backend stores empty transplant/sowing dates as SQL NULL. Catalogue
+    // observations with these dates must survive validation and render safely.
+    const next = [...before, {
+      ...base, id: `QA-recovered-${name}`, coltura: "mais", varieta: "QA synthetic maize",
+      dataTrapianto: null, dataSemina: null, faseFenologica: null,
+    }];
+    await page.evaluate(body => {
+      window.qaObservationNextGet = { body };
+      window.dispatchEvent(new Event("focus"));
+    }, corrupt(clone(next)));
+    await page.getByRole("alert").filter({ hasText: warnings.it }).waitFor();
+    assert.equal(await (await registryTable(page, "it")).innerText(), beforeTable,
+      `${name}: the complete previous snapshot must remain unchanged`);
+    await assertUniqueSame(await registryIds(page, "it"), before.map(row => row.id),
+      `${current.name} malformed GET/${name}: retained registry`);
+    for (const lang of languages) {
+      await setLanguage(page, lang);
+      await page.getByRole("alert").filter({ hasText: warnings[lang] }).waitFor();
+    }
+    await go(page, "Storico Rilievi");
+    await assertUniqueSame(await historyIds(page), before.map(row => row.id),
+      `${current.name} malformed GET/${name}: retained history`);
+    if (name === "null-record") {
+      await page.screenshot({ path: path.join(screenshotDir, `${current.name}-invalid-registry.png`) });
+    }
+    server.records = next;
+    await focusRefresh(page);
+    await page.getByRole("alert").filter({ hasText: warnings.es }).waitFor({ state: "detached" });
+    await assertUniqueSame(await historyIds(page), next.map(row => row.id),
+      `${current.name} malformed GET/${name}: next valid GET recovers`);
+    await go(page, "Rilievo e dati");
+    await setLanguage(page, "it");
+    await assertUniqueSame(await registryIds(page, "it"), next.map(row => row.id),
+      `${current.name} malformed GET/${name}: recovered registry`);
+  }
+  assert.equal(server.trace.filter(x => x.method === "DELETE").length, beforeDeletes);
+  server.records = original;
+  await focusRefresh(page);
+  await page.waitForFunction(ids => {
+    const table = Array.from(document.querySelectorAll("table")).find(el =>
+      el.querySelector("tbody")?.textContent.includes("QA-expired"));
+    const actual = Array.from(table?.querySelectorAll("tbody tr td:first-child") ?? []).map(el => el.textContent.trim());
+    return JSON.stringify(actual.sort()) === JSON.stringify([...ids].sort());
+  }, original.map(row => row.id));
+}
+
 async function deletionFailureMatrix(current, base) {
   const { page, transport } = current;
   const warnings = {
@@ -529,6 +600,7 @@ try {
   for (const current of [desktop, mobile]) {
     await go(current.page, "Rilievo e dati");
     await deletionFailureMatrix(current, base);
+    await malformedRegistryMatrix(current, base);
   }
   assert.deepEqual(pageErrors, [], `Page errors: ${pageErrors.join("; ")}`);
   const scopePass = await runStorageScopePass({

@@ -177,10 +177,10 @@ export type Observation = {
   id: string;
   coltura: Coltura;
   data: string;
-  dataTrapianto: string;
-  dataSemina?: string;
+  dataTrapianto: string | null;
+  dataSemina?: string | null;
   giorni: number;
-  faseFenologica?: string;
+  faseFenologica?: string | null;
   bbch?: string | null;
   faseFonte?: string | null;
   etaPiantina: EtaPiantina;
@@ -839,7 +839,9 @@ function AccountApp({ storageScope, migrateLegacySettings }: { storageScope: str
         </ModuleHeading>
 
         {deletionError && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{t(deletionError)}</p>}
-        {registryError && <p role="alert" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{t("Aggiornamento del registro non riuscito. Verifica la connessione e torna alla pagina per riprovare.")}</p>}
+        {registryError && <p role="alert" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{t(registryError === "invalid-response"
+          ? "Aggiornamento del registro non riuscito: i dati ricevuti sono incompleti o non validi. I rilievi già caricati non sono stati modificati. Torna alla pagina per riprovare."
+          : "Aggiornamento del registro non riuscito. Verifica la connessione e torna alla pagina per riprovare.")}</p>}
 
         {activeTab === "catalogo" && <CropCatalogue active tobaccoVarieties={Object.values(VARIETA_DB)} />}
 

@@ -41,3 +41,15 @@ confronto rispetto ai rilievi effettuati dagli utenti.
 **How to apply:** condividere i dati dello stesso account sul sito pubblico,
 aggiornare le viste dopo scritture e al ritorno da un altro dispositivo.
 La richiesta non autorizza a copiare la produzione nella preview isolata.
+
+Validate registry snapshots against the persisted read contract, not only the
+form's write shape. Synthetic history fixtures must include mixed crops and
+legitimately absent planting dates and metadata.
+
+**Why:** Complete tobacco-only fixtures can pass structural validation tests
+while excluding valid catalogue observations whose empty form fields become
+null when persisted.
+
+**How to apply:** Before tightening the registry boundary, inspect serialization
+and nullability on the read path and include a realistic mixed snapshot in the
+recovery tests. Do not invent dates to satisfy a validator.

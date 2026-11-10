@@ -26,6 +26,16 @@ mobile non presenta overflow orizzontale.
 
 Report JSON/Markdown e screenshot sono salvati sotto
 `generated-artifacts/observation-deletion/` (ignorato da Git e deployment).
+Il runner verifica inoltre GET con record nulli, ID mancanti/vuoti/duplicati,
+record incompleti, coordinate mancanti e tipi errati: conserva l'intero snapshot
+nel registro e nello storico, controlla l'avviso in IT/EN/ES e il recupero senza
+duplicati al successivo GET valido, su entrambe le risoluzioni.
+L'entry DEV espone `window.qaObservationNextGet = { body: ... }` per sostituire
+un solo GET sintetico senza modificare i dati di partenza.
+Il test unitario `src/utils/observationRegistryValidation.test.ts` documenta
+la validazione strutturale: campi obbligatori tipizzati, numeri finiti, GPS
+numerico o nullo e metadati opzionali compatibili con lo storico. Non esegue
+nuove valutazioni agronomiche né normalizza o elimina record dalla risposta.
 Questa è una simulazione Chromium, non una prova di Safari o di dispositivi
 fisici. Gli inserimenti sono sintetici: non verifica salvataggio reale,
 autenticazione o sincronizzazione del backend. Dettagli e limiti:

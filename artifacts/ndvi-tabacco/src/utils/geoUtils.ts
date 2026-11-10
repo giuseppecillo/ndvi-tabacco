@@ -759,9 +759,9 @@ export function downloadGeoTiff(result: PolyIdwResult): void {
 
 export function buildObservationsCsv(
   osservazioni: {
-    id: string; coltura?: string; data: string; dataTrapianto: string; dataSemina?: string;
+    id: string; coltura?: string; data: string; dataTrapianto: string | null; dataSemina?: string | null;
     giorni: number;
-    faseFenologica?: string;
+    faseFenologica?: string | null;
     bbch?: string | null; faseFonte?: string | null;
     cliente: string; appezzamento: string; varieta: string;
     densitaValore?: number | null; densitaUnita?: string | null; pianteHaEquivalenti?: number | null;

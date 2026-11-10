@@ -6,7 +6,7 @@ import { getLocale, t } from "../i18n/runtime";
 import { formatRecordedDose } from "./observationDose";
 
 /** Date-only values are calendar dates: do not shift them through UTC. */
-function reportDate(value: string, locale: string): string {
+function reportDate(value: string | null | undefined, locale: string): string {
   if (!value) return "—";
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return value;

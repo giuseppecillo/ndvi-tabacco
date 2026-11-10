@@ -13,6 +13,8 @@ if (!import.meta.env.DEV) throw new Error("Development-only synthetic deletion h
 // in the runner, never via an API, account, localStorage or database.
 declare global {
   interface Window {
+    // One-shot malformed GET for manual/automated QA without touching seed data.
+    qaObservationNextGet?: { body: unknown };
     qaObservationTransport?: (request: {
       method: string; pathname: string; seed: typeof records; scope: string;
     }) => Promise<{ status: number; body?: unknown; rawBody?: string }>;
@@ -34,6 +36,11 @@ window.fetch = async (input, init) => {
   const method = init?.method ?? (input instanceof Request ? input.method : "GET");
   if(method==="GET"&&["/api/variety-proposals","/api/variety-templates"].includes(url.pathname))return Response.json([]);
   if (url.origin !== location.origin) throw new Error("External requests disabled.");
+  if (url.pathname === "/api/osservazioni" && method === "GET" && window.qaObservationNextGet) {
+    const { body } = window.qaObservationNextGet;
+    delete window.qaObservationNextGet;
+    return Response.json(body);
+  }
   if (window.qaObservationTransport && /^\/api\/osservazioni(?:\/|$)/.test(url.pathname)) {
     const result = await window.qaObservationTransport({ method, pathname: url.pathname, seed: records, scope });
     window.qaTransportSettled = (window.qaTransportSettled ?? 0) + 1;
@@ -60,7 +67,7 @@ function RegistryProbe({ storageScope }: { storageScope: string }) {
   useLayoutEffect(() => {
     (window.qaRegistryCommits ??= []).push({
       scope: storageScope, ids: registry.observations.map(o => o.id),
-      loading: registry.loading, error: registry.error,
+      loading: registry.loading, error: Boolean(registry.error),
     });
   });
   return <output data-testid="registry-probe">{JSON.stringify({

@@ -16,6 +16,7 @@ export const common: readonly Translation[] = [
   ["Proposta non più in attesa.", "This proposal has already been reviewed.", "Esta propuesta ya se ha revisado."],
   ["Revisione della proposta non riuscita.", "Unable to review the proposal.", "No se pudo revisar la propuesta."],
   ["Aggiornamento del registro non riuscito. Verifica la connessione e torna alla pagina per riprovare.", "Unable to refresh the register. Check your connection and return to the page to try again.", "No se pudo actualizar el registro. Comprueba la conexión y vuelve a la página para reintentarlo."],
+  ["Aggiornamento del registro non riuscito: i dati ricevuti sono incompleti o non validi. I rilievi già caricati non sono stati modificati. Torna alla pagina per riprovare.", "Unable to refresh the register: the received data is incomplete or invalid. Previously loaded observations have not been changed. Return to the page to try again.", "No se pudo actualizar el registro: los datos recibidos están incompletos o no son válidos. Los registros ya cargados no se han modificado. Vuelve a la página para reintentarlo."],
   ["Elimina rilievo {0}", "Delete observation {0}", "Eliminar observación {0}"],
   ["Elimina entro 24 ore", "Delete within 24 hours", "Eliminar en un plazo de 24 horas"],
   ["Eliminazione in corso…", "Deleting…", "Eliminando…"],
