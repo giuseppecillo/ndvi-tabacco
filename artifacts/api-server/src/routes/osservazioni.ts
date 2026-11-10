@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import pool from "../lib/db";
 import { saveWithUsage } from "../lib/plan-store";
 import { PlanError, validDay } from "../lib/plan-model";
+import { RECENT_OBSERVATION_SQL } from "../lib/observation-deletion";
 import { riferimentoNdviTabacco, calcolaDoseNTabacco } from "@workspace/tobacco-calculations";
 import { requireAccount, requirePrivacyAck, requireSubscription } from "../middlewares/access";
 import {
@@ -288,18 +289,39 @@ router.post("/osservazioni", async (req, res) => {
 // DELETE — remove an observation by id
 router.delete("/osservazioni/:id", async (req, res) => {
   try {
-    await pool.query("DELETE FROM osservazioni WHERE observation_id=$1 AND owner_id=$2", [req.params.id, res.locals.account.id]);
-    res.json({ ok: true });
+    const deleted = await pool.query(
+      `DELETE FROM osservazioni WHERE observation_id=$1 AND owner_id=$2
+       AND ${RECENT_OBSERVATION_SQL} RETURNING observation_id`,
+      [req.params.id, res.locals.account.id],
+    );
+    if (!deleted.rows.length) {
+      const own = await pool.query(
+        "SELECT 1 FROM osservazioni WHERE observation_id=$1 AND owner_id=$2",
+        [req.params.id, res.locals.account.id],
+      );
+      res.status(own.rows.length ? 403 : 404).json({
+        error: own.rows.length
+          ? "Cancellazione consentita solo entro 24 ore dalla creazione verificata."
+          : "Osservazione non trovata.",
+        code: own.rows.length ? "DELETION_WINDOW_CLOSED" : "OBSERVATION_NOT_FOUND",
+      });
+      return;
+    }
+    res.json({ ok: true, deletedIds: deleted.rows.map(r => r.observation_id) });
   } catch (err) {
     res.status(500).json({ error: "Impossibile eliminare l’osservazione." });
   }
 });
 
-// DELETE all — reset the entire registry
+// Bulk deletion obeys the same time window; older history is never reset here.
 router.delete("/osservazioni", async (_req, res) => {
   try {
-    await pool.query("DELETE FROM osservazioni WHERE owner_id=$1", [res.locals.account.id]);
-    res.json({ ok: true });
+    const deleted = await pool.query(
+      `DELETE FROM osservazioni WHERE owner_id=$1 AND ${RECENT_OBSERVATION_SQL}
+       RETURNING observation_id`,
+      [res.locals.account.id],
+    );
+    res.json({ ok: true, deletedIds: deleted.rows.map(r => r.observation_id) });
   } catch (err) {
     res.status(500).json({ error: "Impossibile cancellare il registro." });
   }

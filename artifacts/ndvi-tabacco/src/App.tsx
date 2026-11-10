@@ -8,6 +8,8 @@ import { buildObservationPdf } from "./utils/observationPdf";
 import { ElaborazioniMappe } from "./ElaborazioniMappe";
 import { ObservationDistributionChart } from "./ObservationDistributionChart";
 import { ObservationList } from "./components/ObservationList";
+import { ObservationDeleteButton } from "./components/ObservationDeleteButton";
+import { canDeleteObservation } from "./utils/observationDeletion";
 import { CropCatalogue } from "./components/CropCatalogue";
 import { CatalogueCropParameters, CatalogueCropResults } from "./components/CatalogueCropParameters";
 import { CROP_PROFILES, CATALOGUE_CROPS, cropPhaseSource, isCatalogueCrop, getCropReference, calculateCrop } from "@workspace/crop-calculations";
@@ -336,6 +338,19 @@ function NumberInput({
 const today = new Date().toISOString().slice(0, 10);
 
 export default function App({ storageScope, migrateLegacySettings = false }: { storageScope: string; migrateLegacySettings?: boolean }) {
+  const [deletionNow, setDeletionNow] = useState(Date.now);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletionError, setDeletionError] = useState("");
+  const deletionBusy = useRef(false);
+  useEffect(() => {
+    const refresh = () => setDeletionNow(Date.now());
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
   const activeAccountView = useRef(true);
   useEffect(() => {
     activeAccountView.current = true;
@@ -723,24 +738,51 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
     }
   }, [isCatalogo, risultatiCatalogo, obsId, coltura, data, dataTrapianto, giorni, etaPiantina, cliente, appezzamento, osservazioni, resa, varieta, densitaValore, densitaUnita, densita.pianteHaEquivalenti, densitaGrano.semiHaEquivalenti, n1, n2, n3, n4, n5, risultati, risultatiGrano, risultatiPomodoro, fasePomodoro, isPomodoro, azotoGiaDistribuito, dataTrapiantoFutura, isGranoDuro, bbchGrano, bbchGranoConfermato, faseGrano, faseGranoSelezionata]);
 
-  const eliminaOsservazione = useCallback((id: string) => {
-    fetch(`/api/osservazioni/${encodeURIComponent(id)}`, { method: "DELETE" })
-      .then((response) => {
-        if (!response.ok) throw new Error("Eliminazione non riuscita.");
-        setOsservazioni((prev) => prev.filter((o) => o.id !== id));
-      })
-      .catch(() => setErrors(current => ({ ...current, save: "Impossibile eliminare l’osservazione. Verifica l’accesso e riprova." })));
-  }, []);
-
-  const resetRegistro = useCallback(() => {
-    if (!window.confirm("Sei sicuro di voler cancellare tutto il registro? L'operazione è irreversibile.")) return;
-    fetch("/api/osservazioni", { method: "DELETE" })
-      .then((response) => {
-        if (!response.ok) throw new Error("Cancellazione non riuscita.");
-        setOsservazioni([]);
-      })
-      .catch(() => setErrors(current => ({ ...current, save: "Impossibile cancellare il registro. Verifica l’accesso e riprova." })));
-  }, []);
+  const deleteObservations = useCallback(async (id?: string) => {
+    if (deletionBusy.current) return;
+    if (id) {
+      const observation = osservazioni.find(o => o.id === id);
+      if (!observation || !canDeleteObservation(observation.createdAt)) {
+        setDeletionError("Cancellazione consentita solo entro 24 ore dalla creazione verificata.");
+        setDeletionNow(Date.now());
+        return;
+      }
+    }
+    const confirmation = id
+      ? "Eliminare questo rilievo? L’operazione è irreversibile."
+      : "Eliminare i rilievi creati nelle ultime 24 ore? I rilievi precedenti saranno conservati. L’operazione è irreversibile.";
+    if (!window.confirm(t(confirmation))) return;
+    deletionBusy.current = true;
+    setDeletingId(id ?? "*");
+    setDeletionError("");
+    try {
+      const response = await fetch(id ? `/api/osservazioni/${encodeURIComponent(id)}` : "/api/osservazioni", { method: "DELETE" });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.code === "DELETION_WINDOW_CLOSED"
+          ? "Cancellazione consentita solo entro 24 ore dalla creazione verificata."
+          : "Impossibile eliminare l’osservazione. Verifica l’accesso e riprova.");
+      }
+      if (!Array.isArray(result.deletedIds) || result.deletedIds.some((value: unknown) => typeof value !== "string")) {
+        throw new Error("Impossibile confermare la cancellazione. Ricarica il registro.");
+      }
+      if (activeAccountView.current) {
+        const deleted = new Set<string>(result.deletedIds);
+        setOsservazioni(prev => prev.filter(o => !deleted.has(o.id)));
+      }
+    } catch (error) {
+      if (activeAccountView.current) setDeletionError(error instanceof Error
+        ? error.message : "Impossibile eliminare l’osservazione. Verifica l’accesso e riprova.");
+    } finally {
+      deletionBusy.current = false;
+      if (activeAccountView.current) {
+        setDeletingId(null);
+        setDeletionNow(Date.now());
+      }
+    }
+  }, [osservazioni]);
+  const eliminaOsservazione = useCallback((id: string) => { void deleteObservations(id); }, [deleteObservations]);
+  const resetRegistro = useCallback(() => { void deleteObservations(); }, [deleteObservations]);
 
   const esportaPDF = useCallback(() => {
     // Logo (convert img URL → base64 via canvas)
@@ -782,6 +824,8 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
           <p className="text-amber-900 mt-0.5 text-sm">Supporto alla fertilizzazione azotata</p>
         </ModuleHeading>
 
+        {deletionError && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{t(deletionError)}</p>}
+
         {activeTab === "catalogo" && <CropCatalogue active tobaccoVarieties={Object.values(VARIETA_DB)} />}
 
         <div hidden={activeTab !== "elaborazioni"}>
@@ -800,7 +844,7 @@ export default function App({ storageScope, migrateLegacySettings = false }: { s
                 Nessun rilievo salvato. Le osservazioni registrate in Rilievo e dati compariranno qui, raggruppate per cliente e data.
               </p>
             ) : (
-              <ObservationList osservazioni={osservazioni} />
+              <ObservationList osservazioni={osservazioni} onDelete={eliminaOsservazione} deletionNow={deletionNow} deletingId={deletingId} />
             )}
           </div>
         </div>
