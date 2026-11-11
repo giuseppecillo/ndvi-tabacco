@@ -22,7 +22,9 @@ test("narrowed scope admits exactly the unchanged baseline and three reviewed sa
 
 test("a complete-looking new identity still needs an explicit evidence review", () => {
   const original = catalogueRecords.find(isAddition)!;
-  const unreviewed = rehash({ ...original, variety: "Not reviewed" });
+  const parameters = original.parameters as { profile: object };
+  const unreviewed = rehash({ ...original, crop: "Orzo", variety: "Not reviewed",
+    parameters: { ...parameters, profile: { ...parameters.profile, crop: "Orzo", name: "Not reviewed" } } });
   assert.throws(() => assertVerifiedCatalogueScope([...catalogueRecords, unreviewed]), /VERIFIED_SCOPE_MISMATCH/);
   const replaced = catalogueRecords.map(r => r === original ? unreviewed : r);
   assert.throws(() => assertVerifiedCatalogueScope(replaced), /VERIFIED_SCOPE_MISMATCH/);

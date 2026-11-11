@@ -1,5 +1,14 @@
 # Ampliamento del catalogo: verifica delle evidenze
 
+**Perimetro successivamente ridotto dal titolare:** inserire soltanto
+profili colturali completi verificati, senza schede parziali.
+La selezione comprende le tre melanzane documentate qui; non attende più
+il completamento di tutte le colture candidate. Il controllo e l'applicazione
+del sottoinsieme sono descritti nella
+[release verificata](catalogue-verified-release.md).
+Le descrizioni di mancata applicazione riportate sotto si riferiscono alla
+fase di ricerca precedente, non all'esito del nuovo percorso autorizzato.
+
 ## Esito dopo l'autorizzazione alle medie di coltura
 
 Sono stati aggiunti alla sorgente applicativa tre profili completi di
