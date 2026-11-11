@@ -5,7 +5,9 @@ description: Regola richiesta per completare i modelli colturali prima dell'inte
 
 Quando ci sono problemi o mancano parametri per il calcolo automatico della
 dose, prendere sempre come riferimento varietà affini appartenenti alla
-stessa coltura. Il catalogo deve essere completo prima di integrarlo.
+stessa coltura. Dopo la successiva riduzione di perimetro, possono essere
+integrati i soli profili completi verificati senza attendere tutte le
+colture candidate.
 
 **Why:** l'utente ha ribadito questa istruzione correggendo l'integrazione
 limitata alla sola consultazione.

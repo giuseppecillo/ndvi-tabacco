@@ -10,6 +10,8 @@ import {inventoryConfig} from "../../../../lib/db/migration-preparation/inventor
 import {SUPABASE_RUNTIME_CA} from "../../../../lib/db/src/supabase-runtime-ca";
 import {catalogueRecords,catalogueVersion,catalogueCounts,assertCatalogueRows} from "../lib/catalogue-manifest";
 import {assessCatalogueExpansion,assertCompleteCatalogueScope} from "../lib/catalogue-expansion-readiness";
+import {assessVerifiedCatalogueScope,assertVerifiedCatalogueScope,assertStoredLegacyCatalogue} from "../lib/catalogue-verified-scope";
+import {LEGACY_VERSION} from "../lib/catalogue-expansion-readiness";
 
 const HOST="aws-0-eu-west-1.pooler.supabase.com";
 const PROJECT="bhnaarbzpmcniesxyldx";
@@ -17,6 +19,13 @@ async function main() {
   let client:Client|undefined; let transaction=false;let stage="approval";
   let rollbackConfirmed=false;let commitConfirmed=false;
   try {
+    if(process.argv.length===3&&process.argv[2]==="--check-verified-catalogue"){
+      const readiness=assessVerifiedCatalogueScope(catalogueRecords);
+      console.log(JSON.stringify({status:readiness.verifiedScopeComplete?"verified-scope-ready":"blocked-unverified",
+        version:catalogueVersion,...readiness,databaseConnected:false,supabaseWrites:false},null,2));
+      if(!readiness.verifiedScopeComplete)process.exitCode=2;
+      return;
+    }
     if(process.argv.length===3&&process.argv[2]==="--check-complete-catalogue"){
       const readiness=assessCatalogueExpansion(catalogueRecords);
       console.log(JSON.stringify({status:readiness.structuralScopeComplete?"scope-complete-evidence-review-required":"blocked-incomplete",
@@ -25,12 +34,16 @@ async function main() {
       return;
     }
     const verifyOnly=process.argv.length===3&&process.argv[2]==="--verify-catalogue-only";
-    const applyApproved=process.argv.length===3&&["--apply-approved-excel-catalogue","--apply-approved-complete-catalogue"].includes(process.argv[2]);
+    const applyVerified=process.argv.length===3&&process.argv[2]==="--apply-approved-verified-catalogue";
+    const applyApproved=process.argv.length===3&&["--apply-approved-excel-catalogue","--apply-approved-complete-catalogue",
+      "--apply-approved-verified-catalogue"].includes(process.argv[2]);
     if(!verifyOnly&&!applyApproved)
       throw new Error("EXPLICIT_CATALOGUE_APPROVAL_REQUIRED");
-    // Owner approval is conditional on the full expansion, not just the three
-    // existing eggplant additions. Stop locally before reading admin credentials.
-    if(!verifyOnly){stage="complete_catalogue_scope";assertCompleteCatalogueScope(catalogueRecords);}
+    // The owner now authorizes only reviewed complete additions. This separate
+    // allowlisted path does not weaken the original full-expansion guard.
+    // Both guards run before reading credentials or opening a connection.
+    if(applyVerified){stage="verified_catalogue_scope";assertVerifiedCatalogueScope(catalogueRecords);}
+    else if(!verifyOnly){stage="complete_catalogue_scope";assertCompleteCatalogueScope(catalogueRecords);}
     if(process.env.NODE_TLS_REJECT_UNAUTHORIZED==="0")throw new Error("TLS_DISABLED");
     const secret=process.env.SUPABASE_QA_ADMIN_URL;
     if(!secret)throw new Error("DEDICATED_ADMIN_SECRET_MISSING");
@@ -110,6 +123,11 @@ async function main() {
         WHERE has_table_privilege(role_name,'agronomy_catalogue.model_profiles','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')) AS api_access`);
     if(!permissions.rows[0].runtime_read||permissions.rows[0].runtime_write||permissions.rows[0].api_access)
       throw new Error("CATALOGUE_PERMISSIONS_FAILED");
+    if(applyVerified){
+      stage="stored_legacy_comparison";
+      const legacy=await client.query("SELECT crop,variety,model,parameters,record_hash FROM agronomy_catalogue.model_profiles WHERE version=$1",[LEGACY_VERSION]);
+      assertStoredLegacyCatalogue(legacy.rows);
+    }
     stage="insert_immutable_release";
     const before=await client.query("SELECT crop,variety,model,parameters,record_hash FROM agronomy_catalogue.model_profiles WHERE version=$1",[catalogueVersion]);
     if(before.rows.length)assertCatalogueRows(before.rows);
@@ -122,10 +140,11 @@ async function main() {
     assertCatalogueRows(after.rows);
     stage="commit";await client.query("COMMIT");transaction=false;commitConfirmed=true;
     const report={status:"applied-and-fully-compared",version:catalogueVersion,profiles:catalogueRecords.length,
+      ...(applyVerified?{scope:assertVerifiedCatalogueScope(catalogueRecords)}:{}),
       counts:catalogueCounts,tls:{ca:true,hostname:true,protocol:socket.getProtocol()},
       runtimeReadOnly:true,dataApiAccess:false,rls:true,transactionCommitted:true,
       existingClientData:"not-read-or-modified",applicationConnection:"unchanged",published:false};
-    writeFileSync(resolve("generated-artifacts/catalogue-360-result.json"),JSON.stringify(report,null,2)+"\n");
+    writeFileSync(resolve(applyVerified?"generated-artifacts/catalogue-verified-result.json":"generated-artifacts/catalogue-360-result.json"),JSON.stringify(report,null,2)+"\n");
     console.log(JSON.stringify(report));
   }catch(error){
     if(client&&transaction)try{await client.query("ROLLBACK");rollbackConfirmed=true;}catch{}

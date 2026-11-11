@@ -39,3 +39,16 @@ condizione precedente alla migrazione.
 delle aggiunte prima di applicare la release del solo catalogo. Non anticipare
 la migrazione con profili incompleti e non estendere il consenso a modifiche
 dei rilievi, degli account o a una pubblicazione dell'app.
+
+Il titolare ha successivamente ridotto il perimetro: «INSERISCI SOLO LE
+COLTURE E VARIETA' VERIFICATE». Non è più necessario attendere la copertura
+di tutte le colture candidate per inserire il sottoinsieme completo verificato.
+
+**Why:** nuova istruzione esplicita del titolare, successiva alla richiesta
+di completare tutta la tabella prima dell'integrazione.
+
+**How to apply:** mantenere tutti i profili precedenti e ammettere soltanto
+aggiunte complete con evidenze controllate, incluse le medie della stessa
+coltura già autorizzate. I risultati bibliografici parziali restano fuori
+dal catalogo operativo e dai calcoli; non descrivere queste esclusioni
+come colture integrate né medie autorizzate come calibrazioni sperimentali.
