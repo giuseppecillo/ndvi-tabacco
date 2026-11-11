@@ -44,3 +44,14 @@ Per i nuovi profili vanno bene anche i valori NDVI rilevati da satellite o drone
 **How to apply:** non escludere una fonte soltanto perché aerea o satellitare;
 conservare piattaforma, metodo e associazione alle fasi nella traccia tecnica,
 senza dedurre automaticamente equivalenza con un sensore da terra.
+
+Le tabelle numeriche PDF estratte automaticamente possono avere colonne
+disallineate anche quando il testo restituito sembra completo.
+
+**Why:** durante la ricerca sul triticale, il confronto con le pagine originali
+renderizzate ha corretto l'attribuzione dei valori NDVI alle rispettive fasi.
+
+**How to apply:** verificare visivamente intestazioni, unità, righe dei
+trattamenti e colonne di media prima di ammettere dati numerici. Conservare
+la scala fenologica originale; Zadoks, BBCH e FAO-56 non sono etichette
+intercambiabili.

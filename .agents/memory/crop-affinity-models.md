@@ -14,3 +14,19 @@ limitata alla sola consultazione.
 usata come riferimento quando si trasferiscono parametri. Non sostituire
 silenziosamente una coltura con un'altra né presentare una stima per affinità
 come una calibrazione sperimentale della varietà selezionata.
+
+Per le varietà di grano tenero l'utente autorizza espressamente l'uso dei dati
+medi NDVI e azoto del frumento duro. Per triticale e miglio chiede dati
+standard di cereali della stessa specie.
+
+**Why:** il titolare ha modificato esplicitamente il criterio per il grano
+tenero e precisato quello per triticale e miglio.
+
+**How to apply:** trattare il trasferimento duro → tenero come un'eccezione
+autorizzata per NDVI e azoto, non come equivalenza sperimentale né come
+permesso di trasferire anche densità e resa o dati fra altre colture.
+Conservare origine e metodo nel materiale tecnico separato, senza aggiungere
+etichette di provenienza alla tabella principale. Per orzo, avena, ortive,
+fragola e fruttiferi proseguire la ricerca nelle pubblicazioni di remote
+sensing, inclusi dati satellitari e materiali e metodi; per l'avena includere
+anche presentazioni e materiale tecnico su densità, resa e unità di azoto.

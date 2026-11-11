@@ -1,4 +1,4 @@
-- [Varietà affini](crop-affinity-models.md) — Completare i riferimenti prima dell'integrazione; per parametri mancanti usare varietà affini della stessa coltura.
+- [Varietà affini](crop-affinity-models.md) — Riferimenti della stessa coltura; eccezione autorizzata per NDVI e azoto medi dal duro al tenero.
 - [Ambito dati colture](crop-data-scope.md) — Escludere potassio, fosforo, acqua e note dall'integrazione richiesta.
 - [Catalogo persistente](catalogue-persistence-scope.md) — Preparazione offline, applicazione autorizzata e attivazione dei calcoli sono passaggi distinti; mai modificare rilievi.
 - [Fonti e selezione varietale](variety-source-trust.md) — Verificare fonti e diffusione commerciale; non inventare dati né riportare nuovi profili incompleti.

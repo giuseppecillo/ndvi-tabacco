@@ -7,6 +7,14 @@ NDVI da satellite o drone. **Non è un catalogo di nuovi profili**, non contiene
 valori da importare e non attiva calcoli. Le 23 colture/gruppi mancanti non
 sono ancora integrate: questo approfondimento non completa l'incarico.
 
+**Aggiornamento successivo:** il titolare ha autorizzato NDVI e azoto medi
+del duro per il tenero. Nuove tabelle numeriche, fonti recuperate e limiti
+residui sono in
+[Nuovi riferimenti remote sensing](catalogue-expansion-remote-sensing-followup.md).
+Questo aggiornamento supera le lacune specifiche indicate sotto per i
+valori satellitari del miglio e per i punti NDVI FAO-56 del cavolfiore;
+non attesta ancora l'integrazione operativa dei relativi profili.
+
 Sono state cercate fonti per tutti i gruppi, prima sugli strumenti prossimali
 e poi anche su piattaforme aeree e satellitari. Le evidenze sotto distinguono
 testi recuperati, abstract/metadati e riferimenti solo individuati. Non si
@@ -323,17 +331,17 @@ sopra e al rapporto precedente.
 
 | Gruppo | Riferimenti esaminati o individuati | Lacuna prima dell'ammissione |
 |---|---|---|
-| Grano tenero | R1, R4; Cezanne nel rapporto precedente | Densità coerente e serie fase/N/NDVI completa |
+| Grano tenero | R1, R4; Cezanne; nuovo riferimento medio del duro autorizzato | Densità/resa e identità del tenero; integrazione coerente fra curva DAS e schemi N nativi |
 | Orzo | R2; Povh nel rapporto precedente | NDVI e quote N associati a tutte le fasi |
 | Avena | R3 | Destinazione, unità e serie fase/N/NDVI da consolidare |
-| Triticale | R4; Povh nel rapporto precedente | Densità di piante e piano N coerente con la serie NDVI |
+| Triticale | R4; Povh; nuova prova Karaman 2023 | Recuperati cinque NDVI, rese varietali e piano N 30+60; restano unità di densità, stadi e selezione commerciale |
 | Melone | R13 | Resa e quote N per le fasi dei dati UAS |
 | Carciofo | R6 | Densità discordante, copertura delle fasi, resa e N coerenti |
 | Cavolo cappuccio | R7 | Consolidamento varietà/trattamento/fase/N/NDVI |
 | Cavolo verza | R8 | Testo pertinente recuperabile e serie completa della verza |
 | Cavolo nero | R8 | Serie documentata della tipologia, senza sostituirla con altri cavoli |
 | Cavolini di Bruxelles | R8 | NDVI per fase e completamento dei parametri |
-| Cavolfiore | R9 | Set numerico NDVI e fertilizzante per fase, non solo progetto UAV |
+| Cavolfiore | R9; nuova tabella University of Arizona | Recuperati punti NDVI FAO-56; restano cultivar e dati agronomici compatibili, senza inventare BBCH |
 | Patata | R10 | Dose fertilizzante e serie completa per fase, distinta da concentrazione N |
 | Carota | R11 | Riferimenti fase/N/NDVI e scelta della destinazione produttiva |
 | Rucola | R14 | Specie, cicli di raccolta e NDVI per fase |
@@ -341,7 +349,7 @@ sopra e al rapporto precedente.
 | Pesco | R16 | NDVI per fase compatibile con il contesto produttivo |
 | Albicocco | R16 | Testo verificabile e serie propria, senza trasferimenti dal pesco |
 | Peperone | R12 | NDVI assoluto e dose per superficie/fase, non concentrazione in soluzione |
-| Miglio | R5 | Consolidamento delle due fonti e copertura completa delle fasi |
+| Miglio | R5; tabella 3 ora estratta dal PDF | Recuperati nove NDVI su cinque stadi; consolidare identità/densità/resa/N della stessa specie |
 | Fagiolino | R18 | Testo verificabile e NDVI per prodotto fresco, distinto da SPAD |
 | Fava | R17 | Profilo fresco distinto e N minerale/NDVI per le sue fasi |
 | Favino | R17 | Profilo da granella completo, distinguendo fissazione e dose minerale |

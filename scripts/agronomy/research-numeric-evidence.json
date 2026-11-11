@@ -1,0 +1,230 @@
+{
+  "status": "research-only-not-catalogue",
+  "operational": false,
+  "description": "Dati numerici estratti da fonti recuperate; non attestano ancora profili completi o ottimali.",
+  "studies": [
+    {
+      "id": "triticale-karaman-2023",
+      "crop": "Triticale",
+      "source": "https://www.banglajol.info/index.php/BJB/article/download/65250/44166",
+      "title": "Relationship between physiological characteristics and grain yield of triticale genotypes",
+      "extraction": "Materiali e metodi; tabella 5 a pagina 192 verificata visivamente nel PDF originale; tabella 6 a pagina 193 per GS85.",
+      "context": "Mus, Turchia, asciutta, annate 2019–2020 e 2020–2021.",
+      "sowing": {"value": 450, "unit": "seeds/m2", "notMeasuredPlants": true},
+      "mineralNitrogenKgHa": 90,
+      "nitrogenApplications": [
+        {"stage": "semina", "kgHa": 30},
+        {"stage": "GS23 accestimento", "kgHa": 60}
+      ],
+      "ndviMethod": "GreenSeeker; NDVI rosso/NIR; stadi Zadoks dichiarati dall'autore, non convertiti automaticamente in BBCH",
+      "publishedMeanPopulation": "18 genotipi, comprendenti varietà e linee sperimentali: non è una media delle sole varietà commerciali",
+      "publishedMeans": {
+        "grainYieldKgHa": 2983,
+        "ndvi": [
+          {"stage": "GS49", "value": 0.632},
+          {"stage": "GS60", "value": 0.616},
+          {"stage": "GS70.1", "value": 0.597},
+          {"stage": "GS83", "value": 0.548},
+          {"stage": "GS85", "value": 0.509}
+        ]
+      },
+      "namedVarieties": [
+        {"name": "Mehmetbey", "grainYieldKgHa": 2423, "ndviGS49": 0.593, "ndviGS60": 0.590, "ndviGS70_1": 0.608, "ndviGS83": 0.566, "ndviGS85": 0.479},
+        {"name": "Özer", "grainYieldKgHa": 2967, "ndviGS49": 0.622, "ndviGS60": 0.603, "ndviGS70_1": 0.613, "ndviGS83": 0.541, "ndviGS85": 0.477},
+        {"name": "Esin", "grainYieldKgHa": 3028, "ndviGS49": 0.627, "ndviGS60": 0.547, "ndviGS70_1": 0.603, "ndviGS83": 0.556, "ndviGS85": 0.498},
+        {"name": "Tatlıcak-97", "grainYieldKgHa": 2820, "ndviGS49": 0.638, "ndviGS60": 0.623, "ndviGS70_1": 0.627, "ndviGS83": 0.578, "ndviGS85": 0.543},
+        {"name": "Ayşehanım", "grainYieldKgHa": 3472, "ndviGS49": 0.627, "ndviGS60": 0.605, "ndviGS70_1": 0.573, "ndviGS83": 0.535, "ndviGS85": 0.482},
+        {"name": "Ümranhanım", "grainYieldKgHa": 2738, "ndviGS49": 0.630, "ndviGS60": 0.643, "ndviGS70_1": 0.617, "ndviGS83": 0.592, "ndviGS85": 0.552},
+        {"name": "Alperbey", "grainYieldKgHa": 3536, "ndviGS49": 0.667, "ndviGS60": 0.638, "ndviGS70_1": 0.607, "ndviGS83": 0.543, "ndviGS85": 0.503},
+        {"name": "Mikham-2002", "grainYieldKgHa": 2486, "ndviGS49": 0.657, "ndviGS60": 0.645, "ndviGS70_1": 0.645, "ndviGS83": 0.585, "ndviGS85": 0.568},
+        {"name": "Karma", "grainYieldKgHa": 2656, "ndviGS49": 0.643, "ndviGS60": 0.645, "ndviGS70_1": 0.592, "ndviGS83": 0.545, "ndviGS85": 0.500},
+        {"name": "Melihbey", "grainYieldKgHa": 3296, "ndviGS49": 0.640, "ndviGS60": 0.652, "ndviGS70_1": 0.608, "ndviGS83": 0.563, "ndviGS85": 0.502},
+        {"name": "Bc Goran", "grainYieldKgHa": 3273, "ndviGS49": 0.642, "ndviGS60": 0.660, "ndviGS70_1": 0.608, "ndviGS83": 0.540, "ndviGS85": 0.542},
+        {"name": "Bera", "grainYieldKgHa": 3051, "ndviGS49": 0.655, "ndviGS60": 0.638, "ndviGS70_1": 0.558, "ndviGS83": 0.543, "ndviGS85": 0.515},
+        {"name": "Presto", "grainYieldKgHa": 2763, "ndviGS49": 0.638, "ndviGS60": 0.632, "ndviGS70_1": 0.599, "ndviGS83": 0.520, "ndviGS85": 0.488}
+      ],
+      "unresolved": [
+        "Densità riportata come semi seminati, non piante misurate",
+        "NDVI rilevati da botticella in poi; non attribuirli a semina o GS23",
+        "Distinguere stadi Zadoks da BBCH e mantenere anche i due interventi N precoci",
+        "Verificare disponibilità commerciale italiana prima della selezione definitiva"
+      ]
+    },
+    {
+      "id": "triticale-povh-density-2008",
+      "crop": "Triticale",
+      "variety": "BRS-203",
+      "source": "https://apct.sede.embrapa.br/pab/en/article/download/194/5618",
+      "doi": "10.1590/S1678-3921.pab2008.v43.194",
+      "extraction": "Material e Métodos, experimento 4, pagina stampata 1077",
+      "context": "Itaberá, Brasile, semina 18 aprile 2007",
+      "plantsPerLinearM": 70,
+      "rowSpacingM": 0.17,
+      "mineralNitrogenAtSowingKgHa": 40,
+      "testedTopdressNitrogenKgHa": [0, 40, 80, 120, 160],
+      "topdressStage": "accestimento",
+      "ndviMethod": "GreenSeeker, 85 giorni dopo la semina; nessun BBCH dedotto dalla sola data",
+      "unresolved": [
+        "La densità dichiarata è un riferimento colturale distinto dalla prova Karaman, non un suo rilievo",
+        "La singola lettura a 85 giorni non completa una curva NDVI precoce",
+        "Gli apporti in copertura si sommano ai 40 kg N/ha basali, non sono totali"
+      ]
+    },
+    {
+      "id": "millet-sunrise-nitrogen-2023",
+      "crop": "Miglio",
+      "species": "Panicum miliaceum",
+      "variety": "Sunrise",
+      "source": "https://iris.cnr.it/retrieve/70354edd-4a81-416d-ad98-dda6c3385176/agriculture-13-01657-v2.pdf",
+      "title": "Effects of Nitrogen Fertilization and Plant Density on Proso Millet Growth and Yield under Mediterranean Pedoclimatic Conditions",
+      "extraction": "Materiali e metodi §2.2 e tabella 2 del PDF originale",
+      "context": "Cesa, Toscana, 2018–2019, asciutta",
+      "nitrogenTiming": "Tutte le dosi N distribuite in unica soluzione alla semina",
+      "densityMarginalMeans": [
+        {"plantsPerM2": 55, "grainYieldKgHa": 2758},
+        {"plantsPerM2": 111, "grainYieldKgHa": 3020},
+        {"plantsPerM2": 222, "grainYieldKgHa": 3211}
+      ],
+      "nitrogenMarginalMeans": [
+        {"nitrogenKgHa": 0, "grainYieldKgHa": 2705},
+        {"nitrogenKgHa": 50, "grainYieldKgHa": 2896},
+        {"nitrogenKgHa": 100, "grainYieldKgHa": 3123},
+        {"nitrogenKgHa": 150, "grainYieldKgHa": 3263}
+      ],
+      "unresolved": [
+        "Le rese sono medie marginali di fattori distinti, non rese di singole combinazioni densità×N",
+        "Nessuna misura NDVI in questa prova: comporre solo con fonti compatibili della stessa specie",
+        "Non assegnare l'apporto basale a una fase tardiva soltanto per abbinarlo a un NDVI disponibile"
+      ]
+    },
+    {
+      "id": "millet-sentinel-2022",
+      "crop": "Miglio",
+      "species": "Panicum miliaceum",
+      "source": "https://www.mdpi.com/2073-4395/12/3/609",
+      "doi": "10.3390/agronomy12030609",
+      "extraction": "Tabella 3 del PDF originale, pagina 10; sole righe Millet NDVI, escluse righe Corn e NDWI.",
+      "method": "Sentinel-2; BBCH principal stages; valori di campo misurati, non soglie N ottimali dimostrate",
+      "observations": [
+        {"date": "2019-06-18", "bbchPrincipal": 6, "ndvi": 0.80},
+        {"date": "2019-07-05", "bbchPrincipal": 7, "ndvi": 0.80},
+        {"date": "2019-07-25", "bbchPrincipal": 8, "ndvi": 0.65},
+        {"date": "2020-06-22", "bbchPrincipal": 6, "ndvi": 0.62},
+        {"date": "2020-07-22", "bbchPrincipal": 8, "ndvi": 0.77},
+        {"date": "2020-08-11", "bbchPrincipal": 9, "ndvi": 0.63},
+        {"date": "2021-06-12", "bbchPrincipal": 3, "ndvi": 0.58},
+        {"date": "2021-07-12", "bbchPrincipal": 6, "ndvi": 0.77},
+        {"date": "2021-08-06", "bbchPrincipal": 8, "ndvi": 0.74}
+      ],
+      "unresolved": ["Abbinamento con dati agronomici e identità varietale compatibili; non usare dati del miglio perlato"]
+    },
+    {
+      "id": "oat-arsarp",
+      "crop": "Avena",
+      "source": "https://www.arsarp.it/bancadelgermoplasma/bancadati/erbacee/avena/avena",
+      "context": "Scheda tecnica ARSARP, accessione locale di Carpinone; non un esperimento NDVI",
+      "targetPlantsPerM2": {"min": 250, "max": 350},
+      "seedKgHa": {"min": 150, "max": 200},
+      "mineralNitrogenKgHa": 70,
+      "nitrogenApplications": [
+        {"stage": "preparazione letto di semina", "fraction": "1/3"},
+        {"stage": "copertura, BBCH non specificato", "fraction": "2/3"}
+      ],
+      "unresolved": ["NDVI per fase e resa riferita al profilo da consolidare"]
+    },
+    {
+      "id": "oat-tuscany-standard",
+      "crop": "Avena",
+      "source": "https://www.regione.toscana.it/documents/d/guest/fase-agronomica-avena-2",
+      "context": "Disciplinare regionale 2025, dose standard in situazione normale; non mediare con ARSARP senza una scelta di contesto",
+      "grainYieldTHa": {"min": 3.2, "max": 4.8},
+      "standardMineralNitrogenKgHa": 60,
+      "unresolved": ["Distribuzione temporale e NDVI; la dose richiede adattamenti alle condizioni previste dal disciplinare"]
+    },
+    {
+      "id": "pepper-yalova-2018",
+      "crop": "Peperone",
+      "variety": "Yalova Yağlık 28",
+      "source": "http://www.pjoes.com/pdf-85351-28002?filename=Crop%20Evapotranspiration.pdf",
+      "title": "Crop Evapotranspiration Estimations of Red Pepper Using Field Level Remote Sensing Data and Energy Balance",
+      "context": "Bafra, Turchia; annate 2010 e 2011; trattamenti irrigui distinti",
+      "rowSpacingM": 0.70,
+      "plantSpacingM": 0.40,
+      "approximateMineralNitrogenKgHa": 100,
+      "nitrogenApplications": [
+        {"stage": "prima del trapianto", "fraction": 0.5},
+        {"stage": "durante la stagione, BBCH non specificato", "fraction": 0.5}
+      ],
+      "ndviMethod": "(R800-R680)/(R800+R680), spettrometro FieldSpec",
+      "approximateNdviAtTransplant": 0.1,
+      "unresolved": ["Estrarre curva per trattamento e associazione alle fasi; completare resa commerciabile; il resto del frazionamento non è specificato"]
+    },
+    {
+      "id": "barley-fabbri-2020",
+      "crop": "Orzo",
+      "source": "https://www.mdpi.com/2071-1050/12/18/7303",
+      "doi": "10.3390/su12187303",
+      "context": "Firenze 2017–2018; vasche cilindriche di 1 m3, non una prova di pieno campo equivalente in ogni ambiente",
+      "sowing": {"value": 400, "unit": "seeds/m2", "notMeasuredPlants": true},
+      "nitrogenAtSowingKgHa": 0,
+      "treatments": [
+        {"id": "CF", "mineralNitrogenKgHa": 150, "springTopdressKgHa": [75, 75], "grainYieldTHa": 4.3},
+        {"id": "RF", "mineralNitrogenKgHa": 75, "springTopdressKgHa": [37.5, 37.5], "grainYieldTHa": 3.5}
+      ],
+      "applicationDates": ["2018-03-26", "2018-04-24"],
+      "sensorDecisionStage": "BBCH39",
+      "ndviMethod": "GreenSeeker 505",
+      "unresolved": ["Estrarre la curva numerica NDVI per trattamento; identità varietale e densità di piante da consolidare"]
+    },
+    {
+      "id": "cauliflower-arizona-ndvi",
+      "crop": "Cavolfiore",
+      "source": "https://desertagsolutions.org/research-areas-and-initiatives/increasing-irrigation-efficiency/water-use-and-management/updated-crop-evapotranspiration-et-salinity-management/cauliflower",
+      "publisher": "University of Arizona, Desert Ag Solutions",
+      "extraction": "Tabella 1, punti NDVI di transizione classificati secondo gli stadi FAO-56",
+      "ndviPoints": [
+        {"stage": "INI", "ndvi": 0.103},
+        {"stage": "INI/DEV", "ndvi": 0.154},
+        {"stage": "DEV/MID", "ndvi": 0.857},
+        {"stage": "MID/END", "ndvi": 0.857},
+        {"stage": "END", "ndvi": 0.505}
+      ],
+      "unresolved": [
+        "I punti di transizione non sono medie temporali di fase né soglie N dimostrate",
+        "Identità varietale, densità, resa e concimazione da integrare con fonti compatibili",
+        "La fonte usa FAO-56: non attribuire automaticamente codici BBCH"
+      ]
+    },
+    {
+      "id": "faba-minor-fixation-2023",
+      "crop": "Favino",
+      "species": "Vicia faba L. minor",
+      "source": "https://www.mdpi.com/2223-7747/12/8/1711",
+      "doi": "10.3390/plants12081711",
+      "varieties": ["Diva", "Hiverna", "Alexia"],
+      "context": "Raasdorf, Austria, 2013/14 e 2014/15; Diva e Hiverna autunnali, Alexia primaverile",
+      "sowingRates": {"values": [25, 50], "unit": "germinable seeds/m2", "notMeasuredPlants": true},
+      "mineralFertilizerNitrogenKgHa": 0,
+      "nitrogenBasis": "Nessuna fertilizzazione nella prova; fissazione e N accumulato determinati separatamente",
+      "unresolved": [
+        "Estrarre densità effettive, rese e bilanci separati per varietà, annata e trattamento",
+        "Abbinare NDVI e fenologia senza attribuire ai campioni austriaci le misure francesi",
+        "Non trasferire direttamente questo profilo di Vicia faba minor alla fava da baccello fresco",
+        "Lo zero di concimazione minerale non significa zero fabbisogno biologico o zero fissazione"
+      ]
+    },
+    {
+      "id": "potato-active-sensors-2023",
+      "crop": "Patata",
+      "source": "https://jcoagri.uobaghdad.edu.iq/index.php/intro/article/download/1725/1221/2877",
+      "title": "Active optical sensors to develop nitrogen fertilizer recommendations for potato crop",
+      "varieties": ["Russet Burbank", "Shepody", "Superior"],
+      "rowSpacingM": 0.90,
+      "plantSpacingM": 0.30,
+      "testedMineralNitrogenKgHa": [0, 56, 112, 168, 224, 280],
+      "maximumYieldTreatmentNitrogenKgHa": 168,
+      "ndviMethod": "GreenSeeker e Crop Circle distinti; letture a 4, 8, 10, 12, 16 e 20 foglie",
+      "unresolved": ["Estrarre valori NDVI per stadio/trattamento e resa associata; verificare tempi di applicazione N; mantenere distinti siti e sensori"]
+    }
+  ]
+}
